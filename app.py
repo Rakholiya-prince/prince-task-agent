@@ -291,11 +291,32 @@ class WebhookHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response_data, indent=2).encode("utf-8"))
 
     def do_POST(self):
-        # Telegram Webhook endpoint
         content_len = int(self.headers.get("Content-Length", 0))
         post_body = self.rfile.read(content_len)
         
-        # Acknowledge Telegram immediately (prevents webhook retry loops)
+        # 1. Antigravity Delegation endpoint
+        if self.path in ["/delegate", "/api/task"]:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(b'{"status": "task_received_and_processing"}')
+            try:
+                data = json.loads(post_body.decode("utf-8"))
+                task_text = data.get("task", "")
+                chat_id = data.get("chat_id", 2117099158)
+                if task_text:
+                    fake_message = {
+                        "text": task_text,
+                        "chat": {"id": chat_id},
+                        "from": {"first_name": "Prince (via Antigravity)"}
+                    }
+                    threading.Thread(target=process_message, args=(fake_message,), daemon=True).start()
+            except Exception as e:
+                print(f"[!] Error handling delegation: {e}")
+            return
+            
+        # 2. Telegram Webhook endpoint
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.send_header("Connection", "close")
