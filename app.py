@@ -33,6 +33,8 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
             "status": "online",
             "service": "Prince Task Agent 24/7",
             "uptime": f"{hours}h {minutes}m {seconds}s",
+            "telegram_token_present": bool(TELEGRAM_BOT_TOKEN),
+            "gemini_key_present": bool(GEMINI_API_KEY),
             "health": "ok"
         }
         
