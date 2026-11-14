@@ -2,60 +2,29 @@ import os
 import sys
 import time
 import json
+import socket
 import traceback
 import subprocess
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import urllib3.util.connection as urllib_connection
 import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 
-import socket
-import urllib3.util.connection as urllib_connection
+# Force IPv4 for all outbound connections (fixes Render -> Google/Telegram latency)
 urllib_connection.allowed_gai_family = lambda: socket.AF_INET
 
 # Environment configuration
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+TELEGRAM_BOT_TOKEN = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
+GEMINI_API_KEY = (os.getenv("GEMINI_API_KEY") or "").strip()
 PORT = int(os.getenv("PORT", "10000"))
 
 START_TIME = time.time()
 
-# ----------------- HTTP HEALTHCHECK SERVER FOR RENDER ----------------- #
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        uptime_sec = int(time.time() - START_TIME)
-        hours = uptime_sec // 3600
-        minutes = (uptime_sec % 3600) // 60
-        seconds = uptime_sec % 60
-        
-        response_data = {
-            "status": "online",
-            "service": "Prince Task Agent 24/7",
-            "uptime": f"{hours}h {minutes}m {seconds}s",
-            "telegram_token_present": bool(TELEGRAM_BOT_TOKEN),
-            "gemini_key_present": bool(GEMINI_API_KEY),
-            "health": "ok"
-        }
-        
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(response_data, indent=2).encode("utf-8"))
-
-    def log_message(self, format, *args):
-        # Silence standard HTTP access logging to keep terminal clean
-        return
-
-def run_http_server():
-    server_address = ('', PORT)
-    httpd = HTTPServer(server_address, HealthCheckHandler)
-    print(f"[*] Healthcheck HTTP Server listening on port {PORT}...")
-    httpd.serve_forever()
-
 # ----------------- AGENT TOOLS ----------------- #
 def tool_web_search(query: str) -> str:
-    """Searches the web using DuckDuckGo and returns summaries of top results."""
+    """Searches the live web using DuckDuckGo."""
     try:
         results = []
         with DDGS() as ddgs:
@@ -68,41 +37,41 @@ def tool_web_search(query: str) -> str:
         return f"Error during web search: {str(e)}"
 
 def tool_fetch_webpage(url: str) -> str:
-    """Fetches and extracts clean text content from a given URL."""
+    """Fetches text content from a given URL."""
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        resp = requests.get(url, headers=headers, timeout=10)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Connection": "close"}
+        resp = requests.get(url, headers=headers, timeout=12)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         for tag in soup(["script", "style", "nav", "footer", "header"]):
             tag.decompose()
         text = ' '.join(soup.stripped_strings)
-        return text[:4000] # return first 4000 chars
+        return text[:4000]
     except Exception as e:
         return f"Error fetching webpage: {str(e)}"
 
 def tool_run_python(code: str) -> str:
-    """Executes Python code in an isolated subprocess and returns stdout and stderr."""
+    """Executes Python code in an isolated subprocess."""
     try:
         proc = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=25
         )
         output = proc.stdout
         if proc.stderr:
             output += "\nSTDERR:\n" + proc.stderr
-        return output.strip() if output.strip() else "(Execution completed with no output)"
+        return output.strip() if output.strip() else "(Code ran successfully with no output)"
     except subprocess.TimeoutExpired:
-        return "Error: Code execution timed out after 30 seconds."
+        return "Error: Code execution timed out after 25 seconds."
     except Exception as e:
         return f"Execution error: {str(e)}"
 
 TOOLS_DECLARATIONS = [
     {
         "name": "web_search",
-        "description": "Search the live web for real-time information, news, articles, and answers.",
+        "description": "Search the live web for real-time information, news, and answers.",
         "parameters": {
             "type": "OBJECT",
             "properties": {
@@ -124,7 +93,7 @@ TOOLS_DECLARATIONS = [
     },
     {
         "name": "run_python",
-        "description": "Run Python code to calculate, process data, scrape, or solve complex logic.",
+        "description": "Run Python code to compute, analyze data, scrape, or solve logic.",
         "parameters": {
             "type": "OBJECT",
             "properties": {
@@ -135,54 +104,43 @@ TOOLS_DECLARATIONS = [
     }
 ]
 
-# ----------------- TELEGRAM HELPER FUNCTIONS ----------------- #
+# ----------------- TELEGRAM MESSAGING ----------------- #
 def telegram_send_message(chat_id: int, text: str, parse_mode: str = "Markdown") -> None:
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": chat_id, "text": text}
     if parse_mode:
         payload["parse_mode"] = parse_mode
     try:
-        r = requests.post(url, json=payload, timeout=10)
-        # If markdown parsing fails, fallback to plain text
+        r = requests.post(url, json=payload, headers={"Connection": "close"}, timeout=12)
         if not r.ok:
             payload.pop("parse_mode", None)
-            requests.post(url, json=payload, timeout=10)
+            requests.post(url, json=payload, headers={"Connection": "close"}, timeout=12)
     except Exception as e:
         print(f"[!] Telegram sendMessage error: {e}")
-
-def telegram_send_document(chat_id: int, filename: str, content: str) -> None:
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
-    try:
-        files = {"document": (filename, content.encode("utf-8"))}
-        requests.post(url, data={"chat_id": chat_id}, files=files, timeout=15)
-    except Exception as e:
-        print(f"[!] Telegram sendDocument error: {e}")
 
 # ----------------- GEMINI AGENT EXECUTION LOOP ----------------- #
 def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
     endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
+    headers = {"Content-Type": "application/json", "Connection": "close"}
     
     system_instruction = (
-        "You are Prince's elite 24/7 Autonomous AI Agent. "
-        "You are deployed on a 24/7 cloud server and have full tools: web_search, fetch_webpage, and run_python. "
-        "When the user asks you to do something, use your tools autonomously to gather information, "
-        "execute scripts, crunch numbers, and deliver thorough, professional results. "
-        "Always communicate respectfully, address the user as Sir, and summarize your findings clearly."
+        "You are Prince's 24/7 Autonomous AI Agent. "
+        "You are hosted permanently on cloud infrastructure with tools: web_search, fetch_webpage, run_python. "
+        "Use tools autonomously to solve user requests, perform research, run code, or summarize information. "
+        "Always be helpful, precise, and address the user as Sir."
     )
 
     contents = [{"role": "user", "parts": [{"text": user_prompt}]}]
     
-    # Run Agent Loop up to 5 steps
-    for step in range(5):
+    for step in range(4):
         payload = {
             "system_instruction": {"parts": [{"text": system_instruction}]},
             "contents": contents,
             "tools": [{"function_declarations": TOOLS_DECLARATIONS}]
         }
         
-        headers = {"Content-Type": "application/json", "Connection": "close"}
         try:
-            resp = requests.post(endpoint, json=payload, headers=headers, timeout=60)
+            resp = requests.post(endpoint, json=payload, headers=headers, timeout=50)
             data = resp.json()
             
             if "error" in data:
@@ -195,18 +153,14 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
             if not parts:
                 return "Task finished without output."
             
-            # Check for function calls
             function_calls = [p["functionCall"] for p in parts if "functionCall" in p]
             
             if not function_calls:
-                # Text answer produced!
                 text_parts = [p["text"] for p in parts if "text" in p]
                 return "\n".join(text_parts)
             
-            # Add assistant's response with function call to conversation history
             contents.append(content)
             
-            # Execute tool calls
             tool_response_parts = []
             for fc in function_calls:
                 fn_name = fc["name"]
@@ -230,14 +184,13 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
                     }
                 })
             
-            # Append tool responses as user role (standard Gemini format)
             contents.append({
                 "role": "user",
                 "parts": tool_response_parts
             })
             
         except requests.exceptions.Timeout:
-            # Quick fallback without complex tools
+            # Quick lightweight fallback
             try:
                 simple_payload = {"contents": [{"role": "user", "parts": [{"text": user_prompt}]}]}
                 resp = requests.post(endpoint, json=simple_payload, headers=headers, timeout=25)
@@ -247,94 +200,133 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
                     return "".join(text_parts)
             except Exception:
                 pass
-            return "⚠️ Gemini request took too long. Please try again."
+            return "⚠️ Request timed out. Please try asking again."
         except Exception as e:
             return f"⚠️ Agent error: {str(e)}"
             
     return "Task reached maximum tool iterations."
 
-# ----------------- TELEGRAM POLLING WORKER ----------------- #
-def run_telegram_bot():
-    print("[*] Starting 24/7 Telegram Poller...")
-    offset = 0
-    
-    while True:
-        try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
-            params = {"timeout": 25, "offset": offset}
-            resp = requests.get(url, params=params, timeout=30)
+# ----------------- MESSAGE PROCESSOR ----------------- #
+def process_message(message: dict):
+    try:
+        text = message.get("text", "").strip()
+        chat_id = message.get("chat", {}).get("id")
+        user_first_name = message.get("from", {}).get("first_name", "Sir")
+        
+        if not text or not chat_id:
+            return
             
-            if not resp.ok:
-                time.sleep(3)
-                continue
-                
-            updates = resp.json().get("result", [])
-            for update in updates:
-                offset = update["update_id"] + 1
-                message = update.get("message", {})
-                text = message.get("text", "").strip()
-                chat_id = message.get("chat", {}).get("id")
-                user_first_name = message.get("from", {}).get("first_name", "Sir")
-                
-                if not text or not chat_id:
-                    continue
-                
-                print(f"[+] Message received from {user_first_name} ({chat_id}): {text}")
-                
-                if text == "/start":
-                    greeting = (
-                        f"👋 Hello {user_first_name} Sir!\n\n"
-                        "I am your **24/7 Autonomous AI Agent**, hosted on the cloud!\n\n"
-                        "⚡ **What I can do for you:**\n"
-                        "• 🌐 **Live Web Search & Scraping**: Give me any topic to research.\n"
-                        "• 🐍 **Python Code Execution**: I can calculate, write, and run Python code.\n"
-                        "• 📊 **Analysis & Data Tasks**: I process tasks autonomously.\n"
-                        "• ⏰ **24/7 Uptime**: Send me any job, close your phone, and I'll work on it!\n\n"
-                        "Commands:\n"
-                        "/status - Check server uptime and health\n"
-                        "Or simply send me your task instructions!"
-                    )
-                    telegram_send_message(chat_id, greeting)
-                    continue
-                    
-                elif text == "/status":
-                    uptime_sec = int(time.time() - START_TIME)
-                    hours = uptime_sec // 3600
-                    minutes = (uptime_sec % 3600) // 60
-                    seconds = uptime_sec % 60
-                    status_msg = (
-                        f"🟢 **Agent Status:** Online & Active\n"
-                        f"⏳ **Uptime:** {hours}h {minutes}m {seconds}s\n"
-                        f"☁️ **Host:** 24/7 Cloud Server\n"
-                        f"🧠 **Model:** Gemini Flash (Agentic Loop Enabled)\n"
-                        f"🛠️ **Tools:** Web Search, Web Scraper, Python Runner"
-                    )
-                    telegram_send_message(chat_id, status_msg)
-                    continue
-                
-                # Normal user task prompt
-                telegram_send_message(chat_id, "⏳ *Working on your task, Sir... Please wait.*")
-                
-                # Execute agent
-                agent_reply = ask_gemini_agent(text, chat_id)
-                
-                # Final response
-                final_msg = f"{agent_reply}\n\n━━━━━━━━━━━━━━━━━━━━\n✅ *Task completed, Sir! You can check now.*"
-                telegram_send_message(chat_id, final_msg)
-                
+        print(f"[+] Received message from {user_first_name} ({chat_id}): {text}")
+        
+        if text == "/start":
+            greeting = (
+                f"👋 Hello {user_first_name} Sir!\n\n"
+                "I am your **24/7 Autonomous AI Agent**, hosted on the cloud!\n\n"
+                "⚡ **What I can do for you:**\n"
+                "• 🌐 **Live Web Search & Scraping**: Give me any topic to research.\n"
+                "• 🐍 **Python Code Execution**: I can calculate, write, and run Python code.\n"
+                "• 📊 **Analysis & Data Tasks**: I process tasks autonomously.\n"
+                "• ⏰ **24/7 Uptime**: Send me any job, close your phone, and I'll work on it!\n\n"
+                "Commands:\n"
+                "/status - Check server uptime and health\n"
+                "Or simply send me your task instructions!"
+            )
+            telegram_send_message(chat_id, greeting)
+            return
+            
+        elif text == "/status":
+            uptime_sec = int(time.time() - START_TIME)
+            hours = uptime_sec // 3600
+            minutes = (uptime_sec % 3600) // 60
+            seconds = uptime_sec % 60
+            status_msg = (
+                f"🟢 **Agent Status:** Online & Active (Webhook Mode)\n"
+                f"⏳ **Uptime:** {hours}h {minutes}m {seconds}s\n"
+                f"☁️ **Host:** 24/7 Render Cloud Server\n"
+                f"🧠 **Model:** Gemini Flash (Agentic Loop Enabled)\n"
+                f"🛠️ **Tools:** Web Search, Web Scraper, Python Runner"
+            )
+            telegram_send_message(chat_id, status_msg)
+            return
+            
+        # Normal task execution
+        telegram_send_message(chat_id, "⏳ *Working on your task, Sir... Please wait.*")
+        agent_reply = ask_gemini_agent(text, chat_id)
+        final_msg = f"{agent_reply}\n\n━━━━━━━━━━━━━━━━━━━━\n✅ *Task completed, Sir! You can check now.*"
+        telegram_send_message(chat_id, final_msg)
+        
+    except Exception as e:
+        print(f"[!] Error in process_message: {e}")
+
+# ----------------- HTTP SERVER & WEBHOOK HANDLER ----------------- #
+class WebhookHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        uptime_sec = int(time.time() - START_TIME)
+        hours = uptime_sec // 3600
+        minutes = (uptime_sec % 3600) // 60
+        seconds = uptime_sec % 60
+        
+        response_data = {
+            "status": "online",
+            "mode": "webhook",
+            "service": "Prince Task Agent 24/7",
+            "uptime": f"{hours}h {minutes}m {seconds}s",
+            "telegram_token_present": bool(TELEGRAM_BOT_TOKEN),
+            "gemini_key_present": bool(GEMINI_API_KEY),
+            "health": "ok"
+        }
+        
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(json.dumps(response_data, indent=2).encode("utf-8"))
+
+    def do_POST(self):
+        # Telegram Webhook endpoint
+        content_len = int(self.headers.get("Content-Length", 0))
+        post_body = self.rfile.read(content_len)
+        
+        # Acknowledge Telegram immediately (prevents webhook retry loops)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(b"OK")
+        
+        try:
+            update = json.loads(post_body.decode("utf-8"))
+            if "message" in update:
+                threading.Thread(target=process_message, args=(update["message"],), daemon=True).start()
         except Exception as e:
-            print(f"[!] Polling loop error: {e}")
-            time.sleep(3)
+            print(f"[!] Webhook parsing error: {e}")
+
+    def log_message(self, format, *args):
+        # Silence standard HTTP access logging to keep terminal clean
+        return
+
+def setup_telegram_webhook():
+    """Configures Telegram to deliver updates to this server via webhook."""
+    webhook_url = "https://prince-task-agent.onrender.com/webhook"
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook?url={webhook_url}"
+    try:
+        r = requests.get(url, headers={"Connection": "close"}, timeout=10)
+        print(f"[*] Telegram Webhook set: {r.text}")
+    except Exception as e:
+        print(f"[!] Webhook setup error: {e}")
 
 # ----------------- MAIN ENTRYPOINT ----------------- #
 if __name__ == "__main__":
     print("=" * 50)
-    print("🤖 Launching Prince's 24/7 Autonomous AI Agent")
+    print("🤖 Launching Prince's 24/7 Autonomous AI Agent (Webhook Mode)")
     print("=" * 50)
     
-    # 1. Start HTTP Server thread for Render
-    http_thread = threading.Thread(target=run_http_server, daemon=True)
-    http_thread.start()
-    
-    # 2. Start Telegram Bot in main thread
-    run_telegram_bot()
+    # Register webhook with Telegram
+    if TELEGRAM_BOT_TOKEN:
+        setup_telegram_webhook()
+        
+    # Start HTTP & Webhook Server
+    server_address = ('', PORT)
+    httpd = HTTPServer(server_address, WebhookHandler)
+    print(f"[*] Agent Server listening on port {PORT}...")
+    httpd.serve_forever()
