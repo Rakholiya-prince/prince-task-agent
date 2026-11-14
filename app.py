@@ -120,8 +120,12 @@ def telegram_send_message(chat_id: int, text: str, parse_mode: str = "Markdown")
 
 # ----------------- GEMINI AGENT EXECUTION LOOP ----------------- #
 def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
-    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
-    headers = {"Content-Type": "application/json", "Connection": "close"}
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent"
+    headers = {
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_API_KEY,
+        "Connection": "close"
+    }
     
     system_instruction = (
         "You are Prince's 24/7 Autonomous AI Agent. "
@@ -140,7 +144,7 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
         }
         
         try:
-            resp = requests.post(endpoint, json=payload, headers=headers, timeout=50)
+            resp = requests.post(endpoint, json=payload, headers=headers, timeout=25)
             data = resp.json()
             
             if "error" in data:
@@ -247,6 +251,10 @@ def process_message(message: dict):
                 f"🛠️ **Tools:** Web Search, Web Scraper, Python Runner"
             )
             telegram_send_message(chat_id, status_msg)
+            return
+            
+        elif text.lower().strip() in ["hi", "hello", "hey", "kem cho", "namaste"]:
+            telegram_send_message(chat_id, f"👋 Hello {user_first_name} Sir!\n\nI am online 24/7 on the cloud and ready for your work. What task would you like me to do?")
             return
             
         # Normal task execution
