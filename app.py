@@ -10,6 +10,10 @@ import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 
+import socket
+import urllib3.util.connection as urllib_connection
+urllib_connection.allowed_gai_family = lambda: socket.AF_INET
+
 # Environment configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -174,8 +178,9 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
             "tools": [{"function_declarations": TOOLS_DECLARATIONS}]
         }
         
+        headers = {"Content-Type": "application/json", "Connection": "close"}
         try:
-            resp = requests.post(endpoint, json=payload, timeout=30)
+            resp = requests.post(endpoint, json=payload, headers=headers, timeout=60)
             data = resp.json()
             
             if "error" in data:
@@ -229,6 +234,18 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
                 "parts": tool_response_parts
             })
             
+        except requests.exceptions.Timeout:
+            # Quick fallback without complex tools
+            try:
+                simple_payload = {"contents": [{"role": "user", "parts": [{"text": user_prompt}]}]}
+                resp = requests.post(endpoint, json=simple_payload, headers=headers, timeout=25)
+                data = resp.json()
+                text_parts = [p.get("text", "") for p in data.get("candidates", [{}])[0].get("content", {}).get("parts", []) if "text" in p]
+                if text_parts:
+                    return "".join(text_parts)
+            except Exception:
+                pass
+            return "⚠️ Gemini request took too long. Please try again."
         except Exception as e:
             return f"⚠️ Agent error: {str(e)}"
             
