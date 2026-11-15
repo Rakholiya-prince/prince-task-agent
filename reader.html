@@ -47,29 +47,32 @@
       --text-main: #1c1917;
       --text-body: #37332d;
       --text-muted: #6e665d;
-      --paper-highlight: #fef08a;
-      --card-shadow: 0 6px 24px rgba(70, 50, 30, 0.06);
-      background-image: radial-gradient(circle at 50% 0%, rgba(200, 180, 150, 0.15) 0%, transparent 65%);
+      --accent-blue: #0284c7;
+      --accent-emerald: #059669;
+      --accent-purple: #7c3aed;
+      --accent-gold: #b45309;
+      --paper-highlight: rgba(254, 240, 138, 0.65);
+      --card-shadow: 0 8px 24px rgba(60, 50, 40, 0.08);
     }
 
-    body.theme-book .section-title,
-    body.theme-book .tech-item-title,
-    body.theme-book .vocab-word,
-    body.theme-book .speaking-prompt,
-    body.theme-book h1.main-title {
-      color: #1c1917 !important;
-      -webkit-text-fill-color: initial !important;
-      background: none !important;
+    body.theme-book {
+      background-image: none !important;
     }
 
-    body.theme-book .vocab-card {
-      background: #faf7f2;
-      border-color: #e8e2d5;
+    body.theme-book .top-nav {
+      border-bottom: 1px solid #e7e0d3;
     }
 
-    body.theme-book .speaking-box {
-      background: #f5effc;
-      border-color: #d8b4fe;
+    body.theme-book .source-badge {
+      background: #f0ebe1;
+      border-color: #dcd3c3;
+      color: #78350f;
+    }
+
+    body.theme-book .pill {
+      background: #f3eee4;
+      border-color: #e2d9ca;
+      color: #4b443c;
     }
 
     body.theme-book .audio-toolbar {
@@ -85,12 +88,6 @@
     body.theme-book .highlight-word {
       background: #fef08a;
       color: #854d0e;
-    }
-
-    body.theme-book .source-link-btn {
-      background: #f3eee3;
-      border-color: #dcd3c3;
-      color: #2b2621;
     }
 
     body.theme-book .theme-pill.active {
@@ -115,14 +112,13 @@
       background-image: 
         radial-gradient(circle at 10% 8%, rgba(59, 130, 246, 0.09) 0%, transparent 40%),
         radial-gradient(circle at 90% 18%, rgba(168, 85, 247, 0.09) 0%, transparent 40%),
-        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.07) 0%, transparent 50%);
+        radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.07) 0%, transparent 50%);
       background-attachment: fixed;
       line-height: 1.6;
-      transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
-      overflow-x: hidden;
+      transition: background 0.25s ease, color 0.25s ease;
     }
 
-    /* Progress Bar */
+    /* Reading Progress Bar */
     #progress-bar {
       position: fixed;
       top: 0;
@@ -135,9 +131,8 @@
     }
 
     .container {
-      max-width: 680px;
+      max-width: 740px;
       margin: 0 auto;
-      width: 100%;
     }
 
     /* ================= 3. TOP NAVIGATION & CONTROLS ================= */
@@ -145,41 +140,46 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.4rem 0 1.1rem 0;
+      padding: 0.35rem 0 0.95rem 0;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 1.5rem;
-      gap: 0.5rem;
+      margin-bottom: 1.4rem;
       flex-wrap: wrap;
+      gap: 0.65rem;
     }
 
     .source-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 0.74rem;
-      font-weight: 700;
+      font-size: 0.72rem;
+      font-weight: 800;
       color: var(--accent-gold);
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 0.22rem 0.6rem;
+      padding: 0.25rem 0.65rem;
       border-radius: 9999px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .nav-controls {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
     }
 
-    /* 3-Theme Switcher Segmented Pills */
+    /* 3-Way Theme Switcher */
     .theme-switch-pills {
-      display: inline-flex;
-      background: rgba(255, 255, 255, 0.04);
+      display: flex;
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--card-border);
-      padding: 0.18rem;
       border-radius: 9999px;
-      gap: 0.15rem;
+      padding: 0.18rem;
+    }
+
+    body.theme-book .theme-switch-pills {
+      background: #eae3d5;
+      border-color: #dcd3c3;
     }
 
     .theme-pill {
@@ -188,110 +188,117 @@
       color: var(--text-muted);
       font-size: 0.72rem;
       font-weight: 700;
-      padding: 0.28rem 0.6rem;
+      padding: 0.25rem 0.65rem;
       border-radius: 9999px;
       cursor: pointer;
       transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .theme-pill:hover {
-      color: var(--text-main);
+      font-family: var(--ui-font);
     }
 
     .theme-pill.active {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--accent-blue);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    /* Font Size Controls (A- / A+) */
+    body.theme-paper .theme-pill.active {
+      background: var(--accent-gold);
+      color: #14120e;
+    }
+
+    /* Font Size Adjuster Controls */
     .font-controls {
-      display: inline-flex;
+      display: flex;
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--card-border);
-      border-radius: 0.55rem;
-      overflow: hidden;
+      border-radius: 9999px;
+      padding: 0.18rem;
+    }
+
+    body.theme-book .font-controls {
+      background: #eae3d5;
+      border-color: #dcd3c3;
     }
 
     .font-btn {
-      background: rgba(255, 255, 255, 0.04);
+      background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 0.74rem;
-      font-weight: 700;
-      padding: 0.28rem 0.55rem;
+      font-size: 0.76rem;
+      font-weight: 800;
+      width: 28px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
       cursor: pointer;
-      transition: all 0.2s;
+      font-family: var(--ui-font);
+      transition: all 0.15s;
     }
 
     .font-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.15);
       color: var(--text-main);
     }
 
     /* ================= 4. MAGAZINE HEADER ================= */
     header {
-      margin-bottom: 1.75rem;
+      margin-bottom: 2rem;
+      text-align: left;
     }
 
     .edition-date {
       font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      color: var(--text-muted);
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-blue);
       margin-bottom: 0.45rem;
     }
 
-    h1.main-title {
-      font-size: clamp(1.75rem, 5.5vw, 2.35rem);
-      font-weight: 800;
-      letter-spacing: -0.035em;
-      line-height: 1.25;
-      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.55rem;
-      word-break: break-word;
+    .main-title {
+      font-family: var(--reading-font);
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      margin-bottom: 0.65rem;
     }
 
     .edition-subtitle {
-      font-size: 0.92rem;
+      font-size: 0.95rem;
       color: var(--text-muted);
-      margin-bottom: 1.35rem;
-      line-height: 1.55;
+      line-height: 1.5;
+      margin-bottom: 1rem;
     }
 
     .meta-pills {
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
-      margin-bottom: 1.85rem;
     }
 
     .pill {
       font-size: 0.72rem;
-      font-weight: 700;
-      padding: 0.2rem 0.6rem;
+      font-weight: 600;
+      padding: 0.22rem 0.6rem;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.035);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--card-border);
       color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
     }
 
-    /* ================= 5. EDITORIAL SECTION CARDS ================= */
+    /* ================= 5. EDITORIAL SECTIONS ================= */
     .section-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 1.35rem;
-      padding: 1.4rem 1.25rem;
-      margin-bottom: 1.65rem;
-      backdrop-filter: blur(20px);
+      border-radius: 1.15rem;
+      padding: 1.35rem 1.25rem;
+      margin-bottom: 1.75rem;
       box-shadow: var(--card-shadow);
-      position: relative;
+      backdrop-filter: blur(12px);
+      transition: background 0.25s ease, border 0.25s ease;
     }
 
     .section-head {
@@ -301,257 +308,374 @@
       margin-bottom: 1.15rem;
       padding-bottom: 0.75rem;
       border-bottom: 1px solid var(--card-border);
-      gap: 0.5rem;
-      flex-wrap: wrap;
     }
 
     .section-title {
-      font-size: 1.12rem;
+      font-family: var(--ui-font);
+      font-size: 1.05rem;
       font-weight: 800;
-      color: #fff;
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.5rem;
       letter-spacing: -0.01em;
     }
 
     .section-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.66rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 0.15rem 0.55rem;
-      border-radius: 9999px;
       text-transform: uppercase;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
     }
 
-    .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-    .tag-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-    .tag-gold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .tag-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .tag-gold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 
-    /* ================= 6. SECTION 1: DEVELOPER TECH WIRE ================= */
+    /* ================= 6. PROMINENT ARTICLE TITLE BANNERS ================= */
+    .article-title-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-left: 4.5px solid var(--accent-blue);
+      border-radius: 0.75rem;
+      padding: 0.95rem 1.05rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .article-title-card.bbc-card {
+      border-left-color: var(--accent-emerald);
+    }
+
+    .article-sub-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .article-headline {
+      font-family: var(--reading-font);
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text-main);
+      margin-bottom: 0.45rem;
+    }
+
+    .article-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .article-meta-row a {
+      color: var(--accent-blue);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    body.theme-paper .article-title-card {
+      background: rgba(245, 158, 11, 0.06);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    body.theme-book .article-title-card {
+      background: #fcf9f2;
+      border-color: #e5ded2;
+      border-left: 4.5px solid #0284c7;
+    }
+
+    body.theme-book .article-title-card.bbc-card {
+      border-left-color: #059669;
+    }
+
+    body.theme-book .article-sub-label {
+      color: #92400e;
+    }
+
+    body.theme-book .article-headline {
+      color: #1c1917;
+    }
+
+    body.theme-book .article-meta-row {
+      color: #78716c;
+    }
+
+    body.theme-book .article-meta-row a {
+      color: #0369a1;
+    }
+
+    /* ================= 7. TECH BRIEF (HEAP HEAP HURRAY) ================= */
     .tech-list {
       display: flex;
       flex-direction: column;
-      gap: 1.2rem;
+      gap: 1.05rem;
     }
 
     .tech-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
+      padding: 0.9rem;
+      background: rgba(255, 255, 255, 0.025);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform 0.15s ease;
+    }
+
+    body.theme-book .tech-item {
+      background: #faf6ee;
+      border-color: #ebe4d8;
     }
 
     .tech-item-title {
-      font-size: 0.98rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      color: #fff;
-      line-height: 1.4;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
       display: flex;
-      align-items: flex-start;
+      align-items: baseline;
       justify-content: space-between;
       gap: 0.5rem;
       flex-wrap: wrap;
     }
 
-    .tech-item-desc {
-      font-size: 0.88rem;
-      color: var(--text-body);
-      line-height: 1.6;
-      text-align: left;
-    }
-
     .tech-badge-inline {
-      font-size: 0.64rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 0.1rem 0.45rem;
-      border-radius: 0.35rem;
-      background: rgba(255, 255, 255, 0.08);
-      color: #94a3b8;
-      white-space: nowrap;
+      color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.12);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* ================= 7. SECTION 2: VOCAL READING PASSAGE ================= */
+    .tech-item-desc {
+      font-size: 0.85rem;
+      color: var(--text-body);
+      line-height: 1.5;
+    }
+
+    .tech-item-desc code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+      color: #f59e0b;
+    }
+
+    body.theme-book .tech-item-desc code {
+      background: #ede6d9;
+      color: #92400e;
+    }
+
+    /* ================= 8. BBC ENGLISH READING BODY ================= */
     .audio-toolbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 0.75rem;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.035);
       border: 1px solid var(--card-border);
       border-radius: 0.85rem;
       padding: 0.65rem 0.95rem;
-      margin-bottom: 1.25rem;
-      flex-wrap: wrap;
+      margin-bottom: 1.15rem;
     }
 
     .play-audio-btn {
       background: var(--accent-emerald);
-      border: none;
-      color: #000;
+      color: #064e3b;
       font-weight: 800;
-      font-size: 0.82rem;
+      border: none;
       padding: 0.45rem 0.95rem;
-      border-radius: 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+      transition: all 0.15s ease;
+      font-family: var(--ui-font);
     }
 
     .play-audio-btn:hover {
-      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
-      transform: translateY(-1px);
+      transform: scale(1.02);
+      filter: brightness(1.1);
     }
 
     .audio-hint {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
+      line-height: 1.35;
     }
 
     .story-body {
       font-family: var(--reading-font);
       font-size: var(--story-size);
-      line-height: 1.85;
+      line-height: 1.78;
       color: var(--text-body);
-      letter-spacing: 0.005em;
+      text-align: justify;
+      hyphens: auto;
     }
 
     .story-body p {
-      margin-bottom: 1.15rem;
-    }
-
-    .story-body p:first-of-type::first-letter {
-      font-size: 3.2rem;
-      font-weight: 700;
-      float: left;
-      line-height: 0.82;
-      margin-right: 0.55rem;
-      margin-top: 0.15rem;
-      color: var(--accent-emerald);
-      font-family: var(--ui-font);
+      margin-bottom: 1.1rem;
     }
 
     .highlight-word {
       background: var(--paper-highlight);
-      padding: 0.1rem 0.35rem;
-      border-radius: 0.3rem;
-      color: #93c5fd;
+      color: #60a5fa;
       font-weight: 600;
+      padding: 0.05rem 0.3rem;
+      border-radius: 4px;
+      cursor: pointer;
+      border-bottom: 1.5px dotted var(--accent-blue);
+      transition: background 0.2s ease;
     }
 
-    /* ================= 8. SECTION 3: VOCABULARY DECK ================= */
+    body.theme-paper .highlight-word {
+      color: #fde68a;
+      border-bottom-color: var(--accent-gold);
+    }
+
+    body.theme-book .highlight-word {
+      background: #fef08a;
+      color: #854d0e;
+      border-bottom-color: #b45309;
+    }
+
+    /* ================= 9. VOCABULARY DECK ================= */
     .vocab-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr;
       gap: 1rem;
+      margin-bottom: 1.25rem;
     }
 
     .vocab-card {
-      background: rgba(255, 255, 255, 0.025);
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--card-border);
-      border-radius: 1.05rem;
-      padding: 1.1rem 1.15rem;
-      transition: all 0.2s ease;
+      border-radius: 0.85rem;
+      padding: 0.95rem;
+      position: relative;
     }
 
-    .vocab-card:hover {
-      background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(255, 255, 255, 0.14);
+    body.theme-book .vocab-card {
+      background: #faf6ed;
+      border-color: #e5ded2;
     }
 
     .vocab-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.3rem;
     }
 
     .vocab-word {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-family: var(--reading-font);
+      font-size: 1.22rem;
+      font-weight: 700;
+      color: var(--text-main);
     }
 
     .vocab-sound-btn {
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--card-border);
       color: var(--text-muted);
-      width: 1.95rem;
-      height: 1.95rem;
-      border-radius: 0.55rem;
-      cursor: pointer;
-      display: inline-flex;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-
-    .vocab-sound-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      color: #fff;
+      cursor: pointer;
+      font-size: 0.75rem;
     }
 
     .vocab-pronounce-box {
       font-size: 0.82rem;
-      color: var(--accent-blue);
-      margin-bottom: 0.45rem;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      flex-wrap: wrap;
-    }
-
-    .vocab-pronounce-box strong {
-      color: #93c5fd;
-      font-size: 0.88rem;
-    }
-
-    .vocab-meaning {
-      font-size: 0.88rem;
-      color: var(--text-main);
-      margin-bottom: 0.35rem;
+      color: var(--accent-gold);
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 3px solid var(--accent-gold);
+      padding: 0.35rem 0.65rem;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 0.55rem;
       line-height: 1.45;
     }
 
+    body.theme-book .vocab-pronounce-box {
+      background: #fbf5e6;
+      border-left-color: #b45309;
+      color: #92400e;
+    }
+
+    .vocab-meaning {
+      font-size: 0.84rem;
+      color: var(--text-body);
+      margin-bottom: 0.35rem;
+      line-height: 1.4;
+    }
+
     .vocab-gujarati {
-      font-size: 0.86rem;
-      color: var(--accent-gold);
+      font-size: 0.82rem;
+      color: #10b981;
       font-weight: 600;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+
+    body.theme-book .vocab-gujarati {
+      color: #047857;
     }
 
     .vocab-example {
-      font-size: 0.84rem;
-      color: var(--text-muted);
+      font-size: 0.8rem;
       font-style: italic;
-      padding-left: 0.75rem;
-      border-left: 2px solid var(--accent-emerald);
-      line-height: 1.5;
+      color: var(--text-muted);
+      border-left: 2px solid rgba(255, 255, 255, 0.15);
+      padding-left: 0.6rem;
+      line-height: 1.45;
     }
 
-    /* Speaking Challenge Box */
+    body.theme-book .vocab-example {
+      border-left-color: #d6cebf;
+    }
+
+    /* Speaking Practice Box */
     .speaking-box {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.09) 0%, rgba(59, 130, 246, 0.09) 100%);
+      background: rgba(168, 85, 247, 0.08);
       border: 1px solid rgba(168, 85, 247, 0.25);
-      border-radius: 1.15rem;
-      padding: 1.25rem;
-      margin-top: 1.15rem;
+      border-radius: 0.85rem;
+      padding: 1.05rem;
+    }
+
+    body.theme-book .speaking-box {
+      background: #f8f2fc;
+      border-color: #e4d0f7;
     }
 
     .speaking-head {
-      font-size: 0.96rem;
+      font-size: 0.78rem;
       font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
       color: #c084fc;
       margin-bottom: 0.45rem;
       display: flex;
       align-items: center;
       gap: 0.45rem;
+    }
+
+    body.theme-book .speaking-head {
+      color: #7c3aed;
     }
 
     .speaking-prompt {
@@ -562,47 +686,115 @@
       line-height: 1.45;
     }
 
+    body.theme-book .speaking-prompt {
+      color: #2e1065;
+    }
+
     .speaking-tip {
       font-size: 0.82rem;
       color: var(--text-muted);
       line-height: 1.5;
     }
 
-    /* ================= 9. EXACT SOURCE ARTICLE LINKS ================= */
+    /* ================= 10. PROMINENT SOURCE ARTICLE BUTTONS ================= */
     .source-link-container {
-      margin-top: 1.15rem;
-      padding-top: 0.85rem;
+      margin-top: 1.25rem;
+      padding-top: 0.95rem;
       border-top: 1px solid var(--card-border);
     }
 
     .source-link-btn {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.75rem;
       width: 100%;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid var(--card-border);
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
       border-radius: 0.85rem;
-      padding: 0.7rem 1rem;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #93c5fd;
+      padding: 0.85rem 1rem;
       text-decoration: none;
       transition: all 0.2s ease;
     }
 
+    .source-btn-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      text-align: left;
+    }
+
+    .source-btn-tag {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #60a5fa;
+    }
+
+    .source-btn-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.35;
+    }
+
+    .source-btn-arrow {
+      font-size: 1.25rem;
+      color: #60a5fa;
+      flex-shrink: 0;
+      font-weight: bold;
+    }
+
     .source-link-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.2);
-      color: #fff;
+      background: rgba(59, 130, 246, 0.16);
+      border-color: rgba(59, 130, 246, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .source-link-btn.bbc-source {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .source-link-btn.bbc-source .source-btn-tag,
+    .source-link-btn.bbc-source .source-btn-arrow {
+      color: #34d399;
     }
 
     .source-link-btn.bbc-source:hover {
-      color: #34d399;
-      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.45);
     }
 
-    /* ================= 10. FOOTER & CALL-TO-ACTIONS ================= */
+    body.theme-book .source-link-btn {
+      background: #f4efe4;
+      border-color: #dcd3c3;
+    }
+
+    body.theme-book .source-btn-tag {
+      color: #0369a1;
+    }
+
+    body.theme-book .source-btn-title {
+      color: #1c1917;
+    }
+
+    body.theme-book .source-btn-arrow {
+      color: #0369a1;
+    }
+
+    body.theme-book .source-link-btn.bbc-source {
+      background: #edf7f2;
+      border-color: #c6e7d6;
+    }
+
+    body.theme-book .source-link-btn.bbc-source .source-btn-tag,
+    body.theme-book .source-link-btn.bbc-source .source-btn-arrow {
+      color: #047857;
+    }
+
+    /* ================= 11. FOOTER & ACTIONS ================= */
     .reader-footer {
       display: flex;
       justify-content: space-between;
@@ -618,66 +810,32 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      font-size: 0.84rem;
+      font-size: 0.8rem;
       font-weight: 700;
-      padding: 0.65rem 1.15rem;
-      border-radius: 0.85rem;
+      padding: 0.55rem 0.95rem;
+      border-radius: 9999px;
       text-decoration: none;
-      transition: all 0.2s;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      transition: all 0.15s ease;
+      font-family: var(--ui-font);
     }
 
     .btn-cal {
-      background: rgba(66, 133, 244, 0.15);
-      border: 1px solid rgba(66, 133, 244, 0.35);
-      color: #93c5fd;
-    }
-
-    .btn-cal:hover {
-      background: rgba(66, 133, 244, 0.25);
-      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
     }
 
     .btn-done {
-      background: var(--accent-emerald);
-      color: #000;
+      background: var(--accent-blue);
+      color: #fff;
       border: none;
-      cursor: pointer;
     }
 
-    .btn-done:hover {
-      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-    }
-
-    /* Mobile Responsive Optimizations */
     @media (max-width: 600px) {
-      body {
-        padding: 0.75rem 0.65rem 4rem 0.65rem;
-      }
-      .section-card {
-        padding: 1.25rem 1rem;
-        border-radius: 1.15rem;
-      }
-      .top-nav {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-      }
-      .nav-controls {
-        width: 100%;
-        justify-content: space-between;
-      }
-      .story-body {
-        font-size: 1.15rem;
-        line-height: 1.75;
-      }
-      .reader-footer {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .action-link-btn {
-        justify-content: center;
-        width: 100%;
-      }
+      .main-title { font-size: 1.85rem; }
+      .section-card { padding: 1.15rem 1rem; }
+      .story-body { text-align: left; }
     }
   </style>
 </head>
@@ -707,10 +865,10 @@
 
     <!-- Magazine Header -->
     <header>
-      <div class="edition-date">Sunday • 15 November 2026 • Morning Edition</div>
-      <h1 class="main-title">Morning Tech & English Dispatch</h1>
+      <div class="edition-date">Sunday • 15 November 2026 • Daily Dispatch</div>
+      <h1 class="main-title">Daily Tech & English Reader</h1>
       <p class="edition-subtitle">
-        Curated daily engineering brief from <strong>Heap Heap Hurray</strong> and vocal English practice from <strong>BBC World</strong>.
+        Directly connected with <strong>Heap Heap Hurray</strong> engineering brief and <strong>BBC News</strong> vocal drill.
       </p>
 
       <div class="meta-pills">
@@ -728,6 +886,17 @@
           <span>☕</span> The Developer Wire
         </div>
         <span class="section-tag tag-blue">Heap Heap Hurray</span>
+      </div>
+
+      <!-- Prominent Edition Title Banner -->
+      <div class="article-title-card">
+        <div class="article-sub-label">
+          <span>🪅 HEAP HEAP HURRAY • EDITION #664</span>
+        </div>
+        <h2 class="article-headline">OpenAI India Inference Residency, Multilingual TTS & Trending Open Source Repos</h2>
+        <div class="article-meta-row">
+          <span>📅 Today's Edition</span> • <span>⏱️ 3 Min Read</span> • <a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-664" target="_blank" rel="noopener noreferrer">heapheaphurray.com/p/heap-heap-hurray-ed-664</a>
+        </div>
       </div>
 
       <div class="tech-list">
@@ -772,11 +941,14 @@
         </div>
       </div>
 
-      <!-- Exact Article Source Link -->
+      <!-- Exact Article Source Link with Clear Title -->
       <div class="source-link-container">
         <a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-664" target="_blank" rel="noopener noreferrer" class="source-link-btn">
-          <span>📖 Read Full Original Edition on Heap Heap Hurray</span>
-          <span>↗</span>
+          <div class="source-btn-info">
+            <span class="source-btn-tag">🔗 Direct Link to Original Edition</span>
+            <span class="source-btn-title">Read Full "🪅 Heap Heap Hurray Ed. #664" Newsletter</span>
+          </div>
+          <span class="source-btn-arrow">↗</span>
         </a>
       </div>
     </section>
@@ -787,7 +959,18 @@
         <div class="section-title">
           <span>📖</span> Daily English Vocal Reading
         </div>
-        <span class="section-tag tag-emerald">BBC World Story</span>
+        <span class="section-tag tag-emerald">BBC Technology News</span>
+      </div>
+
+      <!-- Prominent BBC Article Title Banner -->
+      <div class="article-title-card bbc-card">
+        <div class="article-sub-label">
+          <span>🌍 BBC NEWS • GLOBAL TECH</span>
+        </div>
+        <h2 class="article-headline">Microsoft Says Services Fully Restored After Day-Long Global Outage</h2>
+        <div class="article-meta-row">
+          <span>📅 BBC News Report</span> • <span>⏱️ 2 Min Read Aloud</span> • <a href="https://www.bbc.co.uk/news/articles/c6rrg51rkz09o" target="_blank" rel="noopener noreferrer">bbc.co.uk/news/articles/c6rrg51rkz09o</a>
+        </div>
       </div>
 
       <!-- Native Audio Tool -->
@@ -800,18 +983,21 @@
 
       <div class="story-body" id="reading-passage">
         <p>
-          Global technological breakthroughs are redefining the <span class="highlight-word">trajectory</span> of modern software engineering. Across international hubs, engineering teams are constructing <span class="highlight-word">resilient</span> distributed architectures designed to process massive computational workloads without failure. 
+          Microsoft has officially announced that its core cloud and enterprise services have been fully restored following an <span class="highlight-word">unprecedented</span> worldwide outage that disrupted Outlook, Microsoft Teams, and Copilot for hundreds of millions of users across more than seventy countries.
         </p>
         <p>
-          This represents an <span class="highlight-word">unprecedented</span> shift in how software is deployed globally. Developers in India and worldwide are no longer merely maintaining legacy systems; they are spearheading scalable web APIs, autonomous agentic workflows, and cloud-native solutions that influence millions of lives.
+          According to Microsoft engineering leaders, the disruption was triggered during a routine network capacity upgrade rather than a malicious cyber-attack. Engineering teams worked around the clock to deploy <span class="highlight-word">resilient</span> architecture safeguards, ensuring that enterprise workloads and cloud APIs recovered safely. This global incident highlights the critical <span class="highlight-word">trajectory</span> of modern cloud engineering, where automated failover systems and fault tolerance determine business continuity.
         </p>
       </div>
 
-      <!-- Exact BBC Article Source Link -->
+      <!-- Exact BBC Article Source Link with Clear Title -->
       <div class="source-link-container">
-        <a href="https://www.bbc.co.uk/news/articles/cwvg2l312ylqo" target="_blank" rel="noopener noreferrer" class="source-link-btn bbc-source">
-          <span>📰 Read Full Original Article on BBC News</span>
-          <span>↗</span>
+        <a href="https://www.bbc.co.uk/news/articles/c6rrg51rkz09o" target="_blank" rel="noopener noreferrer" class="source-link-btn bbc-source">
+          <div class="source-btn-info">
+            <span class="source-btn-tag">🔗 Direct Link to Original BBC Article</span>
+            <span class="source-btn-title">Read Full BBC Story: "Microsoft Says Services Fully Restored After Day-Long Global Outage"</span>
+          </div>
+          <span class="source-btn-arrow">↗</span>
         </a>
       </div>
     </section>
@@ -838,7 +1024,7 @@
           <div class="vocab-meaning">Never done or known before; extraordinary and historic.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: અભૂતપૂર્વ, જે પહેલાં ક્યારેય ન બન્યું હોય તેવું.</div>
           <div class="vocab-example">
-            "The launch of OpenAI's local inference residency represents an unprecedented opportunity for Indian builders."
+            "The global outage affecting over 70 nations was an unprecedented challenge for Microsoft's cloud infrastructure."
           </div>
         </div>
 
@@ -851,10 +1037,10 @@
           <div class="vocab-pronounce-box">
             🗣️ સરળ ઉચ્ચાર: <strong>રિ-ઝિલિ-યન્ટ</strong> <span>(Re-zil-yent) • Adjective</span>
           </div>
-          <div class="vocab-meaning">Able to withstand or recover quickly from difficult conditions.</div>
+          <div class="vocab-meaning">Able to withstand shock or recover quickly from difficult conditions.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: સક્ષમ, મુશ્કેલીઓ કે લોડ સામે ટકી રહેનાર.</div>
           <div class="vocab-example">
-            "In ASP.NET Core, building a resilient API requires smart error handling and retry policies."
+            "In ASP.NET Core and cloud architectures, building resilient systems requires automatic retries and circuit breakers."
           </div>
         </div>
 
@@ -867,7 +1053,7 @@
           <div class="vocab-pronounce-box">
             🗣️ સરળ ઉચ્ચાર: <strong>ટ્ર-જેક-ટરી</strong> <span>(Tra-jek-tuh-ree) • Noun</span>
           </div>
-          <div class="vocab-meaning">The curved path of an object, or the progress direction of someone's career.</div>
+          <div class="vocab-meaning">The curved path of an object, or the progress direction of someone's career or technology.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: ગતિપથ, કરિયર કે પ્રગતિની દિશા.</div>
           <div class="vocab-example">
             "Consistent daily practice in DSA and English fluency will accelerate your career trajectory."
@@ -881,10 +1067,10 @@
           <span>🗣️</span> Speaking Practice Challenge
         </div>
         <div class="speaking-prompt">
-          "Speak out loud for 30 seconds: Explain why building a resilient backend is important for user trust."
+          "Speak out loud for 30 seconds: Explain why building a resilient backend is important for user trust during unexpected outages."
         </div>
         <div class="speaking-tip">
-          💡 <strong>Tip:</strong> Don't translate in your head word-by-word. Start directly in English: <em>"A resilient system ensures that when high traffic hits..."</em> Pause smoothly at commas.
+          💡 <strong>Tip:</strong> Don't translate in your head word-by-word. Start directly in English: <em>"A resilient system ensures that when high traffic or unexpected network changes hit..."</em> Pause smoothly at commas.
         </div>
       </div>
     </section>

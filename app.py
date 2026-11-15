@@ -281,20 +281,30 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
 
 # ----------------- CONTENT SCRAPERS (HHH & BBC) ----------------- #
 def fetch_latest_bbc() -> dict:
-    """Fetches the latest article from BBC World News RSS."""
-    try:
-        url = "https://feeds.bbci.co.uk/news/world/rss.xml"
-        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=10)
-        root = ET.fromstring(resp.content)
-        items = root.findall('.//item')
-        if items:
-            title = items[0].find('title').text if items[0].find('title') is not None else ""
-            desc = items[0].find('description').text if items[0].find('description') is not None else ""
-            link = items[0].find('link').text if items[0].find('link') is not None else ""
-            return {"title": title, "desc": desc, "link": link}
-    except Exception as e:
-        print(f"[!] fetch_latest_bbc error: {e}")
-    return {"title": "Global Tech & Business Innovation", "desc": "Leaders across the globe accelerate AI adoption and digital transformation.", "link": "https://www.bbc.com/news"}
+    """Fetches the latest article from BBC Technology or World News RSS."""
+    feeds = [
+        "https://feeds.bbci.co.uk/news/technology/rss.xml",
+        "https://feeds.bbci.co.uk/news/world/rss.xml"
+    ]
+    for url in feeds:
+        try:
+            resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=10)
+            root = ET.fromstring(resp.content)
+            items = root.findall('.//item')
+            if items:
+                title = items[0].find('title').text.strip() if items[0].find('title') is not None else ""
+                desc = items[0].find('description').text.strip() if items[0].find('description') is not None else ""
+                raw_link = items[0].find('link').text.strip() if items[0].find('link') is not None else ""
+                clean_link = raw_link.split('?')[0] if raw_link else "https://www.bbc.com/news"
+                if title and clean_link:
+                    return {"title": title, "desc": desc, "link": clean_link}
+        except Exception as e:
+            print(f"[!] fetch_latest_bbc error for {url}: {e}")
+    return {
+        "title": "Microsoft says services fully restored after day-long global outage",
+        "desc": "Microsoft has said its services have been fully restored after a worldwide outage affected several of its tools.",
+        "link": "https://www.bbc.co.uk/news/articles/c6rrg51rkz09o"
+    }
 
 def fetch_latest_hhh() -> dict:
     """Fetches the latest edition from heapheaphurray.com."""
@@ -307,13 +317,15 @@ def fetch_latest_hhh() -> dict:
             ed_url = "https://www.heapheaphurray.com" + match.group(1)
             resp2 = requests.get(ed_url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=12)
             soup = BeautifulSoup(resp2.text, "html.parser")
+            h1 = soup.find('h1')
+            ed_title = h1.text.strip() if h1 else f"Heap Heap Hurray ({match.group(1).split('/')[-1]})"
             for t in soup(["script", "style", "nav", "footer"]):
                 t.decompose()
             text = ' '.join(soup.stripped_strings)
-            return {"url": ed_url, "content": text[:3500]}
+            return {"url": ed_url, "title": ed_title, "content": text[:3500]}
     except Exception as e:
         print(f"[!] fetch_latest_hhh error: {e}")
-    return {"url": "https://www.heapheaphurray.com", "content": "Daily tech newsletter for developers in India covering AI, GitHub repos, and changelogs."}
+    return {"url": "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-664", "title": "🪅 Heap Heap Hurray Ed. #664", "content": "Daily tech newsletter for developers in India covering AI, GitHub repos, and changelogs."}
 
 # ----------------- DIGEST GENERATORS (7:30 AM & 9:00 PM) ----------------- #
 def generate_morning_digest() -> str:
@@ -326,12 +338,15 @@ def generate_morning_digest() -> str:
 Today is a fresh morning. Generate Prince's daily 'Morning Tech & English Reading Digest'.
 
 SOURCE 1: Heap Heap Hurray (Tech news, changelog, trending repos):
+Edition Title: {hhh_data.get('title', 'Heap Heap Hurray')}
+Link: {hhh_data.get('url', 'https://www.heapheaphurray.com')}
+Content:
 {hhh_data.get('content', '')[:2500]}
 
 SOURCE 2: BBC News:
-Title: {bbc_data.get('title', '')}
+Article Title: {bbc_data.get('title', '')}
 Summary: {bbc_data.get('desc', '')}
-Link: {bbc_data.get('link', '')}
+Direct Link: {bbc_data.get('link', '')}
 
 Prince's Core Learning Goals:
 1. DSA (Data Structures & Algorithms)
@@ -345,13 +360,16 @@ _Good morning, Prince Sir! Here is your sorted tech & English drill._
 
 ━━━━━━━━━━━━━━━━━━━━
 💻 *1. TODAY'S TECH BRIEF (Heap Heap Hurray)*
+📰 *Edition:* {hhh_data.get('title')}
+🔗 *Direct Link:* {hhh_data.get('url')}
 • 3 sharp, high-value bullet points summarizing today's key developer updates, product changelogs, or trending GitHub repositories.
-• Source link: {hhh_data.get('url')}
 
 ━━━━━━━━━━━━━━━━━━━━
 📖 *2. DAILY ENGLISH READING (BBC Story)*
-*{bbc_data.get('title')}*
-Write a compelling, well-crafted 120-150 word English reading passage based on this BBC story. Keep sentences natural, clear, and engaging so Prince can read it aloud for 2 minutes to practice pronunciation.
+📰 *Article Title:* {bbc_data.get('title')}
+🔗 *Direct Link:* {bbc_data.get('link')}
+
+Write a compelling, well-crafted 120-150 word English reading passage directly based on this exact BBC article ('{bbc_data.get('title')}'). Keep sentences natural, clear, and engaging so Prince can read it aloud for 2 minutes to practice pronunciation.
 
 ━━━━━━━━━━━━━━━━━━━━
 🧠 *3. VOCABULARY & SPEAKING BOOSTER*
