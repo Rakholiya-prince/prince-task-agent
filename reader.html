@@ -6,11 +6,12 @@
   <title>Prince's Daily Intelligence & English Reader | 15 Nov 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    /* ================= 1. THEME PALETTES ================= */
     :root {
       --bg: #090d16;
-      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-bg: rgba(18, 24, 38, 0.88);
       --card-border: rgba(255, 255, 255, 0.08);
       --text-main: #f8fafc;
       --text-body: #cbd5e1;
@@ -19,20 +20,85 @@
       --accent-emerald: #10b981;
       --accent-purple: #a855f7;
       --accent-gold: #f59e0b;
-      --paper-highlight: rgba(59, 130, 246, 0.15);
+      --paper-highlight: rgba(59, 130, 246, 0.18);
+      --card-shadow: 0 10px 35px rgba(0, 0, 0, 0.45);
       --reading-font: 'Newsreader', Georgia, serif;
-      --ui-font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --ui-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --story-size: 1.25rem;
     }
 
+    /* 📜 Theme 2: Warm Sepia / Candlelight Paper */
     body.theme-paper {
       --bg: #14120e;
-      --card-bg: rgba(28, 25, 21, 0.9);
-      --card-border: rgba(245, 158, 11, 0.12);
+      --card-bg: rgba(28, 24, 20, 0.92);
+      --card-border: rgba(245, 158, 11, 0.14);
       --text-main: #fef3c7;
-      --text-body: #e2d9cc;
-      --text-muted: #a89f91;
+      --text-body: #e4dacb;
+      --text-muted: #a69c8e;
+      --paper-highlight: rgba(245, 158, 11, 0.22);
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
 
+    /* 📖 Theme 3: Natural Book Light Mode (Realistic Printed Book Feel) */
+    body.theme-book {
+      --bg: #f8f5ee;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.08);
+      --text-main: #1c1917;
+      --text-body: #37332d;
+      --text-muted: #6e665d;
+      --paper-highlight: #fef08a;
+      --card-shadow: 0 6px 24px rgba(70, 50, 30, 0.06);
+      background-image: radial-gradient(circle at 50% 0%, rgba(200, 180, 150, 0.15) 0%, transparent 65%);
+    }
+
+    body.theme-book .section-title,
+    body.theme-book .tech-item-title,
+    body.theme-book .vocab-word,
+    body.theme-book .speaking-prompt,
+    body.theme-book h1.main-title {
+      color: #1c1917 !important;
+      -webkit-text-fill-color: initial !important;
+      background: none !important;
+    }
+
+    body.theme-book .vocab-card {
+      background: #faf7f2;
+      border-color: #e8e2d5;
+    }
+
+    body.theme-book .speaking-box {
+      background: #f5effc;
+      border-color: #d8b4fe;
+    }
+
+    body.theme-book .audio-toolbar {
+      background: #f4efe6;
+      border-color: #e5ded2;
+    }
+
+    body.theme-book .tech-badge-inline {
+      background: #e8e2d5;
+      color: #443e37;
+    }
+
+    body.theme-book .highlight-word {
+      background: #fef08a;
+      color: #854d0e;
+    }
+
+    body.theme-book .source-link-btn {
+      background: #f3eee3;
+      border-color: #dcd3c3;
+      color: #2b2621;
+    }
+
+    body.theme-book .theme-pill.active {
+      background: #2b2621;
+      color: #fff;
+    }
+
+    /* ================= 2. GLOBAL RESET & BASE ================= */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -45,118 +111,170 @@
       color: var(--text-main);
       font-family: var(--ui-font);
       min-height: 100vh;
-      padding: 1.25rem 1rem 4rem 1rem;
+      padding: 1rem 0.85rem 4.5rem 0.85rem;
       background-image: 
-        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 10% 8%, rgba(59, 130, 246, 0.09) 0%, transparent 40%),
+        radial-gradient(circle at 90% 18%, rgba(168, 85, 247, 0.09) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.07) 0%, transparent 50%);
       background-attachment: fixed;
       line-height: 1.6;
-      transition: background 0.3s ease, color 0.3s ease;
+      transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+      overflow-x: hidden;
     }
 
-    /* Reading Progress Bar */
+    /* Progress Bar */
     #progress-bar {
       position: fixed;
       top: 0;
       left: 0;
-      height: 3px;
+      height: 3.5px;
       width: 0%;
       background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
-      z-index: 999;
+      z-index: 9999;
       transition: width 0.1s;
     }
 
     .container {
-      max-width: 720px;
+      max-width: 680px;
       margin: 0 auto;
+      width: 100%;
     }
 
-    /* Top Navigation Bar */
+    /* ================= 3. TOP NAVIGATION & CONTROLS ================= */
     .top-nav {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 0 1.25rem 0;
+      padding: 0.4rem 0 1.1rem 0;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .source-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      font-size: 0.76rem;
+      gap: 0.4rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: var(--accent-gold);
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 0.25rem 0.65rem;
+      padding: 0.22rem 0.6rem;
       border-radius: 9999px;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
     }
 
-    .theme-toggle-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 0.35rem 0.75rem;
-      border-radius: 0.65rem;
-      cursor: pointer;
-      display: inline-flex;
+    .nav-controls {
+      display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.5rem;
+    }
+
+    /* 3-Theme Switcher Segmented Pills */
+    .theme-switch-pills {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      padding: 0.18rem;
+      border-radius: 9999px;
+      gap: 0.15rem;
+    }
+
+    .theme-pill {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.28rem 0.6rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .theme-pill:hover {
+      color: var(--text-main);
+    }
+
+    .theme-pill.active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Font Size Controls (A- / A+) */
+    .font-controls {
+      display: inline-flex;
+      border: 1px solid var(--card-border);
+      border-radius: 0.55rem;
+      overflow: hidden;
+    }
+
+    .font-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.28rem 0.55rem;
+      cursor: pointer;
       transition: all 0.2s;
     }
 
-    .theme-toggle-btn:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.1);
+    .font-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
     }
 
-    /* Magazine Headline */
+    /* ================= 4. MAGAZINE HEADER ================= */
+    header {
+      margin-bottom: 1.75rem;
+    }
+
     .edition-date {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.09em;
       color: var(--text-muted);
       font-weight: 700;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
     }
 
     h1.main-title {
-      font-size: clamp(1.85rem, 5vw, 2.5rem);
+      font-size: clamp(1.75rem, 5.5vw, 2.35rem);
       font-weight: 800;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.035em;
       line-height: 1.25;
       background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.55rem;
+      word-break: break-word;
     }
 
     .edition-subtitle {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       color: var(--text-muted);
-      margin-bottom: 1.75rem;
-      line-height: 1.5;
+      margin-bottom: 1.35rem;
+      line-height: 1.55;
     }
 
     .meta-pills {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
+      gap: 0.45rem;
+      margin-bottom: 1.85rem;
     }
 
     .pill {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 0.22rem 0.65rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.035);
       border: 1px solid var(--card-border);
       color: var(--text-muted);
       display: inline-flex;
@@ -164,15 +282,15 @@
       gap: 0.35rem;
     }
 
-    /* Section Cards */
+    /* ================= 5. EDITORIAL SECTION CARDS ================= */
     .section-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 1.35rem;
-      padding: 1.5rem;
-      margin-bottom: 1.75rem;
+      padding: 1.4rem 1.25rem;
+      margin-bottom: 1.65rem;
       backdrop-filter: blur(20px);
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--card-shadow);
       position: relative;
     }
 
@@ -182,36 +300,40 @@
       align-items: center;
       margin-bottom: 1.15rem;
       padding-bottom: 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--card-border);
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .section-title {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       font-weight: 800;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
+      letter-spacing: -0.01em;
     }
 
     .section-tag {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 700;
-      padding: 0.15rem 0.5rem;
+      padding: 0.15rem 0.55rem;
       border-radius: 9999px;
       text-transform: uppercase;
+      letter-spacing: 0.02em;
     }
 
     .tag-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
     .tag-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
     .tag-gold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
-    /* Tech Pulse Items */
+    /* ================= 6. SECTION 1: DEVELOPER TECH WIRE ================= */
     .tech-list {
       display: flex;
       flex-direction: column;
-      gap: 1.15rem;
+      gap: 1.2rem;
     }
 
     .tech-item {
@@ -226,67 +348,41 @@
       color: #fff;
       line-height: 1.4;
       display: flex;
-      align-items: baseline;
-      gap: 0.45rem;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .tech-item-desc {
       font-size: 0.88rem;
       color: var(--text-body);
-      line-height: 1.55;
+      line-height: 1.6;
+      text-align: left;
     }
 
     .tech-badge-inline {
-      font-size: 0.65rem;
+      font-size: 0.64rem;
       font-weight: 700;
-      padding: 0.08rem 0.45rem;
+      padding: 0.1rem 0.45rem;
       border-radius: 0.35rem;
       background: rgba(255, 255, 255, 0.08);
       color: #94a3b8;
+      white-space: nowrap;
     }
 
-    /* Reading Story Section (Editorial Feel) */
-    .story-body {
-      font-family: var(--reading-font);
-      font-size: 1.25rem;
-      line-height: 1.85;
-      color: var(--text-body);
-      letter-spacing: 0.005em;
-    }
-
-    .story-body p {
-      margin-bottom: 1.15rem;
-    }
-
-    .story-body p:first-of-type::first-letter {
-      font-size: 3.4rem;
-      font-weight: 700;
-      float: left;
-      line-height: 0.85;
-      margin-right: 0.55rem;
-      margin-top: 0.15rem;
-      color: var(--accent-emerald);
-      font-family: var(--ui-font);
-    }
-
-    .highlight-word {
-      background: var(--paper-highlight);
-      padding: 0.1rem 0.3rem;
-      border-radius: 0.3rem;
-      color: #93c5fd;
-      font-weight: 600;
-    }
-
-    /* Audio Playback Controls */
+    /* ================= 7. SECTION 2: VOCAL READING PASSAGE ================= */
     .audio-toolbar {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 0.75rem;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--card-border);
       border-radius: 0.85rem;
-      padding: 0.65rem 1rem;
+      padding: 0.65rem 0.95rem;
       margin-bottom: 1.25rem;
+      flex-wrap: wrap;
     }
 
     .play-audio-btn {
@@ -310,39 +406,70 @@
     }
 
     .audio-hint {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
     }
 
-    /* Vocabulary Cards */
+    .story-body {
+      font-family: var(--reading-font);
+      font-size: var(--story-size);
+      line-height: 1.85;
+      color: var(--text-body);
+      letter-spacing: 0.005em;
+    }
+
+    .story-body p {
+      margin-bottom: 1.15rem;
+    }
+
+    .story-body p:first-of-type::first-letter {
+      font-size: 3.2rem;
+      font-weight: 700;
+      float: left;
+      line-height: 0.82;
+      margin-right: 0.55rem;
+      margin-top: 0.15rem;
+      color: var(--accent-emerald);
+      font-family: var(--ui-font);
+    }
+
+    .highlight-word {
+      background: var(--paper-highlight);
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.3rem;
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    /* ================= 8. SECTION 3: VOCABULARY DECK ================= */
     .vocab-grid {
       display: flex;
       flex-direction: column;
-      gap: 0.95rem;
+      gap: 1rem;
     }
 
     .vocab-card {
       background: rgba(255, 255, 255, 0.025);
       border: 1px solid var(--card-border);
-      border-radius: 1rem;
-      padding: 1.05rem 1.15rem;
+      border-radius: 1.05rem;
+      padding: 1.1rem 1.15rem;
       transition: all 0.2s ease;
     }
 
     .vocab-card:hover {
       background: rgba(255, 255, 255, 0.04);
-      border-color: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.14);
     }
 
     .vocab-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.45rem;
+      margin-bottom: 0.4rem;
     }
 
     .vocab-word {
-      font-size: 1.12rem;
+      font-size: 1.15rem;
       font-weight: 800;
       color: #fff;
       display: flex;
@@ -351,65 +478,74 @@
     }
 
     .vocab-sound-btn {
-      background: none;
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--card-border);
       color: var(--text-muted);
-      width: 1.85rem;
-      height: 1.85rem;
-      border-radius: 0.5rem;
+      width: 1.95rem;
+      height: 1.95rem;
+      border-radius: 0.55rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       transition: all 0.2s;
     }
 
     .vocab-sound-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       color: #fff;
     }
 
-    .vocab-phonetic {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
+    .vocab-pronounce-box {
+      font-size: 0.82rem;
       color: var(--accent-blue);
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .vocab-pronounce-box strong {
+      color: #93c5fd;
+      font-size: 0.88rem;
     }
 
     .vocab-meaning {
       font-size: 0.88rem;
       color: var(--text-main);
       margin-bottom: 0.35rem;
+      line-height: 1.45;
     }
 
     .vocab-gujarati {
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       color: var(--accent-gold);
       font-weight: 600;
-      margin-bottom: 0.45rem;
+      margin-bottom: 0.5rem;
     }
 
     .vocab-example {
       font-size: 0.84rem;
       color: var(--text-muted);
       font-style: italic;
-      padding-left: 0.65rem;
+      padding-left: 0.75rem;
       border-left: 2px solid var(--accent-emerald);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     /* Speaking Challenge Box */
     .speaking-box {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.09) 0%, rgba(59, 130, 246, 0.09) 100%);
       border: 1px solid rgba(168, 85, 247, 0.25);
       border-radius: 1.15rem;
       padding: 1.25rem;
-      margin-top: 1rem;
+      margin-top: 1.15rem;
     }
 
     .speaking-head {
-      font-size: 0.95rem;
+      font-size: 0.96rem;
       font-weight: 800;
       color: #c084fc;
       margin-bottom: 0.45rem;
@@ -423,22 +559,57 @@
       color: #fff;
       font-weight: 600;
       margin-bottom: 0.5rem;
+      line-height: 1.45;
     }
 
     .speaking-tip {
       font-size: 0.82rem;
       color: var(--text-muted);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
-    /* Bottom Action Bar */
+    /* ================= 9. EXACT SOURCE ARTICLE LINKS ================= */
+    .source-link-container {
+      margin-top: 1.15rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .source-link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid var(--card-border);
+      border-radius: 0.85rem;
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #93c5fd;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .source-link-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .source-link-btn.bbc-source:hover {
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    /* ================= 10. FOOTER & CALL-TO-ACTIONS ================= */
     .reader-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 0.75rem;
-      margin-top: 2rem;
+      margin-top: 2.25rem;
       padding-top: 1.5rem;
       border-top: 1px solid var(--card-border);
     }
@@ -447,7 +618,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 700;
       padding: 0.65rem 1.15rem;
       border-radius: 0.85rem;
@@ -476,16 +647,62 @@
     .btn-done:hover {
       box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
     }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 600px) {
+      body {
+        padding: 0.75rem 0.65rem 4rem 0.65rem;
+      }
+      .section-card {
+        padding: 1.25rem 1rem;
+        border-radius: 1.15rem;
+      }
+      .top-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      .nav-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .story-body {
+        font-size: 1.15rem;
+        line-height: 1.75;
+      }
+      .reader-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .action-link-btn {
+        justify-content: center;
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="progress-bar"></div>
 
   <div class="container">
-    <!-- Top Bar -->
+    <!-- Top Navigation Bar -->
     <div class="top-nav">
       <div class="source-badge">⚡ 24/7 CLOUD INTELLIGENCE</div>
-      <button class="theme-toggle-btn" onclick="toggleTheme()">🎨 <span id="theme-btn-label">Paper Mode</span></button>
+      
+      <div class="nav-controls">
+        <!-- 3-Way Theme Switcher -->
+        <div class="theme-switch-pills">
+          <button class="theme-pill active" id="btn-theme-dark" onclick="setTheme('dark')">🌙 Dark</button>
+          <button class="theme-pill" id="btn-theme-paper" onclick="setTheme('paper')">📜 Warm</button>
+          <button class="theme-pill" id="btn-theme-book" onclick="setTheme('book')">📖 Book</button>
+        </div>
+
+        <!-- Font Size Adjuster -->
+        <div class="font-controls">
+          <button class="font-btn" onclick="adjustFontSize(-1)" title="Smaller Text">A-</button>
+          <button class="font-btn" onclick="adjustFontSize(1)" title="Larger Text">A+</button>
+        </div>
+      </div>
     </div>
 
     <!-- Magazine Header -->
@@ -554,6 +771,14 @@
           </div>
         </div>
       </div>
+
+      <!-- Exact Article Source Link -->
+      <div class="source-link-container">
+        <a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-664" target="_blank" rel="noopener noreferrer" class="source-link-btn">
+          <span>📖 Read Full Original Edition on Heap Heap Hurray</span>
+          <span>↗</span>
+        </a>
+      </div>
     </section>
 
     <!-- SECTION 2: BBC ENGLISH READING (READ ALOUD) -->
@@ -581,6 +806,14 @@
           This represents an <span class="highlight-word">unprecedented</span> shift in how software is deployed globally. Developers in India and worldwide are no longer merely maintaining legacy systems; they are spearheading scalable web APIs, autonomous agentic workflows, and cloud-native solutions that influence millions of lives.
         </p>
       </div>
+
+      <!-- Exact BBC Article Source Link -->
+      <div class="source-link-container">
+        <a href="https://www.bbc.co.uk/news/articles/cwvg2l312ylqo" target="_blank" rel="noopener noreferrer" class="source-link-btn bbc-source">
+          <span>📰 Read Full Original Article on BBC News</span>
+          <span>↗</span>
+        </a>
+      </div>
     </section>
 
     <!-- SECTION 3: VOCABULARY DECK -->
@@ -599,7 +832,9 @@
             <div class="vocab-word">1. Unprecedented</div>
             <button class="vocab-sound-btn" onclick="speakText('Unprecedented')" title="Listen">🔊</button>
           </div>
-          <div class="vocab-phonetic">🗣️ સરળ ઉચ્ચાર: <strong>અન-પ્રેસિ-ડેન્ટિડ</strong> (Un-pres-i-den-ted) • Adjective</div>
+          <div class="vocab-pronounce-box">
+            🗣️ સરળ ઉચ્ચાર: <strong>અન-પ્રેસિ-ડેન્ટિડ</strong> <span>(Un-pres-i-den-ted) • Adjective</span>
+          </div>
           <div class="vocab-meaning">Never done or known before; extraordinary and historic.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: અભૂતપૂર્વ, જે પહેલાં ક્યારેય ન બન્યું હોય તેવું.</div>
           <div class="vocab-example">
@@ -613,7 +848,9 @@
             <div class="vocab-word">2. Resilient</div>
             <button class="vocab-sound-btn" onclick="speakText('Resilient')" title="Listen">🔊</button>
           </div>
-          <div class="vocab-phonetic">🗣️ સરળ ઉચ્ચાર: <strong>રિ-ઝિલિ-યન્ટ</strong> (Re-zil-yent) • Adjective</div>
+          <div class="vocab-pronounce-box">
+            🗣️ સરળ ઉચ્ચાર: <strong>રિ-ઝિલિ-યન્ટ</strong> <span>(Re-zil-yent) • Adjective</span>
+          </div>
           <div class="vocab-meaning">Able to withstand or recover quickly from difficult conditions.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: સક્ષમ, મુશ્કેલીઓ કે લોડ સામે ટકી રહેનાર.</div>
           <div class="vocab-example">
@@ -627,7 +864,9 @@
             <div class="vocab-word">3. Trajectory</div>
             <button class="vocab-sound-btn" onclick="speakText('Trajectory')" title="Listen">🔊</button>
           </div>
-          <div class="vocab-phonetic">🗣️ સરળ ઉચ્ચાર: <strong>ટ્ર-જેક-ટરી</strong> (Tra-jek-tuh-ree) • Noun</div>
+          <div class="vocab-pronounce-box">
+            🗣️ સરળ ઉચ્ચાર: <strong>ટ્ર-જેક-ટરી</strong> <span>(Tra-jek-tuh-ree) • Noun</span>
+          </div>
           <div class="vocab-meaning">The curved path of an object, or the progress direction of someone's career.</div>
           <div class="vocab-gujarati">👉 ગુજરાતી અર્થ: ગતિપથ, કરિયર કે પ્રગતિની દિશા.</div>
           <div class="vocab-example">
@@ -655,7 +894,7 @@
       <div style="font-size: 0.84rem; color: var(--text-muted);">
         Next drill: <strong>Tonight at 9:00 PM IST</strong>
       </div>
-      <div style="display: flex; gap: 0.5rem;">
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
         <a href="https://t.me/PrinceTaskAgentBot" target="_blank" class="action-link-btn btn-cal">
           📲 Open Telegram
         </a>
@@ -675,12 +914,44 @@
       document.getElementById('progress-bar').style.width = scrolled + '%';
     });
 
-    // Theme Toggle
-    function toggleTheme() {
-      const body = document.body;
-      const isPaper = body.classList.toggle('theme-paper');
-      document.getElementById('theme-btn-label').innerText = isPaper ? 'Dark Mode' : 'Paper Mode';
+    // 3-Way Theme Switcher (Dark / Warm Paper / Natural Book Light)
+    function setTheme(theme) {
+      document.body.classList.remove('theme-paper', 'theme-book');
+      document.querySelectorAll('.theme-pill').forEach(btn => btn.classList.remove('active'));
+      
+      if (theme === 'paper') {
+        document.body.classList.add('theme-paper');
+        document.getElementById('btn-theme-paper').classList.add('active');
+        localStorage.setItem('prince_reader_theme', 'paper');
+      } else if (theme === 'book') {
+        document.body.classList.add('theme-book');
+        document.getElementById('btn-theme-book').classList.add('active');
+        localStorage.setItem('prince_reader_theme', 'book');
+      } else {
+        document.getElementById('btn-theme-dark').classList.add('active');
+        localStorage.setItem('prince_reader_theme', 'dark');
+      }
     }
+
+    // Font Size Adjuster
+    let currentFontSizeRem = 1.25;
+    function adjustFontSize(delta) {
+      currentFontSizeRem = Math.max(1.0, Math.min(1.65, currentFontSizeRem + delta * 0.1));
+      document.documentElement.style.setProperty('--story-size', currentFontSizeRem + 'rem');
+      localStorage.setItem('prince_story_font_size', currentFontSizeRem);
+    }
+
+    // Load saved preferences
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('prince_reader_theme');
+      if (savedTheme) setTheme(savedTheme);
+
+      const savedSize = localStorage.getItem('prince_story_font_size');
+      if (savedSize) {
+        currentFontSizeRem = parseFloat(savedSize);
+        document.documentElement.style.setProperty('--story-size', currentFontSizeRem + 'rem');
+      }
+    });
 
     // Native Speech Synthesis (Text-to-Speech)
     let isSpeaking = false;
