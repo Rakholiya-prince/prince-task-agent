@@ -403,12 +403,14 @@ Rest well and prepare for tomorrow's wins, Sir! 🛌💤"""
 
 def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     digest = generate_morning_digest()
-    telegram_send_message(chat_id, digest)
+    full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View (with Audio):*\nhttps://prince-task-agent.onrender.com/read"
+    telegram_send_message(chat_id, full_msg)
     print(f"[*] Morning digest delivered to {chat_id}.")
 
 def send_night_digest(chat_id: int = PRINCE_CHAT_ID):
     digest = generate_night_digest()
-    telegram_send_message(chat_id, digest)
+    full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View:*\nhttps://prince-task-agent.onrender.com/read"
+    telegram_send_message(chat_id, full_msg)
     print(f"[*] Night digest delivered to {chat_id}.")
 
 # ----------------- 24/7 BACKGROUND SCHEDULER ----------------- #
@@ -538,7 +540,20 @@ class WebhookHandler(BaseHTTPRequestHandler):
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         ist_now = now_utc + datetime.timedelta(hours=5, minutes=30)
         
-        # Manual cron trigger endpoints
+        # 1. Reader Magazine Interface Endpoint
+        if self.path in ["/read", "/today", "/daily", "/reader"]:
+            reader_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader.html")
+            if os.path.exists(reader_path):
+                with open(reader_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Connection", "close")
+                self.end_headers()
+                self.wfile.write(html_content.encode("utf-8"))
+                return
+
+        # 2. Manual cron trigger endpoints
         if self.path == "/cron/morning":
             threading.Thread(target=send_morning_digest, args=(PRINCE_CHAT_ID,), daemon=True).start()
             self.send_response(200)
