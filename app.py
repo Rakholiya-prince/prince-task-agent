@@ -356,8 +356,12 @@ Write a compelling, well-crafted 120-150 word English reading passage based on t
 ━━━━━━━━━━━━━━━━━━━━
 🧠 *3. VOCABULARY & SPEAKING BOOSTER*
 Select 3 high-impact professional words from the passage:
-1. *[Word]*: [English Meaning] • [Gujarati Meaning in brackets]
-   👉 Example: "[Clear professional example sentence]"
+Format each strictly as follows:
+1. *[Word]*
+   🗣️ સરળ ઉચ્ચાર: [Easy phonetic syllables in Gujarati & English, e.g. અન-પ્રેસિ-ડેન્ટિડ (Un-pres-i-den-ted) - NEVER USE CONFUSING IPA SYMBOLS LIKE /ʌn/]
+   📖 English Meaning: [Clear English definition]
+   👉 ગુજરાતી અર્થ: [Simple Gujarati meaning]
+   💼 Example: "[Realistic professional workplace/tech sentence]"
 2. *[Word]*: ...
 3. *[Word]*: ...
 
