@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="only light">
   <title>Prince's Daily Reader | 15 Nov 2026</title>
   
   <!-- Premium Google Fonts: Newsreader (Editorial Serif) & Plus Jakarta Sans (Clean Modern Sans) -->
@@ -16,11 +16,11 @@
        1. LUXURY COLOR PALETTES & DESIGN TOKENS
        ========================================================= */
     :root, html.theme-light, body.theme-light {
-      color-scheme: light !important;
+      color-scheme: only light !important;
       forced-color-adjust: none !important;
       -webkit-font-smoothing: antialiased;
 
-      /* Mode 1: ☀️ Crisp Aesthetic White Notebook / Book Theme */
+      /* Mode 1: 📖 Crisp White Book / Notebook Paper Theme */
       --bg-page: #ffffff;
       --bg-surface: #ffffff;
       --bg-subtle: #f8fafc;
@@ -52,7 +52,7 @@
     html.theme-light, body.theme-light {
       background-color: #ffffff !important;
       color: #0f172a !important;
-      color-scheme: light !important;
+      color-scheme: only light !important;
       forced-color-adjust: none !important;
     }
 
@@ -886,10 +886,10 @@
       </div>
 
       <div class="controls-cluster">
-        <!-- 2-Way Theme Switcher: Book (White) & Dark -->
+        <!-- 2-Way Theme Switcher: Dark & Book (White) -->
         <div class="theme-switcher">
-          <button class="theme-tab active" id="tab-light" onclick="applyTheme('light')">📖 Book (White)</button>
           <button class="theme-tab" id="tab-dark" onclick="applyTheme('dark')">🌙 Dark</button>
+          <button class="theme-tab active" id="tab-light" onclick="applyTheme('light')">📖 Book (White)</button>
         </div>
 
         <!-- Typography Size Controls -->
@@ -1153,26 +1153,30 @@
       document.getElementById('progress-tracker').style.width = scrolled + '%';
     });
 
-    // 2. 2-Way Theme Switcher (☀️ Crisp White Light Notebook / 🌙 Dark)
+    // 2. 2-Way Theme Switcher (🌙 Dark / 📖 Book White)
     function applyTheme(theme) {
       document.documentElement.classList.remove('theme-dark', 'theme-light');
       document.body.classList.remove('theme-dark', 'theme-light');
       document.querySelectorAll('.theme-tab').forEach(t => t.classList.remove('active'));
+
+      const metaColorScheme = document.querySelector('meta[name="color-scheme"]');
 
       if (theme === 'dark') {
         document.documentElement.classList.add('theme-dark');
         document.body.classList.add('theme-dark');
         document.documentElement.style.colorScheme = 'dark';
         document.body.style.colorScheme = 'dark';
+        if (metaColorScheme) metaColorScheme.setAttribute('content', 'dark');
         const tab = document.getElementById('tab-dark');
         if (tab) tab.classList.add('active');
         localStorage.setItem('prince_editorial_theme_mode', 'dark');
       } else {
-        // ☀️ Crisp White Aesthetic Notebook Light Theme
+        // 📖 Crisp White Book / Notebook Paper Theme
         document.documentElement.classList.add('theme-light');
         document.body.classList.add('theme-light');
-        document.documentElement.style.colorScheme = 'light';
-        document.body.style.colorScheme = 'light';
+        document.documentElement.style.colorScheme = 'only light';
+        document.body.style.colorScheme = 'only light';
+        if (metaColorScheme) metaColorScheme.setAttribute('content', 'only light');
         const tab = document.getElementById('tab-light');
         if (tab) tab.classList.add('active');
         localStorage.setItem('prince_editorial_theme_mode', 'light');
