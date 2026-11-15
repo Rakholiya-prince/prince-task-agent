@@ -556,7 +556,21 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.wfile.write(html_content.encode("utf-8"))
                 return
 
-        # 2. Manual cron trigger endpoints
+        # 2. Dynamic Calendar .ics Feed Endpoint (For Google Calendar Sync)
+        if self.path in ["/calendar.ics", "/routine.ics", "/schedule.ics", "/feed.ics"]:
+            ics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prince_Daily_Routine.ics")
+            if os.path.exists(ics_path):
+                with open(ics_path, "r", encoding="utf-8") as f:
+                    ics_data = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/calendar; charset=utf-8")
+                self.send_header("Content-Disposition", "inline; filename=Prince_Routine.ics")
+                self.send_header("Connection", "close")
+                self.end_headers()
+                self.wfile.write(ics_data.encode("utf-8"))
+                return
+
+        # 3. Manual cron trigger endpoints
         if self.path == "/cron/morning":
             threading.Thread(target=send_morning_digest, args=(PRINCE_CHAT_ID,), daemon=True).start()
             self.send_response(200)
