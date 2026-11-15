@@ -517,6 +517,104 @@
     /* =========================================================
        7. PILLAR 2: BBC VOCAL READING PASSAGE & AUDIO
        ========================================================= */
+    /* IELTS Difficulty Level Switcher */
+    .level-switcher-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .level-switcher-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .level-desc {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .level-pill-group {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .level-pill-btn {
+      flex: 1;
+      min-width: 90px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.45rem 0.65rem;
+      border-radius: 0.65rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .level-pill-btn:hover {
+      border-color: var(--border-strong);
+    }
+
+    .level-pill-btn:active {
+      transform: scale(0.97);
+    }
+
+    .level-pill-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .dot-a { background: #10b981; }
+    .dot-b { background: #f59e0b; }
+    .dot-c { background: #8b5cf6; }
+
+    .level-pill-btn.active .pill-dot {
+      background: #ffffff;
+    }
+
+    .level-quick-summary {
+      background: var(--bg-subtle);
+      border-left: 3px solid #10b981;
+      padding: 0.85rem 1rem;
+      border-radius: 0.6rem;
+      margin-top: 1.25rem;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+    }
+
     /* Sleek Floating-Style Audio Controller */
     .audio-player-bar {
       display: flex;
@@ -1009,11 +1107,30 @@
         <a href="https://www.bbc.co.uk/news/articles/c6rrg51rkz09o" target="_blank" rel="noopener noreferrer">bbc.co.uk ↗</a>
       </div>
 
+      <!-- IELTS Difficulty Level Switcher -->
+      <div class="level-switcher-container">
+        <div class="level-switcher-label">
+          <span>🎯 IELTS Reading Difficulty:</span>
+          <span class="level-desc" id="level-desc-badge">🌱 Band 5.0 - 6.0 • Easy Understanding</span>
+        </div>
+        <div class="level-pill-group">
+          <button class="level-pill-btn active" id="pill-level-a" onclick="switchDifficulty('a')">
+            <span class="pill-dot dot-a"></span> 🌱 Level A (Simple)
+          </button>
+          <button class="level-pill-btn" id="pill-level-b" onclick="switchDifficulty('b')">
+            <span class="pill-dot dot-b"></span> 🌿 Level B (Medium)
+          </button>
+          <button class="level-pill-btn" id="pill-level-c" onclick="switchDifficulty('c')">
+            <span class="pill-dot dot-c"></span> 🌳 Level C (IELTS Band 9)
+          </button>
+        </div>
+      </div>
+
       <!-- Minimal Audio Player Pill -->
       <div class="audio-player-bar">
         <div class="audio-player-left">
           <button class="play-trigger-btn" id="voice-play-btn" onclick="toggleReadAloud()">
-            <span>▶</span> <span id="voice-btn-label">Listen to Native Voice</span>
+            <span>▶</span> <span id="voice-btn-label">Listen to Selected Level</span>
           </button>
         </div>
         <div class="audio-player-meta">
@@ -1022,14 +1139,40 @@
         </div>
       </div>
 
-      <!-- Editorial Story Body -->
+      <!-- Editorial Story Body with 3 IELTS Progression Levels -->
       <div class="editorial-story" id="vocal-passage">
-        <p>
-          When a routine network capacity upgrade suddenly brought enterprise cloud operations across seventy countries to a grinding halt, it offered an <span class="vocab-in-text">unprecedented</span> window into how profoundly global society relies on interconnected digital infrastructure. From emergency response teams to international financial networks, millions experienced firsthand how fragile convenience can become when core systems falter.
-        </p>
-        <p>
-          Yet for visionary software engineers, this moment represents a defining turning point. Building genuinely <span class="vocab-in-text">resilient</span> systems is no longer merely about writing clean syntax or shipping features quickly; it demands designing fault-tolerant, self-healing distributed pipelines that withstand unexpected shockwaves. As technology accelerates its exponential <span class="vocab-in-text">trajectory</span>, the developers who will lead the industry are those who master both deep algorithmic rigor and antifragile architecture.
-        </p>
+        <!-- Level A: Simple English (IELTS Band 5.0 - 6.0) -->
+        <div class="story-level-content" id="content-level-a">
+          <p>
+            Yesterday, Microsoft cloud services suddenly stopped working in over 70 countries. Because of a routine network update, millions of people could not open Teams, Outlook email, or Office files for many hours. This was an <span class="vocab-in-text">unprecedented</span> situation because emergency teams, banks, and major businesses depend on these online systems every day.
+          </p>
+          <p>
+            For software developers, this outage teaches an important lesson. When building applications, engineers must make them <span class="vocab-in-text">resilient</span>, which means the system can automatically recover when an unexpected error happens. As artificial intelligence and cloud technology continue their rapid <span class="vocab-in-text">trajectory</span> forward, developers who know how to design dependable, crash-proof systems will be in the highest demand.
+          </p>
+          <div class="level-quick-summary">
+            💡 <strong>ગુજરાતી સારાંશ (Quick Meaning):</strong> માઇક્રોસોફ્ટના નેટવર્ક અપડેટથી ૭૦ દેશોમાં ક્લાઉડ સિસ્ટમ બંધ થઈ ગઈ હતી. આનાથી સાબિત થાય છે કે સોફ્ટવેર એન્જિનિયર્સે એવી સિસ્ટમ બનાવવી જોઈએ જે કોઈ પણ ખામી આવે તો પણ ક્રેશ ન થાય (Resilient રહે).
+          </div>
+        </div>
+
+        <!-- Level B: Medium English (IELTS Band 7.0 - 7.5) -->
+        <div class="story-level-content" id="content-level-b" style="display: none;">
+          <p>
+            A routine network capacity upgrade executed by Microsoft unexpectedly caused widespread global disruptions, halting enterprise cloud operations across seventy nations for nearly an entire workday. The major outage left millions of corporate users, emergency response departments, and financial institutions temporarily unable to access vital communication tools. It served as an <span class="vocab-in-text">unprecedented</span> demonstration of society's deep dependence on digital infrastructure.
+          </p>
+          <p>
+            Software engineering leaders view this incident as a critical reminder for architecture design. Modern backend development requires building genuinely <span class="vocab-in-text">resilient</span> distributed systems equipped with automatic failovers and isolated failure boundaries. As the software industry maintains its steep growth <span class="vocab-in-text">trajectory</span> toward intelligent automation, engineers with deep architectural expertise will remain essential in preventing systemic downtime.
+          </p>
+        </div>
+
+        <!-- Level C: Native / Authentic BBC (IELTS Band 8.5 - 9.0) -->
+        <div class="story-level-content" id="content-level-c" style="display: none;">
+          <p>
+            When a routine network capacity upgrade suddenly brought enterprise cloud operations across seventy countries to a grinding halt, it offered an <span class="vocab-in-text">unprecedented</span> window into how profoundly global society relies on interconnected digital infrastructure. From emergency response teams to international financial networks, millions experienced firsthand how fragile convenience can become when core systems falter.
+          </p>
+          <p>
+            Yet for visionary software engineers, this moment represents a defining turning point. Building genuinely <span class="vocab-in-text">resilient</span> systems is no longer merely about writing clean syntax or shipping features quickly; it demands designing fault-tolerant, self-healing distributed pipelines that withstand unexpected shockwaves. As technology accelerates its exponential <span class="vocab-in-text">trajectory</span>, the developers who will lead the industry are those who master both deep algorithmic rigor and antifragile architecture.
+          </p>
+        </div>
       </div>
 
       <!-- Luxury Callout to Exact BBC Story -->
@@ -1207,6 +1350,10 @@
       }
 
       syncStreakUI();
+
+      // Initialize IELTS Reading Difficulty (Defaults to Level A: Simple)
+      const savedLevel = localStorage.getItem('prince_reading_difficulty') || 'a';
+      switchDifficulty(savedLevel);
     });
 
     // 5. Daily Consistency Streak Management
@@ -1326,6 +1473,50 @@
       utterance.rate = 0.85;
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
+    }
+
+    // 7. IELTS Difficulty Level Switcher
+    function switchDifficulty(level) {
+      const levels = ['a', 'b', 'c'];
+      const badges = {
+        'a': '🌱 Band 5.0 - 6.0 • Easy Understanding',
+        'b': '🌿 Band 7.0 - 7.5 • Professional Academic',
+        'c': '🌳 Band 8.5 - 9.0 • Authentic Native Prose'
+      };
+
+      const lvlKey = (level || 'a').toLowerCase();
+
+      levels.forEach(lvl => {
+        const content = document.getElementById('content-level-' + lvl);
+        const pill = document.getElementById('pill-level-' + lvl);
+        if (content) {
+          content.style.display = (lvl === lvlKey) ? 'block' : 'none';
+        }
+        if (pill) {
+          if (lvl === lvlKey) {
+            pill.classList.add('active');
+          } else {
+            pill.classList.remove('active');
+          }
+        }
+      });
+
+      const badge = document.getElementById('level-desc-badge');
+      if (badge && badges[lvlKey]) {
+        badge.innerText = badges[lvlKey];
+      }
+
+      localStorage.setItem('prince_reading_difficulty', lvlKey);
+
+      // Reset speech synthesis when switching levels
+      if (activeSpeech) {
+        window.speechSynthesis.cancel();
+        activeSpeech = false;
+        const label = document.getElementById('voice-btn-label');
+        const status = document.getElementById('audio-status');
+        if (label) label.innerText = 'Listen to Selected Level';
+        if (status) status.innerText = 'Switched to Level ' + lvlKey.toUpperCase();
+      }
     }
   </script>
 </body>
