@@ -423,7 +423,35 @@ Rest well and prepare for tomorrow's wins, Sir! 🛌💤"""
 
     return ask_gemini_direct(prompt)
 
+def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -> None:
+    """Updates reader.html dynamically with the day's fresh news and date."""
+    try:
+        reader_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader.html")
+        if not os.path.exists(reader_path):
+            return
+            
+        with open(reader_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        # Update the header date
+        content = re.sub(r'<span class="brand-date">.*?</span>', f'<span class="brand-date">{date_formatted}</span>', content)
+        content = re.sub(r'<div class="edition-date">.*?</div>', f'<div class="edition-date">{date_formatted} • Daily Dispatch</div>', content)
+        
+        with open(reader_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"[*] Dynamic reader.html updated for {date_formatted}.")
+    except Exception as e:
+        print(f"[!] update_dynamic_reader error: {e}")
+
 def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    ist_now = now_utc + datetime.timedelta(hours=5, minutes=30)
+    date_formatted = ist_now.strftime("%A • %d %b %Y")
+    
+    hhh_data = fetch_latest_hhh()
+    bbc_data = fetch_latest_bbc()
+    update_dynamic_reader(hhh_data, bbc_data, date_formatted)
+    
     digest = generate_morning_digest()
     full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View (with Audio):*\nhttps://prince-task-agent.onrender.com/read"
     telegram_send_message(chat_id, full_msg)
