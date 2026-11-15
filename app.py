@@ -118,6 +118,32 @@ def telegram_send_message(chat_id: int, text: str, parse_mode: str = "Markdown")
     except Exception as e:
         print(f"[!] Telegram sendMessage error: {e}")
 
+# ----------------- TASK COMPLETED ALERT TRIGGER ----------------- #
+def trigger_task_completed_alert(task_summary: str = "Task Completed"):
+    """Triggers MacroDroid alarm & text notification when task completes."""
+    # 1. Trigger MacroDroid Webhook (Loud Ring + Stop Dialog)
+    try:
+        requests.get("https://trigger.macrodroid.com/82b7bc62-b838-4168-adfc-885be31d6210/task_done", timeout=6)
+        print("[*] MacroDroid alarm triggered successfully.")
+    except Exception as e:
+        print(f"[!] MacroDroid webhook error: {e}")
+        
+    # 2. Trigger ntfy Clean Text Notification
+    try:
+        ntfy_payload = {
+            "topic": "prince_task_alert_8140",
+            "title": "✅ TASK COMPLETED!",
+            "message": f"Prince Sir, tamaru kam thay gayu che! Tap to open Telegram.",
+            "priority": 4,
+            "tags": ["white_check_mark", "bell"],
+            "click": "https://t.me/PrinceTaskAgentBot"
+        }
+        requests.post("https://ntfy.sh", json=ntfy_payload, headers={"Connection": "close"}, timeout=6)
+        print("[*] ntfy notification triggered successfully.")
+    except Exception as e:
+        print(f"[!] ntfy notification error: {e}")
+
+
 # ----------------- GEMINI AGENT EXECUTION LOOP ----------------- #
 def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
     endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent"
@@ -262,6 +288,7 @@ def process_message(message: dict):
         agent_reply = ask_gemini_agent(text, chat_id)
         final_msg = f"{agent_reply}\n\n━━━━━━━━━━━━━━━━━━━━\n✅ *Task completed, Sir! You can check now.*"
         telegram_send_message(chat_id, final_msg)
+        trigger_task_completed_alert(text[:60])
         
     except Exception as e:
         print(f"[!] Error in process_message: {e}")
