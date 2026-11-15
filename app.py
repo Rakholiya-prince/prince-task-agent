@@ -531,6 +531,9 @@ def process_message(message: dict):
 
 # ----------------- HTTP SERVER & WEBHOOK HANDLER ----------------- #
 class WebhookHandler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.do_GET()
+
     def do_GET(self):
         uptime_sec = int(time.time() - START_TIME)
         hours = uptime_sec // 3600
