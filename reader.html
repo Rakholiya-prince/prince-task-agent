@@ -299,9 +299,30 @@
     }
 
     /* =========================================================
-       4b. LUXURY STREAK TRACKER CARD
+       4b. MINIMALIST STREAK BADGE & FOOTER CARD
        ========================================================= */
-    .streak-card {
+    .streak-pill-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #b45309;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    body.theme-dark .streak-pill-chip {
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.18);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+
+    .streak-footer-card {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -310,95 +331,39 @@
       border: 1px solid var(--border-subtle);
       border-radius: 1rem;
       padding: 1.15rem 1.25rem;
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       box-shadow: var(--shadow-sm);
       flex-wrap: wrap;
     }
 
-    .streak-left {
+    .streak-footer-left {
       display: flex;
       align-items: center;
-      gap: 0.95rem;
+      gap: 0.85rem;
     }
 
-    .streak-icon-wrap {
-      font-size: 1.75rem;
+    .streak-flame-icon {
+      font-size: 1.6rem;
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.25);
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      animation: pulse-glow 2.5s infinite ease-in-out;
     }
 
-    @keyframes pulse-glow {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-
-    .streak-details {
-      display: flex;
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-
-    .streak-headline {
-      font-size: 1.05rem;
+    .streak-footer-title {
+      font-size: 0.98rem;
       font-weight: 800;
       color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
 
-    .streak-live-tag {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.15rem 0.5rem;
-      border-radius: 9999px;
-      background: rgba(16, 185, 129, 0.12);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .streak-sub-text {
+    .streak-footer-desc {
       font-size: 0.82rem;
       color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .streak-action-btn {
-      background: var(--text-primary);
-      color: var(--bg-page);
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      font-weight: 700;
-      padding: 0.6rem 1.15rem;
-      border-radius: 9999px;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    }
-
-    .streak-action-btn:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.1);
-    }
-
-    .streak-action-btn.is-completed {
-      background: #10b981;
-      color: #ffffff;
-      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
     }
 
     /* Section Divider Hairline */
@@ -600,17 +565,8 @@
     }
 
     .editorial-story p {
-      margin-bottom: 1.35rem;
-    }
-
-    .editorial-story p:first-of-type::first-letter {
-      font-size: 3.1rem;
-      line-height: 0.85;
-      float: left;
-      margin: 0.12rem 0.55rem 0 0;
-      font-weight: 700;
-      color: var(--text-primary);
-      font-family: var(--font-editorial);
+      margin-bottom: 1.45rem;
+      text-align: left;
     }
 
     .vocab-in-text {
@@ -898,7 +854,10 @@
     <header class="top-header">
       <div class="brand-mark">
         <span class="brand-kicker">Prince's Intelligence</span>
-        <span class="brand-date">Sunday • 15 Nov 2026</span>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <span class="brand-date">Sunday • 15 Nov 2026</span>
+          <span class="streak-pill-chip" onclick="completeDailyReading()" title="Consistency Streak">🔥 <strong id="streak-count-top">1</strong>-Day Streak</span>
+        </div>
       </div>
 
       <div class="controls-cluster">
@@ -929,29 +888,11 @@
       </p>
       
       <div class="meta-tags-row">
+        <span class="meta-pill streak-pill" onclick="completeDailyReading()" style="cursor: pointer; border-color: rgba(245, 158, 11, 0.35); color: #b45309; font-weight: 700;">🔥 <strong id="streak-count-display">1</strong>-Day Streak • Active</span>
         <span class="meta-pill">⏱️ 4 Min Read</span>
         <span class="meta-pill">💻 Cloud & APIs</span>
         <span class="meta-pill">🗣️ Vocal Accent Drill</span>
         <span class="meta-pill">⚡ Master Routine</span>
-      </div>
-
-      <!-- Daily Consistency & Learning Streak Tracker Card -->
-      <div class="streak-card">
-        <div class="streak-left">
-          <div class="streak-icon-wrap">🔥</div>
-          <div class="streak-details">
-            <div class="streak-headline">
-              <span class="streak-count-number" id="streak-count-display">1</span>-Day Consistency Streak
-              <span class="streak-live-tag" id="streak-live-tag">Today Active</span>
-            </div>
-            <div class="streak-sub-text" id="streak-sub-text">
-              Day 1 of building unstoppable English fluency & engineering depth. Keep the momentum!
-            </div>
-          </div>
-        </div>
-        <button class="streak-action-btn" id="streak-action-btn" onclick="completeDailyReading()">
-          <span id="streak-btn-icon">✓</span> <span id="streak-btn-label">Mark Finished</span>
-        </button>
       </div>
     </div>
 
@@ -1060,10 +1001,10 @@
       <!-- Editorial Story Body -->
       <div class="editorial-story" id="vocal-passage">
         <p>
-          Microsoft has officially announced that its core cloud and enterprise services have been fully restored following an <span class="vocab-in-text">unprecedented</span> worldwide outage that disrupted Outlook, Microsoft Teams, and Copilot for hundreds of millions of users across more than seventy countries.
+          When a routine network capacity upgrade suddenly brought enterprise cloud operations across seventy countries to a grinding halt, it offered an <span class="vocab-in-text">unprecedented</span> window into how profoundly global society relies on interconnected digital infrastructure. From emergency response teams to international financial networks, millions experienced firsthand how fragile convenience can become when core systems falter.
         </p>
         <p>
-          According to Microsoft engineering leaders, the disruption was triggered during a routine network capacity upgrade rather than a malicious cyber-attack. Engineering teams worked around the clock to deploy <span class="vocab-in-text">resilient</span> architecture safeguards, ensuring that enterprise workloads and cloud APIs recovered safely. This global incident highlights the critical <span class="vocab-in-text">trajectory</span> of modern cloud engineering, where automated failover systems and fault tolerance determine business continuity.
+          Yet for visionary software engineers, this moment represents a defining turning point. Building genuinely <span class="vocab-in-text">resilient</span> systems is no longer merely about writing clean syntax or shipping features quickly; it demands designing fault-tolerant, self-healing distributed pipelines that withstand unexpected shockwaves. As technology accelerates its exponential <span class="vocab-in-text">trajectory</span>, the developers who will lead the industry are those who master both deep algorithmic rigor and antifragile architecture.
         </p>
       </div>
 
@@ -1153,6 +1094,20 @@
       </div>
     </section>
 
+    <!-- Consistency Streak & Completion Card -->
+    <div class="streak-footer-card">
+      <div class="streak-footer-left">
+        <div class="streak-flame-icon">🔥</div>
+        <div>
+          <div class="streak-footer-title"><strong id="streak-count-footer">1</strong>-Day Consistency Streak</div>
+          <div class="streak-footer-desc" id="streak-footer-desc">Building unstoppable English fluency & engineering mastery. Keep going!</div>
+        </div>
+      </div>
+      <button class="footer-btn footer-btn-primary" id="streak-action-btn" onclick="completeDailyReading()">
+        <span id="streak-btn-icon">✓</span> <span id="streak-btn-label">Mark Finished for Today</span>
+      </button>
+    </div>
+
     <!-- Footer & Quick Actions -->
     <footer class="magazine-footer">
       <span class="footer-note">Next drill: <strong>Tonight at 9:00 PM IST</strong></span>
@@ -1160,9 +1115,6 @@
         <a href="https://t.me/PrinceTaskAgentBot" target="_blank" class="footer-btn footer-btn-secondary">
           📲 Open Telegram
         </a>
-        <button class="footer-btn footer-btn-primary" onclick="completeDailyReading()">
-          ✅ Mark Finished
-        </button>
       </div>
     </footer>
   </div>
@@ -1230,37 +1182,33 @@
       const today = new Date().toISOString().slice(0, 10);
       const { streak, lastDate } = getStreakData();
       const countEl = document.getElementById('streak-count-display');
-      const liveTagEl = document.getElementById('streak-live-tag');
-      const subTextEl = document.getElementById('streak-sub-text');
+      const topCountEl = document.getElementById('streak-count-top');
+      const footerCountEl = document.getElementById('streak-count-footer');
+      const footerDescEl = document.getElementById('streak-footer-desc');
       const btn = document.getElementById('streak-action-btn');
       const btnLabel = document.getElementById('streak-btn-label');
       const btnIcon = document.getElementById('streak-btn-icon');
 
       if (countEl) countEl.innerText = streak;
+      if (topCountEl) topCountEl.innerText = streak;
+      if (footerCountEl) footerCountEl.innerText = streak;
 
       if (lastDate === today) {
-        if (liveTagEl) {
-          liveTagEl.innerText = 'Completed Today ✓';
-          liveTagEl.style.color = '#10b981';
-        }
-        if (subTextEl) {
-          subTextEl.innerText = '🔥 Day ' + streak + ' completed! You are building exceptional English & Engineering consistency.';
+        if (footerDescEl) {
+          footerDescEl.innerText = '🔥 Day ' + streak + ' completed! Outstanding consistency in English & engineering.';
         }
         if (btn) {
           btn.classList.add('is-completed');
-          if (btnLabel) btnLabel.innerText = 'Completed Today';
+          if (btnLabel) btnLabel.innerText = 'Completed Today ✓';
           if (btnIcon) btnIcon.innerText = '★';
         }
       } else {
-        if (liveTagEl) {
-          liveTagEl.innerText = 'Today Active';
-        }
-        if (subTextEl) {
-          subTextEl.innerText = 'Day ' + streak + ' of building unstoppable English fluency & engineering depth. Keep going!';
+        if (footerDescEl) {
+          footerDescEl.innerText = 'Day ' + streak + ' of building unstoppable English fluency & engineering mastery. Keep going!';
         }
         if (btn) {
           btn.classList.remove('is-completed');
-          if (btnLabel) btnLabel.innerText = 'Mark Finished';
+          if (btnLabel) btnLabel.innerText = 'Mark Finished for Today';
           if (btnIcon) btnIcon.innerText = '✓';
         }
       }
