@@ -298,6 +298,109 @@
       border-radius: 9999px;
     }
 
+    /* =========================================================
+       4b. LUXURY STREAK TRACKER CARD
+       ========================================================= */
+    .streak-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 1rem;
+      padding: 1.15rem 1.25rem;
+      margin-top: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
+    }
+
+    .streak-left {
+      display: flex;
+      align-items: center;
+      gap: 0.95rem;
+    }
+
+    .streak-icon-wrap {
+      font-size: 1.75rem;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      animation: pulse-glow 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .streak-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .streak-headline {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .streak-live-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .streak-sub-text {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .streak-action-btn {
+      background: var(--text-primary);
+      color: var(--bg-page);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.6rem 1.15rem;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .streak-action-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+
+    .streak-action-btn.is-completed {
+      background: #10b981;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+    }
+
     /* Section Divider Hairline */
     .editorial-divider {
       border: none;
@@ -831,6 +934,25 @@
         <span class="meta-pill">🗣️ Vocal Accent Drill</span>
         <span class="meta-pill">⚡ Master Routine</span>
       </div>
+
+      <!-- Daily Consistency & Learning Streak Tracker Card -->
+      <div class="streak-card">
+        <div class="streak-left">
+          <div class="streak-icon-wrap">🔥</div>
+          <div class="streak-details">
+            <div class="streak-headline">
+              <span class="streak-count-number" id="streak-count-display">1</span>-Day Consistency Streak
+              <span class="streak-live-tag" id="streak-live-tag">Today Active</span>
+            </div>
+            <div class="streak-sub-text" id="streak-sub-text">
+              Day 1 of building unstoppable English fluency & engineering depth. Keep the momentum!
+            </div>
+          </div>
+        </div>
+        <button class="streak-action-btn" id="streak-action-btn" onclick="completeDailyReading()">
+          <span id="streak-btn-icon">✓</span> <span id="streak-btn-label">Mark Finished</span>
+        </button>
+      </div>
     </div>
 
     <hr class="editorial-divider">
@@ -1093,9 +1215,78 @@
         baseFontSize = parseFloat(savedSize);
         document.documentElement.style.setProperty('--body-size', baseFontSize + 'rem');
       }
+
+      syncStreakUI();
     });
 
-    // 5. Native Vocal Speech Synthesis
+    // 5. Daily Consistency Streak Management
+    function getStreakData() {
+      const streak = parseInt(localStorage.getItem('prince_learning_streak') || '1', 10);
+      const lastDate = localStorage.getItem('prince_streak_last_date') || '';
+      return { streak, lastDate };
+    }
+
+    function syncStreakUI() {
+      const today = new Date().toISOString().slice(0, 10);
+      const { streak, lastDate } = getStreakData();
+      const countEl = document.getElementById('streak-count-display');
+      const liveTagEl = document.getElementById('streak-live-tag');
+      const subTextEl = document.getElementById('streak-sub-text');
+      const btn = document.getElementById('streak-action-btn');
+      const btnLabel = document.getElementById('streak-btn-label');
+      const btnIcon = document.getElementById('streak-btn-icon');
+
+      if (countEl) countEl.innerText = streak;
+
+      if (lastDate === today) {
+        if (liveTagEl) {
+          liveTagEl.innerText = 'Completed Today ✓';
+          liveTagEl.style.color = '#10b981';
+        }
+        if (subTextEl) {
+          subTextEl.innerText = '🔥 Day ' + streak + ' completed! You are building exceptional English & Engineering consistency.';
+        }
+        if (btn) {
+          btn.classList.add('is-completed');
+          if (btnLabel) btnLabel.innerText = 'Completed Today';
+          if (btnIcon) btnIcon.innerText = '★';
+        }
+      } else {
+        if (liveTagEl) {
+          liveTagEl.innerText = 'Today Active';
+        }
+        if (subTextEl) {
+          subTextEl.innerText = 'Day ' + streak + ' of building unstoppable English fluency & engineering depth. Keep going!';
+        }
+        if (btn) {
+          btn.classList.remove('is-completed');
+          if (btnLabel) btnLabel.innerText = 'Mark Finished';
+          if (btnIcon) btnIcon.innerText = '✓';
+        }
+      }
+    }
+
+    function completeDailyReading() {
+      const today = new Date().toISOString().slice(0, 10);
+      let { streak, lastDate } = getStreakData();
+
+      if (lastDate !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        if (lastDate === yesterday) {
+          streak += 1;
+        } else if (!lastDate) {
+          streak = 1;
+        }
+        localStorage.setItem('prince_learning_streak', streak);
+        localStorage.setItem('prince_streak_last_date', today);
+        syncStreakUI();
+        alert('🔥 Phenomenal discipline, Prince Sir!\n\nToday\'s vocal drill is officially completed.\nYour consistency streak is now ' + streak + ' Day(s)! Keep stacking daily wins! 🚀');
+      } else {
+        alert('⭐ You already finished today\'s reading drill, Prince Sir! Your streak is ' + streak + ' Day(s) strong.');
+      }
+    }
+
+    // 6. Native Vocal Speech Synthesis
     let activeSpeech = false;
     function toggleReadAloud() {
       if (!('speechSynthesis' in window)) {
@@ -1149,10 +1340,6 @@
       utterance.rate = 0.85;
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
-    }
-
-    function completeDailyReading() {
-      alert('Outstanding, Prince Sir! Today\'s vocal reading drill is finished. Keep stacking your daily wins! 🚀');
     }
   </script>
 </body>

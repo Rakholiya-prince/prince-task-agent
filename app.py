@@ -281,25 +281,48 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
 
 # ----------------- CONTENT SCRAPERS (HHH & BBC) ----------------- #
 def fetch_latest_bbc() -> dict:
-    """Fetches the latest article from BBC Technology or World News RSS."""
+    """Smartly curates the highest-value Technology & Science article from BBC."""
     feeds = [
         "https://feeds.bbci.co.uk/news/technology/rss.xml",
+        "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
         "https://feeds.bbci.co.uk/news/world/rss.xml"
     ]
+    candidates = []
     for url in feeds:
         try:
             resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=10)
             root = ET.fromstring(resp.content)
             items = root.findall('.//item')
-            if items:
-                title = items[0].find('title').text.strip() if items[0].find('title') is not None else ""
-                desc = items[0].find('description').text.strip() if items[0].find('description') is not None else ""
-                raw_link = items[0].find('link').text.strip() if items[0].find('link') is not None else ""
-                clean_link = raw_link.split('?')[0] if raw_link else "https://www.bbc.com/news"
-                if title and clean_link:
-                    return {"title": title, "desc": desc, "link": clean_link}
+            for item in items[:8]:
+                title = item.find('title').text.strip() if item.find('title') is not None else ""
+                desc = item.find('description').text.strip() if item.find('description') is not None else ""
+                raw_link = item.find('link').text.strip() if item.find('link') is not None else ""
+                clean_link = raw_link.split('?')[0] if raw_link else ""
+                
+                if not title or not clean_link:
+                    continue
+                    
+                lower = (title + " " + desc).lower()
+                # Filter out tragedies, crimes, accidents
+                if any(w in lower for w in ['killed', 'dead', 'death', 'murder', 'war', 'crash', 'stab', 'arrest', 'shooting', 'violence']):
+                    continue
+                    
+                score = 0
+                tech_words = ['ai', 'tech', 'software', 'cloud', 'digital', 'science', 'breakthrough', 'computer', 'model', 'data', 'space', 'upgrade', 'system', 'microsoft', 'google', 'engineer', 'research']
+                for tw in tech_words:
+                    if tw in lower:
+                        score += 2
+                if len(desc) > 75:
+                    score += 1
+                candidates.append({"title": title, "desc": desc, "link": clean_link, "score": score})
         except Exception as e:
             print(f"[!] fetch_latest_bbc error for {url}: {e}")
+            
+    if candidates:
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+        best = candidates[0]
+        return {"title": best["title"], "desc": best["desc"], "link": best["link"]}
+        
     return {
         "title": "Microsoft says services fully restored after day-long global outage",
         "desc": "Microsoft has said its services have been fully restored after a worldwide outage affected several of its tools.",
@@ -443,6 +466,42 @@ def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -
     except Exception as e:
         print(f"[!] update_dynamic_reader error: {e}")
 
+def update_calendar_ics(morning_text: str = None, night_text: str = None) -> None:
+    """Dynamically keeps Prince_Daily_Routine.ics synced with today's content."""
+    try:
+        ics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prince_Daily_Routine.ics")
+        if not os.path.exists(ics_path):
+            return
+            
+        with open(ics_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        def format_ical(s):
+            return s.replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+        if morning_text:
+            m_esc = format_ical(morning_text)
+            content = re.sub(
+                r'SUMMARY:📖 Morning Tech & English Reading.*?\nDESCRIPTION:.*?\nSTATUS:',
+                f'SUMMARY:📖 Morning Tech & English Reading • Day 1 🔥\\nDESCRIPTION:{m_esc}\\nSTATUS:',
+                content,
+                flags=re.DOTALL
+            )
+        if night_text:
+            n_esc = format_ical(night_text)
+            content = re.sub(
+                r'SUMMARY:🌙 Night English & Tech Review.*?\nDESCRIPTION:.*?\nSTATUS:',
+                f'SUMMARY:🌙 Night English & Tech Review • Day 1 🔥\\nDESCRIPTION:{n_esc}\\nSTATUS:',
+                content,
+                flags=re.DOTALL
+            )
+            
+        with open(ics_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print("[*] Prince_Daily_Routine.ics dynamically updated for Google Calendar.")
+    except Exception as e:
+        print(f"[!] update_calendar_ics error: {e}")
+
 def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     ist_now = now_utc + datetime.timedelta(hours=5, minutes=30)
@@ -453,12 +512,16 @@ def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     update_dynamic_reader(hhh_data, bbc_data, date_formatted)
     
     digest = generate_morning_digest()
+    update_calendar_ics(morning_text=digest)
+    
     full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View (with Audio):*\nhttps://prince-task-agent.onrender.com/read"
     telegram_send_message(chat_id, full_msg)
     print(f"[*] Morning digest delivered to {chat_id}.")
 
 def send_night_digest(chat_id: int = PRINCE_CHAT_ID):
     digest = generate_night_digest()
+    update_calendar_ics(night_text=digest)
+    
     full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View:*\nhttps://prince-task-agent.onrender.com/read"
     telegram_send_message(chat_id, full_msg)
     print(f"[*] Night digest delivered to {chat_id}.")
