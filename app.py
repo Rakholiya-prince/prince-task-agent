@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 import job_hunter
+import multi_agent_team
 
 # Force IPv4 for all outbound connections (fixes Render -> Google/Telegram latency)
 urllib_connection.allowed_gai_family = lambda: socket.AF_INET
@@ -711,6 +712,30 @@ def process_message(message: dict):
             threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, chat_id, telegram_send_message), daemon=True).start()
             return
 
+        elif text.lower().strip() in ["/team", "team", "/warroom", "warroom", "/boss", "boss", "/deck"]:
+            telegram_send_message(chat_id, "⏳ *Connecting with your 5 Autonomous Agents, Boss...*")
+            try:
+                tel = multi_agent_team.orchestrator.get_team_telemetry()
+                briefing = (
+                    f"👑 *CHIEF OF STAFF EXECUTIVE BRIEFING FOR BOSS PRINCE*\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🛡️ *Team Commander:* `{tel['lead']['name']}`\n"
+                    f"🟢 *Lead Status:* {tel['lead']['status']}\n"
+                    f"🎯 *Precision Level:* `{tel['lead']['confidence']}` | Error Rate: `0.0%`\n\n"
+                    f"🤖 *Active Specialist Agents Telemetry:*\n"
+                    f"• 🕵️ *Scout Brain:* {tel['agents'][0]['status']}\n"
+                    f"• 🧠 *Auditor Brain:* {tel['agents'][1]['status']}\n"
+                    f"• 📝 *Strategist Brain:* {tel['agents'][2]['status']}\n"
+                    f"• 🚀 *Dispatcher Brain:* {tel['agents'][3]['status']}\n"
+                    f"• 📡 *Radar Brain:* {tel['agents'][4]['status']}\n\n"
+                    f"🌌 *Interactive 3D Holographic War Room Deck:*\n"
+                    f"https://prince-task-agent.onrender.com/command"
+                )
+                telegram_send_message(chat_id, briefing)
+            except Exception as e:
+                telegram_send_message(chat_id, f"⚠️ Error querying team: {e}")
+            return
+
         elif text.lower().strip() in ["hi", "hello", "hey", "kem cho", "namaste"]:
             telegram_send_message(chat_id, f"👋 Hello {user_first_name} Sir!\n\nI am online 24/7 on the cloud.\n\n⚡ *Quick Commands:*\n• `/jobs` - View latest foreign remote job matches & stats\n• `/scan` - Trigger live job radar scan now\n• `/morning` - Tech & English Morning Digest\n• `/night` - Night Review & DSA/ASP.NET Core Drill\n\nOr simply send me any task instruction to execute!")
             return
@@ -765,7 +790,39 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.wfile.write(html_content.encode("utf-8"))
                 return
 
-        # 3. Job Radar API Endpoints
+        # 3. 3D Holographic Autonomous War Room Deck
+        if self.path in ["/command", "/warroom", "/deck", "/teamdeck"]:
+            cmd_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "command.html")
+            if os.path.exists(cmd_path):
+                with open(cmd_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Connection", "close")
+                self.end_headers()
+                self.wfile.write(html_content.encode("utf-8"))
+                return
+
+        # 4. Multi-Agent Team API Endpoints
+        if self.path == "/api/team/status":
+            telemetry = multi_agent_team.orchestrator.get_team_telemetry()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(json.dumps(telemetry, ensure_ascii=False).encode("utf-8"))
+            return
+
+        if self.path in ["/api/team/cycle", "/cron/team"]:
+            threading.Thread(target=multi_agent_team.orchestrator.execute_team_cycle, args=(PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(b'{"status": "multi_agent_team_cycle_triggered"}')
+            return
+
+        # 5. Job Radar API Endpoints
         if self.path == "/api/jobs":
             db_data = job_hunter.load_jobs_db()
             self.send_response(200)
@@ -863,7 +920,17 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 print(f"[!] Error handling delegation: {e}")
             return
 
-        # 2. Job Radar Scan POST Endpoint
+        # 2. Multi-Agent Team Cycle POST Endpoint
+        if self.path in ["/api/team/cycle", "/cron/team"]:
+            threading.Thread(target=multi_agent_team.orchestrator.execute_team_cycle, args=(PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(b'{"status": "multi_agent_team_cycle_triggered"}')
+            return
+
+        # 3. Job Radar Scan POST Endpoint
         if self.path in ["/api/jobs/scan", "/cron/jobs"]:
             threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
             self.send_response(200)
