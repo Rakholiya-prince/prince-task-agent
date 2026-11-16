@@ -3,984 +3,1063 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Prince's 3D AI Robot Factory | Autonomous Multi-Agent Command Deck</title>
+  <title>Prince's Real-Time 3D AI Robot Factory | Autonomous Job Deck</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   
-  <!-- Three.js + OrbitControls (Self-healing fallback included) -->
+  <!-- Three.js + OrbitControls (Self-contained, Zero External Tween Dependency) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
   <style>
     :root {
-      --bg-space: #07080d;
-      --glass-panel: rgba(13, 17, 28, 0.88);
-      --glass-border: rgba(56, 189, 248, 0.28);
-      --accent-cyan: #38bdf8;
-      --accent-emerald: #10b981;
-      --accent-purple: #a855f7;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
+      --bg-dark: #06070c;
+      --card-bg: rgba(14, 18, 30, 0.92);
+      --border-neon: rgba(56, 189, 248, 0.3);
+      --border-subtle: rgba(255, 255, 255, 0.08);
       
-      --font-main: 'Plus Jakarta Sans', sans-serif;
-      --font-code: 'JetBrains Mono', monospace;
+      --cyan: #38bdf8;
+      --emerald: #10b981;
+      --purple: #a855f7;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      
+      --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
       width: 100%;
       height: 100%;
-      overflow: hidden;
-      background: var(--bg-space);
+      background: var(--bg-dark);
       color: #f8fafc;
-      font-family: var(--font-main);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* 3D CANVAS VIEWPORT */
-    #viewport3d {
-      position: absolute;
+    /* TOP FIXED NAV */
+    .top-navbar {
+      position: sticky;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      z-index: 1;
-      display: block;
-    }
-
-    /* VIGNETTE OVERLAY */
-    .vignette-fx {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 5;
-      background: radial-gradient(circle at 50% 40%, transparent 55%, rgba(4, 5, 10, 0.8) 100%);
-    }
-
-    /* HUD OVERLAY CONTAINER */
-    .hud-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 10;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 14px;
-    }
-    .interactive { pointer-events: all; }
-
-    /* HEADER */
-    .command-header {
-      background: var(--glass-panel);
+      z-index: 100;
+      background: rgba(10, 13, 22, 0.94);
       backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      padding: 10px 18px;
+      border-bottom: 1px solid var(--border-neon);
+      padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.12);
     }
 
-    .brand-meta {
+    .brand-cluster {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .crown-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+    .brand-crown {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       background: linear-gradient(135deg, #0284c7, #10b981);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
     }
 
-    .brand-text h1 {
-      font-size: 1.05rem;
+    .brand-info h1 {
+      font-size: 0.95rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
     }
 
-    .brand-text p {
-      font-size: 0.72rem;
+    .brand-info p {
+      font-size: 0.7rem;
       color: #94a3b8;
-      font-family: var(--font-code);
+      font-family: var(--font-mono);
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .status-dot {
+    .live-pulse {
       width: 7px;
       height: 7px;
       border-radius: 50%;
       background: #10b981;
       box-shadow: 0 0 8px #10b981;
-      animation: pulseDot 1.4s infinite;
+      animation: pulseAnim 1.4s infinite;
     }
-    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.85); } }
+    @keyframes pulseAnim { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
 
-    .header-actions {
+    .nav-actions {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .btn-handoff {
-      background: linear-gradient(135deg, #0284c7, #10b981);
-      color: #000;
-      font-weight: 800;
-      font-size: 0.82rem;
-      border: none;
-      padding: 9px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 0 18px rgba(56, 189, 248, 0.5);
-      transition: all 0.2s;
-    }
-    .btn-handoff:hover { transform: translateY(-2px); }
-
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.05);
-      color: #f8fafc;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+    .btn-stream-toggle {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      font-size: 0.75rem;
       font-weight: 700;
-      font-size: 0.8rem;
-      padding: 8px 14px;
-      border-radius: 10px;
-      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      cursor: pointer;
     }
 
-    /* ACTION EVENT TOAST NOTIFICATION */
-    .action-toast {
+    .btn-link {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    /* 3D STAGE SECTION */
+    .stage-section {
+      position: relative;
+      width: 100%;
+      height: 48vh;
+      min-height: 320px;
+      max-height: 480px;
+      background: radial-gradient(circle at 50% 35%, #111827 0%, #06070c 85%);
+      overflow: hidden;
+    }
+
+    #viewport3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #viewport3d:active { cursor: grabbing; }
+
+    /* REAL-TIME JOB PASSING HUD (FLOATING IN 3D) */
+    .live-handoff-hud {
       position: absolute;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-30px);
-      background: rgba(16, 185, 129, 0.95);
-      color: #030712;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      max-width: 620px;
+      margin: 0 auto;
+      background: rgba(10, 14, 26, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-neon);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(56, 189, 248, 0.2);
+      z-index: 10;
+      pointer-events: all;
+    }
+
+    .handoff-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .pipeline-status-badge {
+      font-size: 0.68rem;
       font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 2px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .job-active-title {
       font-size: 0.88rem;
-      padding: 9px 22px;
-      border-radius: 24px;
-      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.45);
-      pointer-events: none;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 50;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-active-details {
       display: flex;
       align-items: center;
       gap: 8px;
-    }
-    .action-toast.active {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-top: 2px;
+      flex-wrap: wrap;
     }
 
-    /* 3D SPEECH BUBBLE SPRITES */
-    .speech-bubble {
+    .pill-tag {
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+    }
+    .pill-portal { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .pill-pay { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+    .pill-score { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
+
+    /* MULTI-AGENT STEP INDICATOR BAR */
+    .agent-steps-progress {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .step-node {
+      flex: 1;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    .step-node.active {
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+    .step-node.done {
+      background: var(--emerald);
+    }
+
+    /* 3D SPEECH BUBBLES */
+    .bubble-3d {
       position: absolute;
       transform: translate(-50%, -100%);
       background: rgba(15, 23, 42, 0.96);
-      border: 2px solid var(--accent-cyan);
-      border-radius: 12px;
-      padding: 7px 13px;
-      font-size: 0.74rem;
+      border: 1.5px solid var(--cyan);
+      border-radius: 10px;
+      padding: 6px 11px;
+      font-size: 0.72rem;
       font-weight: 700;
       color: #f8fafc;
       pointer-events: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
       white-space: nowrap;
       opacity: 0;
-      transition: opacity 0.25s, transform 0.25s;
-      z-index: 25;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 20;
     }
-    .speech-bubble::after {
+    .bubble-3d::after {
       content: '';
       position: absolute;
-      bottom: -7px;
+      bottom: -6px;
       left: 50%;
       transform: translateX(-50%);
-      border-width: 7px 7px 0;
+      border-width: 6px 6px 0;
       border-style: solid;
-      border-color: var(--accent-cyan) transparent;
+      border-color: var(--cyan) transparent;
     }
-    .speech-bubble.visible {
+    .bubble-3d.active {
       opacity: 1;
-      transform: translate(-50%, -120%);
+      transform: translate(-50%, -115%);
     }
 
-    /* BOTTOM CONTROLS & HUD DOCK */
-    .bottom-dock-container {
+    /* MASTER FEED & TELEMETRY SECTION (MOBILE OPTIMIZED) */
+    .content-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* TABS SWITCHER */
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--cyan);
+    }
+
+    /* REAL-TIME JOBS PRODUCTION FEED */
+    .jobs-feed-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    /* HORIZONTAL ROBOT CREW BAR */
-    .crew-bar {
-      background: var(--glass-panel);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
+    .job-item-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
       border-radius: 14px;
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .crew-bar::-webkit-scrollbar { display: none; }
-
-    .crew-chip {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 6px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 0.76rem;
-      font-weight: 700;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .crew-chip:hover, .crew-chip.active {
-      background: rgba(56, 189, 248, 0.16);
-      border-color: var(--accent-cyan);
-      transform: translateY(-2px);
-    }
-
-    /* COLLAPSIBLE LOGS / INSPECT DRAWER */
-    .info-drawer {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 12px;
-      transition: all 0.3s ease;
-    }
-    .info-drawer.collapsed {
-      display: none;
-    }
-
-    .log-panel {
-      background: rgba(10, 14, 22, 0.94);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 12px 16px;
-      height: 140px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .job-item-card.highlight-new {
+      border-color: var(--emerald);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+      animation: flashCard 2s ease-out;
+    }
+    @keyframes flashCard {
+      from { background: rgba(16, 185, 129, 0.15); }
+      to { background: var(--card-bg); }
     }
 
-    .panel-header {
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .job-title-text {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.74rem;
+      color: #94a3b8;
+    }
+
+    .card-action-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: var(--font-code);
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      margin-bottom: 6px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      gap: 8px;
     }
 
-    .log-scroller {
+    .btn-pitch-view {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-apply-direct {
+      background: var(--cyan);
+      color: #000;
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 5px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    /* CYBER LOGS DRAWER (COLLAPSIBLE) */
+    .cyber-logs-panel {
+      background: rgba(10, 14, 22, 0.96);
+      border: 1px solid var(--border-neon);
+      border-radius: 14px;
+      padding: 12px 16px;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+    }
+    .cyber-logs-panel.hidden { display: none; }
+
+    .logs-header {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--cyan);
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .logs-scroller {
       flex: 1;
       overflow-y: auto;
-      font-family: var(--font-code);
+      font-family: var(--font-mono);
       font-size: 0.72rem;
       color: #cbd5e1;
       display: flex;
       flex-direction: column;
       gap: 3px;
     }
-    .log-line { line-height: 1.4; }
 
-    .inspector-panel {
-      background: var(--glass-panel);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 6px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-    }
-
-    .insp-header {
-      display: flex;
+    /* MODAL */
+    .pitch-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 200;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      padding: 16px;
     }
-    .insp-avatar { font-size: 22px; }
-    .insp-name { font-size: 0.88rem; font-weight: 800; }
-    .insp-role { font-size: 0.68rem; color: #94a3b8; font-family: var(--font-code); }
-    .insp-bubble {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-size: 0.72rem;
-      color: var(--accent-cyan);
-      font-family: var(--font-code);
-      line-height: 1.35;
-    }
+    .pitch-modal-backdrop.active { display: flex; }
 
-    /* TOGGLE HUD BUTTON */
-    .drawer-toggle {
-      align-self: center;
-      background: rgba(13, 17, 28, 0.8);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 3px 14px;
-      font-size: 0.68rem;
-      font-family: var(--font-code);
-      color: #94a3b8;
+    .pitch-modal-card {
+      background: #0f172a;
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      max-width: 580px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+    .pitch-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #1e293b;
+      border: none;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
       cursor: pointer;
-    }
-    .drawer-toggle:hover { color: #fff; background: rgba(56, 189, 248, 0.2); }
-
-    @media (max-width: 768px) {
-      .hud-screen { padding: 8px; }
-      .command-header { padding: 8px 12px; }
-      .brand-text h1 { font-size: 0.95rem; }
-      .info-drawer { grid-template-columns: 1fr; }
-      .inspector-panel { display: none; }
-      .log-panel { height: 110px; }
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <!-- 3D Canvas -->
-  <canvas id="viewport3d"></canvas>
-  <div class="vignette-fx"></div>
 
-  <!-- Real-time 3D Speech Bubbles -->
-  <div class="speech-bubble" id="bubble_0">👑 Boss Commander: "5 Robots synchronized. Zero shortcuts!"</div>
-  <div class="speech-bubble" id="bubble_1">🕵️ Scout: "Harvested live remote jobs from US & Tokyo!"</div>
-  <div class="speech-bubble" id="bubble_2">🧠 Auditor: "Approved! ($4,500/mo • Zero meeting stress)"</div>
-  <div class="speech-bubble" id="bubble_3">📝 Strategist: "Crafted tailored C# Web API proposal!"</div>
-  <div class="speech-bubble" id="bubble_4">🚀 Dispatcher: "WOOSH! Dispatched application with 0 errors!"</div>
-  <div class="speech-bubble" id="bubble_5">📡 Radar: "Listening 24/7 for interview invitations..."</div>
+  <!-- TOP NAVBAR -->
+  <nav class="top-navbar">
+    <div class="brand-cluster">
+      <div class="brand-crown">👑</div>
+      <div class="brand-info">
+        <h1>Prince's 3D AI Robot Factory</h1>
+        <p><span class="live-pulse"></span> <span id="pipelineStatusText">Auto-Streaming Real Jobs Live</span></p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-stream-toggle" id="streamToggleBtn" onclick="toggleAutoStream()">
+        <span id="streamDot" style="color: #10b981;">●</span> <span id="streamBtnText">Streaming: ON</span>
+      </button>
+      <a href="/jobs" class="btn-link">Full Radar</a>
+    </div>
+  </nav>
 
-  <!-- Action Toast Popup -->
-  <div class="action-toast" id="actionToast">
-    <span>⚡</span> <span id="toastText">Data Document Passed to Auditor!</span>
+  <!-- 3D FACTORY STAGE -->
+  <div class="stage-section">
+    <canvas id="viewport3d"></canvas>
+
+    <!-- LIVE REAL-TIME DATA PASSING HUD OVERLAY -->
+    <div class="live-handoff-hud" id="liveHandoffHud">
+      <div class="handoff-meta">
+        <div class="pipeline-status-badge">
+          <span>⚡</span> <span id="hudStepName">STEP 1: SCOUT HARVESTING</span>
+        </div>
+        <span style="font-size: 0.68rem; font-family: var(--font-mono); color: #94a3b8;" id="hudTimestamp">Just Now</span>
+      </div>
+
+      <div class="job-active-title" id="hudJobTitle">
+        Fetching real-time opportunities from verified portals...
+      </div>
+
+      <div class="job-active-details">
+        <span class="pill-tag pill-portal" id="hudPortal">RemoteOK</span>
+        <span class="pill-tag pill-pay" id="hudSalary">$4,500/mo</span>
+        <span class="pill-tag pill-score" id="hudScore">92% AI-Doable</span>
+        <span id="hudCompany" style="font-weight: 700; color: #f8fafc;">Tech Co</span>
+        <span>•</span>
+        <span id="hudLocation">Worldwide Remote</span>
+      </div>
+
+      <div class="agent-steps-progress">
+        <div class="step-node active" id="step_scout"></div>
+        <div class="step-node" id="step_auditor"></div>
+        <div class="step-node" id="step_strategist"></div>
+        <div class="step-node" id="step_dispatcher"></div>
+      </div>
+    </div>
+
+    <!-- 3D SPEECH BUBBLES -->
+    <div class="bubble-3d" id="bub_0">👑 Boss Commander: "5 Robots synchronized!"</div>
+    <div class="bubble-3d" id="bub_1">🕵️ Scout: "Found job!"</div>
+    <div class="bubble-3d" id="bub_2">🧠 Auditor: "Approved! ($4.2k/mo)"</div>
+    <div class="bubble-3d" id="bub_3">📝 Strategist: "Crafted C# API pitch!"</div>
+    <div class="bubble-3d" id="bub_4">🚀 Dispatcher: "WOOSH! Sent!"</div>
+    <div class="bubble-3d" id="bub_5">📡 Radar: "Monitoring 24/7"</div>
   </div>
 
-  <!-- HUD INTERACTIVE SCREEN -->
-  <div class="hud-screen">
-    <!-- TOP HEADER -->
-    <header class="command-header interactive">
-      <div class="brand-meta">
-        <div class="crown-icon">👑</div>
-        <div class="brand-text">
-          <h1>Prince's 3D AI Robot Factory</h1>
-          <p><span class="status-dot"></span> Multi-Agent 3D Pipeline Live (Render Cloud)</p>
-        </div>
-      </div>
-
-      <div class="header-actions">
-        <button id="handoffBtn" class="btn-handoff" onclick="triggerHandoffAnimation()">
-          <span>📦</span> <span id="handoffText">Simulate Live Data Handoff</span>
-        </button>
-        <button class="btn-ghost" onclick="triggerServerCycle()">
-          <span>⚡</span> <span>Server Scan</span>
-        </button>
-        <a href="/jobs" class="btn-ghost">
-          <span>📊</span> <span>Job Radar</span>
-        </a>
-      </div>
-    </header>
-
-    <!-- BOTTOM DOCK -->
-    <div class="bottom-dock-container interactive">
-      <button class="drawer-toggle" onclick="toggleDrawer()">
-        <span id="toggleText">▼ Hide Cyber Logs</span>
+  <!-- CONTENT TABS & PRODUCTION FEED SECTION -->
+  <div class="content-container">
+    <div class="view-tabs">
+      <button class="tab-btn active" id="tabJobsBtn" onclick="switchTab('jobs')">
+        <span>📦</span> Real Production Feed (<span id="jobCountBadge">0</span>)
       </button>
+      <button class="tab-btn" id="tabLogsBtn" onclick="switchTab('logs')">
+        <span>⚡</span> Live Cyber Logs
+      </button>
+    </div>
 
-      <!-- DRAWER: LOGS + INSPECTOR -->
-      <div class="info-drawer" id="infoDrawer">
-        <!-- LOGS -->
-        <div class="log-panel">
-          <div class="panel-header">
-            <span>⚡ REAL-TIME COGNITIVE DECISION STREAM</span>
-            <span style="color: #64748b;">Precision: 99.8%</span>
-          </div>
-          <div class="log-scroller" id="logScroller">
-            <div class="log-line" style="color: #34d399;">[SYSTEM] 👑 Boss Commander: 5 Stylized 3D Robot crew deployed on Render cloud.</div>
-            <div class="log-line" style="color: #38bdf8;">[SCOUT] 🕵️ Scout Bot: Monitored RemoteOK, Jobicy, Remotive, Arbeitnow (115 verified).</div>
-            <div class="log-line" style="color: #c084fc;">[AUDITOR] 🧠 Auditor Bot: Strict Sweet Spot applied ($3k - $6k/mo, &lt;5h meetings). Approved!</div>
-            <div class="log-line" style="color: #fbbf24;">[STRATEGIST] 📝 Strategist Bot: Custom C# .NET API tailored pitch generated.</div>
-            <div class="log-line" style="color: #f43f5e;">[DISPATCH] 🚀 Dispatcher Bot: Application packet dispatched cleanly.</div>
-          </div>
-        </div>
-
-        <!-- INSPECTOR -->
-        <div class="inspector-panel">
-          <div class="insp-header">
-            <div class="insp-avatar" id="inspAvatar">👑</div>
-            <div>
-              <div class="insp-name" id="inspName">Boss Commander</div>
-              <div class="insp-role" id="inspRole">Chief of Staff & Quality Overseer</div>
-            </div>
-          </div>
-          <div class="insp-bubble" id="inspBubble">
-            "I monitor all 5 specialist robots 24/7 with zero shortcuts. Everything verified with 99.8% precision."
-          </div>
-        </div>
+    <!-- VIEW 1: PRODUCTION FEED TABLE/CARDS -->
+    <div id="jobsFeedView" class="jobs-feed-list">
+      <div style="text-align: center; padding: 30px; color: #64748b; font-family: var(--font-mono); font-size: 0.8rem;">
+        Loading live verified jobs from server...
       </div>
+    </div>
 
-      <!-- HORIZONTAL CREW CHIP BAR -->
-      <div class="crew-bar">
-        <div class="crew-chip active" onclick="focusRobot(0)">
-          <span>👑 Boss Commander</span>
-        </div>
-        <div class="crew-chip" onclick="focusRobot(1)">
-          <span>🕵️ Scout Bot</span>
-        </div>
-        <div class="crew-chip" onclick="focusRobot(2)">
-          <span>🧠 Auditor Bot</span>
-        </div>
-        <div class="crew-chip" onclick="focusRobot(3)">
-          <span>📝 Strategist Bot</span>
-        </div>
-        <div class="crew-chip" onclick="focusRobot(4)">
-          <span>🚀 Dispatcher Bot</span>
-        </div>
-        <div class="crew-chip" onclick="focusRobot(5)">
-          <span>📡 Radar Bot</span>
-        </div>
+    <!-- VIEW 2: CYBER LOGS -->
+    <div id="cyberLogsView" class="cyber-logs-panel hidden">
+      <div class="logs-header">
+        <span>⚡ LIVE COGNITIVE THOUGHT MATRIX (ZERO SHORTCUTS)</span>
+        <span>24/7 Render Worker</span>
+      </div>
+      <div class="logs-scroller" id="realLogsScroller">
+        <div class="log-line" style="color: #34d399;">[SYSTEM] 👑 Boss Commander: 5 Stylized Robots initialized.</div>
+        <div class="log-line" style="color: #38bdf8;">[SCOUT] 🕵️ Scout Bot: Monitored RemoteOK, Jobicy, Remotive, Arbeitnow.</div>
+        <div class="log-line" style="color: #c084fc;">[AUDITOR] 🧠 Auditor Bot: Strict Sweet Spot applied ($3k-$6k, &lt;5h meetings). Approved!</div>
       </div>
     </div>
   </div>
 
-  <!-- 3D SCRIPT -->
+  <!-- PITCH MODAL -->
+  <div class="pitch-modal-backdrop" id="pitchModal">
+    <div class="pitch-modal-card">
+      <button class="pitch-close" onclick="closeModal()">×</button>
+      <h3 id="modalJobTitle" style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px;">Job Title</h3>
+      <p id="modalCompany" style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 14px;">Company • Portal</p>
+      
+      <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-neon); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; font-family: var(--font-mono); margin-bottom: 4px;">🧠 AI AUDITOR COGNITIVE RATIONALE:</div>
+        <p id="modalReason" style="font-size: 0.82rem; color: #e2e8f0; line-height: 1.4;">Approved</p>
+      </div>
+
+      <div style="font-size: 0.72rem; font-weight: 700; color: #10b981; font-family: var(--font-mono); margin-bottom: 4px;">📝 TAILORED APPLICATION PITCH:</div>
+      <div id="modalPitch" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.5; white-space: pre-wrap; margin-bottom: 16px;">Pitch</div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn-link" onclick="copyModalPitch()">Copy Pitch</button>
+        <a id="modalApplyLink" href="#" target="_blank" class="btn-apply-direct">Apply on Portal ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- THREE.JS 3D & CONTINUOUS STREAMING SCRIPT -->
   <script>
     let scene, camera, renderer, controls;
     let robots = [];
     let flyingDoc = null;
-    let isHandoffAnimating = false;
-    let handoffStartTime = 0;
-    let handoffDuration = 1200;
-    let handoffStartPos = new THREE.Vector3();
-    let handoffMidPos = new THREE.Vector3();
-    let handoffEndPos = new THREE.Vector3();
-    let handoffCallback = null;
+    let isDocInFlight = false;
+    let flightStart = 0;
+    let flightDur = 1000;
+    let pStart = new THREE.Vector3(), pMid = new THREE.Vector3(), pEnd = new THREE.Vector3();
+    let flightCb = null;
 
-    let cameraTargetObj = null;
-    let cameraStartPos = new THREE.Vector3();
-    let cameraEndPos = new THREE.Vector3();
-    let cameraLookStart = new THREE.Vector3();
-    let cameraLookEnd = new THREE.Vector3();
-    let cameraLerpProgress = 1;
+    let realJobsQueue = [];
+    let currentJobIdx = 0;
+    let isAutoStreaming = true;
+    let streamTimer = null;
 
-    const ROBOTS_DATA = [
-      { id: 0, name: "Boss Commander", role: "Chief of Staff & Quality Overseer", emoji: "👑", color: 0x10b981, pos: [0, 0, 0] },
-      { id: 1, name: "Scout Bot", role: "Global Multi-Portal Searcher", emoji: "🕵️", color: 0x0284c7, pos: [-32, 0, -16] },
-      { id: 2, name: "Auditor Bot", role: "Stress & Feasibility Inspector", emoji: "🧠", color: 0x9333ea, pos: [-20, 0, 24] },
-      { id: 3, name: "Strategist Bot", role: "Tailored Pitch Copywriter", emoji: "📝", color: 0xd97706, pos: [20, 0, 24] },
-      { id: 4, name: "Dispatcher Bot", role: "Rocket Launcher & Sender", emoji: "🚀", color: 0xe11d48, pos: [32, 0, -16] },
-      { id: 5, name: "Radar Bot", role: "Callback & Sonar Listener", emoji: "📡", color: 0x0ea5e9, pos: [0, 0, -34] }
+    const ROBOT_DEFS = [
+      { id: 0, name: "Boss Commander", color: 0x10b981, pos: [0, 0, 0] },
+      { id: 1, name: "Scout Bot", color: 0x0284c7, pos: [-28, 0, -14] },
+      { id: 2, name: "Auditor Bot", color: 0x9333ea, pos: [-18, 0, 20] },
+      { id: 3, name: "Strategist Bot", color: 0xd97706, pos: [18, 0, 20] },
+      { id: 4, name: "Dispatcher Bot", color: 0xe11d48, pos: [28, 0, -14] },
+      { id: 5, name: "Radar Bot", color: 0x0ea5e9, pos: [0, 0, -28] }
     ];
 
-    function setup3D() {
+    function init3D() {
       const canvas = document.getElementById('viewport3d');
-      scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x07080d, 0.005);
+      const container = canvas.parentElement;
 
-      camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.5, 1000);
-      camera.position.set(0, 42, 85);
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x06070c, 0.005);
+
+      camera = new THREE.PerspectiveCamera(48, container.clientWidth / container.clientHeight, 0.5, 1000);
+      camera.position.set(0, 36, 75);
 
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      // Orbit controls
       if (typeof THREE.OrbitControls !== 'undefined') {
         controls = new THREE.OrbitControls(camera, canvas);
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
         controls.maxPolarAngle = Math.PI / 2.05;
         controls.minDistance = 20;
-        controls.maxDistance = 160;
-        controls.target.set(0, 5, 0);
+        controls.maxDistance = 140;
+        controls.target.set(0, 4, 0);
       }
 
       // Lighting
-      const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
-      scene.add(ambLight);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const dl = new THREE.DirectionalLight(0x38bdf8, 1.3);
+      dl.position.set(30, 60, 40);
+      scene.add(dl);
 
-      const keyLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
-      keyLight.position.set(40, 75, 45);
-      scene.add(keyLight);
+      const pl = new THREE.PointLight(0x10b981, 2, 60);
+      pl.position.set(0, 10, 0);
+      scene.add(pl);
 
-      const fillLight = new THREE.DirectionalLight(0xa855f7, 0.8);
-      fillLight.position.set(-40, 50, -40);
-      scene.add(fillLight);
-
-      const centerGlow = new THREE.PointLight(0x10b981, 2, 70);
-      centerGlow.position.set(0, 12, 0);
-      scene.add(centerGlow);
-
-      // Cyber Studio Floor (Layered Discs)
-      const floorGeo = new THREE.CylinderGeometry(55, 60, 2, 48);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.7 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
+      // Floor
+      const floor = new THREE.Mesh(
+        new THREE.CylinderGeometry(46, 50, 2, 40),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.7 })
+      );
       floor.position.y = -1;
       scene.add(floor);
 
-      // Neon grid rings on floor
-      for (let r = 16; r <= 48; r += 16) {
-        const ringGeo = new THREE.RingGeometry(r - 0.25, r + 0.25, 64);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
+      // Neon Rings
+      for (let r = 14; r <= 42; r += 14) {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(r - 0.2, r + 0.2, 48),
+          new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide })
+        );
         ring.rotation.x = Math.PI / 2;
-        ring.position.y = 0.05;
+        ring.position.y = 0.04;
         scene.add(ring);
       }
 
-      // Build 6 Cartoon 3D Robots
-      ROBOTS_DATA.forEach((def) => {
-        const bot = constructCartoonRobot(def);
+      // Build 6 Robots
+      ROBOT_DEFS.forEach(def => {
+        const bot = buildRobot(def);
         scene.add(bot);
         robots.push(bot);
       });
 
-      // Build 3D Flying Document Envelope
-      buildDocumentMesh();
+      // 3D Flying Document
+      const doc = new THREE.Group();
+      doc.add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 0.25), new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7 })));
+      doc.position.set(0, -50, 0);
+      scene.add(doc);
+      flyingDoc = doc;
 
-      window.addEventListener('resize', onWindowResize);
-      renderLoop();
+      window.addEventListener('resize', onResize);
+      render();
     }
 
-    // =========================================================
-    // PROCEDURAL 3D CARTOON ROBOT CONSTRUCTOR
-    // =========================================================
-    function constructCartoonRobot(def) {
+    function buildRobot(def) {
       const root = new THREE.Group();
       root.position.set(def.pos[0], def.pos[1], def.pos[2]);
 
-      // 1. Pedestal Base
-      const pedRadius = def.id === 0 ? 6.2 : 4.4;
-      const pedGeo = new THREE.CylinderGeometry(pedRadius, pedRadius + 1, 2.8, 32);
-      const pedMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.8 });
-      const pedestal = new THREE.Mesh(pedGeo, pedMat);
-      pedestal.position.y = 1.4;
-      root.add(pedestal);
+      // Base Pedestal
+      const rad = def.id === 0 ? 5.5 : 3.8;
+      const ped = new THREE.Mesh(
+        new THREE.CylinderGeometry(rad, rad + 0.8, 2.4, 28),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 })
+      );
+      ped.position.y = 1.2;
+      root.add(ped);
 
-      // Glowing neon ring around pedestal top
-      const neonTorus = new THREE.TorusGeometry(pedRadius - 0.2, 0.22, 12, 32);
-      const neonMat = new THREE.MeshBasicMaterial({ color: def.color });
-      const neonMesh = new THREE.Mesh(neonTorus, neonMat);
-      neonMesh.rotation.x = Math.PI / 2;
-      neonMesh.position.y = 2.8;
-      root.add(neonMesh);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(rad - 0.2, 0.18, 10, 28),
+        new THREE.MeshBasicMaterial({ color: def.color })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = 2.4;
+      root.add(ring);
 
-      // 2. Robot Animated Body Group
-      const bodyGroup = new THREE.Group();
-      bodyGroup.position.y = 2.8;
+      // Body Group
+      const bodyGrp = new THREE.Group();
+      bodyGrp.position.y = 2.4;
 
-      // Chubby Body
-      const bodyGeo = new THREE.CylinderGeometry(2.1, 2.5, 3.8, 24);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = 2.2;
-      bodyGroup.add(body);
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.9, 2.2, 3.4, 20),
+        new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 })
+      );
+      body.position.y = 1.9;
+      bodyGrp.add(body);
 
-      // Glowing Chest Emblem
-      const chestGeo = new THREE.BoxGeometry(1.8, 1.2, 0.35);
-      const chestMat = new THREE.MeshBasicMaterial({ color: def.color });
-      const chest = new THREE.Mesh(chestGeo, chestMat);
-      chest.position.set(0, 2.3, 1.25);
-      bodyGroup.add(chest);
+      // Chest
+      const chest = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 1, 0.3),
+        new THREE.MeshBasicMaterial({ color: def.color })
+      );
+      chest.position.set(0, 2, 1.1);
+      bodyGrp.add(chest);
 
-      // 3. Robot Head (Expressive cartoon sphere)
-      const headGroup = new THREE.Group();
-      headGroup.position.y = 4.8;
+      // Head
+      const headGrp = new THREE.Group();
+      headGrp.position.y = 4.2;
 
-      const headGeo = new THREE.SphereGeometry(1.9, 24, 24);
-      const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 });
-      const head = new THREE.Mesh(headGeo, headMat);
-      headGroup.add(head);
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(1.7, 20, 20),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 })
+      );
+      headGrp.add(head);
 
-      // Black Visor
-      const visorGeo = new THREE.BoxGeometry(2.5, 1, 0.9);
-      const visorMat = new THREE.MeshBasicMaterial({ color: 0x090a10 });
-      const visor = new THREE.Mesh(visorGeo, visorMat);
-      visor.position.set(0, 0.1, 1.25);
-      headGroup.add(visor);
+      // Visor & Eyes
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.9, 0.8), new THREE.MeshBasicMaterial({ color: 0x090a10 }));
+      visor.position.set(0, 0.1, 1.1);
+      headGrp.add(visor);
 
-      // Twin Glowing Cartoon Eyes
       const eyeMat = new THREE.MeshBasicMaterial({ color: def.color });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), eyeMat);
-      leftEye.position.set(-0.6, 0.1, 1.72);
-      headGroup.add(leftEye);
+      const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 10), eyeMat);
+      e1.position.set(-0.5, 0.1, 1.52);
+      headGrp.add(e1);
+      const e2 = e1.clone();
+      e2.position.set(0.5, 0.1, 1.52);
+      headGrp.add(e2);
 
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), eyeMat);
-      rightEye.position.set(0.6, 0.1, 1.72);
-      headGroup.add(rightEye);
-
-      // SPECIAL ACCESSORIES
+      // Props
       if (def.id === 0) {
-        // Gold Crown on Head
-        const crownGeo = new THREE.ConeGeometry(1.5, 1.1, 5);
-        const crownMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 });
-        const crown = new THREE.Mesh(crownGeo, crownMat);
-        crown.position.y = 2.2;
-        headGroup.add(crown);
+        const crown = new THREE.Mesh(new THREE.ConeGeometry(1.3, 0.9, 5), new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.9 }));
+        crown.position.y = 1.9;
+        headGrp.add(crown);
       } else if (def.id === 1) {
-        // Scout Mini Radar Hat
-        const dishGeo = new THREE.CylinderGeometry(1.3, 0.2, 0.3, 16);
-        const dishMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
-        const dish = new THREE.Mesh(dishGeo, dishMat);
-        dish.position.y = 2.2;
+        const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.2, 0.3, 14), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+        dish.position.y = 1.9;
         dish.rotation.x = Math.PI / 5;
-        headGroup.add(dish);
-      } else if (def.id === 2) {
-        // Auditor Monocle
-        const monocleGeo = new THREE.TorusGeometry(0.55, 0.08, 8, 20);
-        const monocleMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
-        const monocle = new THREE.Mesh(monocleGeo, monocleMat);
-        monocle.position.set(0.6, 0.1, 1.78);
-        headGroup.add(monocle);
-      } else if (def.id === 4) {
-        // Dispatcher Rocket Booster on back
-        const jetGeo = new THREE.CylinderGeometry(0.45, 0.6, 2.2, 16);
-        const jetMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
-        const jet1 = new THREE.Mesh(jetGeo, jetMat);
-        jet1.position.set(-0.8, 2.1, -1.4);
-        bodyGroup.add(jet1);
-        const jet2 = jet1.clone();
-        jet2.position.set(0.8, 2.1, -1.4);
-        bodyGroup.add(jet2);
-      } else if (def.id === 5) {
-        // Radar Rotating Antenna on head
-        const antGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.8, 8);
-        const antMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-        const ant = new THREE.Mesh(antGeo, antMat);
-        ant.position.y = 2.6;
-        headGroup.add(ant);
+        headGrp.add(dish);
       }
 
-      bodyGroup.add(headGroup);
+      bodyGrp.add(headGrp);
 
-      // 4. Arms / Hands
+      // Hands
       const handMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), handMat);
-      leftHand.position.set(-2.2, 2.3, 0.4);
-      bodyGroup.add(leftHand);
+      const h1 = new THREE.Mesh(new THREE.SphereGeometry(0.48, 10, 10), handMat);
+      h1.position.set(-2, 1.9, 0.3);
+      bodyGrp.add(h1);
+      const h2 = h1.clone();
+      h2.position.set(2, 1.9, 0.3);
+      bodyGrp.add(h2);
 
-      const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), handMat);
-      rightHand.position.set(2.2, 2.3, 0.4);
-      bodyGroup.add(rightHand);
-
-      root.add(bodyGroup);
-      root.userData = { 
-        def: def, 
-        bodyGroup: bodyGroup, 
-        headGroup: headGroup, 
-        leftHand: leftHand, 
-        rightHand: rightHand,
-        baseY: 2.8,
-        jumpOffset: 0
-      };
+      root.add(bodyGrp);
+      root.userData = { bodyGrp: bodyGrp, headGrp: headGrp, h1: h1, h2: h2, baseY: 2.4, jumpY: 0 };
       return root;
     }
 
-    // =========================================================
-    // 3D DOCUMENT / ENVELOPE BUILDER
-    // =========================================================
-    function buildDocumentMesh() {
-      const group = new THREE.Group();
-      const folderGeo = new THREE.BoxGeometry(2.4, 1.6, 0.3);
-      const folderMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, roughness: 0.2 });
-      const folder = new THREE.Mesh(folderGeo, folderMat);
-      group.add(folder);
-
-      const sealGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.35, 16);
-      const sealMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
-      const seal = new THREE.Mesh(sealGeo, sealMat);
-      seal.rotation.x = Math.PI / 2;
-      group.add(seal);
-
-      group.position.set(0, -50, 0);
-      scene.add(group);
-      flyingDoc = group;
+    function onResize() {
+      const container = renderer.domElement.parentElement;
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
     }
 
-    // =========================================================
-    // SELF-CONTAINED FLIGHT ANIMATION (NO EXTERNAL TWEEN BUG)
-    // =========================================================
-    function flyDocBetween(start, end, duration) {
-      return new Promise((resolve) => {
-        isHandoffAnimating = true;
-        handoffStartTime = performance.now();
-        handoffDuration = duration;
-        handoffStartPos.copy(start);
-        handoffEndPos.copy(end);
-
-        handoffMidPos.addVectors(start, end).multiplyScalar(0.5);
-        handoffMidPos.y += 12; // parabolic jump
-
-        handoffCallback = () => {
-          isHandoffAnimating = false;
-          resolve();
-        };
-      });
-    }
-
-    // =========================================================
-    // MULTI-STEP HANDOFF SEQUENCE
-    // =========================================================
-    async function triggerHandoffAnimation() {
-      const btn = document.getElementById('handoffBtn');
-      const txt = document.getElementById('handoffText');
-      btn.disabled = true;
-      txt.textContent = 'Handoff in Progress...';
-
-      // 1. Scout finds job
-      showActionToast("🕵️ Scout Bot: Found new $4,500/mo remote role in Tokyo!");
-      saySpeech(1, "Found new job at Rakuten! Passing to Auditor...");
-      triggerRobotJump(1);
-
-      const p1 = new THREE.Vector3().copy(robots[1].position).add(new THREE.Vector3(0, 5.5, 0));
-      const p2 = new THREE.Vector3().copy(robots[2].position).add(new THREE.Vector3(0, 5.5, 0));
-      flyingDoc.position.copy(p1);
-
-      await flyDocBetween(p1, p2, 1300);
-
-      // 2. Auditor inspects & stamps
-      showActionToast("🧠 Auditor Bot: APPROVED! (Low Stress • 92% AI-Doable)");
-      saySpeech(2, "STAMPED! Approved sweet spot ($4.5k/mo). Passing to Strategist...");
-      triggerRobotJump(2);
-
-      const p3 = new THREE.Vector3().copy(robots[3].position).add(new THREE.Vector3(0, 5.5, 0));
-      await flyDocBetween(p2, p3, 1300);
-
-      // 3. Strategist writes pitch
-      showActionToast("📝 Strategist Bot: Crafted high-impact C# .NET API pitch!");
-      saySpeech(3, "Tailored pitch generated! Forwarding to Dispatcher...");
-      triggerRobotJump(3);
-
-      const p4 = new THREE.Vector3().copy(robots[4].position).add(new THREE.Vector3(0, 5.5, 0));
-      await flyDocBetween(p3, p4, 1300);
-
-      // 4. Dispatcher launches
-      showActionToast("🚀 Dispatcher Bot: WHOOSH! Dispatched application with 0 errors!");
-      saySpeech(4, "LAUNCHED! Sent via verified direct email outreach!");
-      triggerRobotJump(4);
-
-      const sky = new THREE.Vector3().copy(p4).add(new THREE.Vector3(0, 40, 0));
-      await flyDocBetween(p4, sky, 900);
-      flyingDoc.position.set(0, -50, 0);
-
-      // 5. Boss Commander approves
-      showActionToast("👑 Boss Commander: Recorded in Boss Prince's Master Ledger!");
-      saySpeech(0, "Splendid teamwork! Master ledger updated for Boss Prince.");
-      triggerRobotJump(0);
-
-      setTimeout(() => {
-        btn.disabled = false;
-        txt.textContent = 'Simulate Live Data Handoff';
-      }, 1000);
-    }
-
-    function triggerRobotJump(idx) {
-      const b = robots[idx];
-      let t = 0;
-      const jumpInterval = setInterval(() => {
-        t += 0.15;
-        b.userData.jumpOffset = Math.sin(t) * 2.8;
-        if (t >= Math.PI) {
-          b.userData.jumpOffset = 0;
-          clearInterval(jumpInterval);
-        }
-      }, 25);
-    }
-
-    function showActionToast(msg) {
-      const toast = document.getElementById('actionToast');
-      document.getElementById('toastText').textContent = msg;
-      toast.classList.add('active');
-      setTimeout(() => toast.classList.remove('active'), 2800);
-    }
-
-    function saySpeech(botIdx, text) {
-      const b = document.getElementById(`bubble_${botIdx}`);
-      if (!b) return;
-      b.textContent = `${ROBOTS_DATA[botIdx].emoji} ${ROBOTS_DATA[botIdx].name}: "${text}"`;
-      b.classList.add('visible');
-      setTimeout(() => b.classList.remove('visible'), 3200);
-    }
-
-    // =========================================================
-    // FOCUS & SMOOTH CAMERA LERP
-    // =========================================================
-    function focusRobot(idx) {
-      document.querySelectorAll('.crew-chip').forEach((c, i) => {
-        c.classList.toggle('active', i === idx);
-      });
-
-      const d = ROBOTS_DATA[idx];
-      document.getElementById('inspAvatar').textContent = d.emoji;
-      document.getElementById('inspName').textContent = d.name;
-      document.getElementById('inspRole').textContent = d.role;
-
-      const speeches = [
-        '"I monitor all 5 robots 24/7. Zero shortcuts allowed for Boss Prince. Everything verified with 99.8% accuracy."',
-        '"I scan 7+ verified global portals across US, UK, Europe, Japan, UAE. No spam, only genuine remote developer roles."',
-        '"I strictly reject $150k+ executive meeting traps. Only approve $3k - $6k/mo task-based jobs that are 90%+ AI-doable."',
-        '"I craft custom, humble, high-impact C# / .NET / Web API cover letters and bullet points for each company."',
-        '"I dispatch applications cleanly with zero duplicates and complete delivery verification."',
-        '"I listen 24/7 for interview invitations and reply signals to alert Boss Prince immediately."'
-      ];
-      document.getElementById('inspBubble').textContent = speeches[idx];
-
-      const targetPos = new THREE.Vector3().copy(robots[idx].position);
-      cameraStartPos.copy(camera.position);
-      cameraEndPos.set(targetPos.x, targetPos.y + 16, targetPos.z + 36);
-
-      if (controls) {
-        cameraLookStart.copy(controls.target);
-        cameraLookEnd.set(targetPos.x, targetPos.y + 4.5, targetPos.z);
-      }
-      cameraLerpProgress = 0;
-
-      triggerRobotJump(idx);
-      saySpeech(idx, speeches[idx].replace(/"/g, ''));
-    }
-
-    function toggleDrawer() {
-      const drawer = document.getElementById('infoDrawer');
-      const text = document.getElementById('toggleText');
-      if (drawer.classList.contains('collapsed')) {
-        drawer.classList.remove('collapsed');
-        text.textContent = '▼ Hide Cyber Logs';
-      } else {
-        drawer.classList.add('collapsed');
-        text.textContent = '▲ View Cyber Logs & Telemetry';
-      }
-    }
-
-    async function triggerServerCycle() {
-      try {
-        await fetch('/api/team/cycle', { method: 'POST' });
-        showActionToast("⚡ Live Multi-Agent Cycle Triggered on Cloud!");
-        triggerHandoffAnimation();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    // =========================================================
-    // MAIN RENDER LOOP (SOLID 60 FPS)
-    // =========================================================
-    function renderLoop() {
-      requestAnimationFrame(renderLoop);
-
+    function render() {
+      requestAnimationFrame(render);
       const now = performance.now();
 
-      // Animate Document Flying along Bezier Curve
-      if (isHandoffAnimating) {
-        const elapsed = now - handoffStartTime;
-        let progress = elapsed / handoffDuration;
-        if (progress >= 1) {
-          progress = 1;
-          flyingDoc.position.copy(handoffEndPos);
-          if (handoffCallback) handoffCallback();
-        } else {
-          // Quadratic Bezier Formula: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
-          const t = progress;
-          const u = 1 - t;
-          flyingDoc.position.x = u * u * handoffStartPos.x + 2 * u * t * handoffMidPos.x + t * t * handoffEndPos.x;
-          flyingDoc.position.y = u * u * handoffStartPos.y + 2 * u * t * handoffMidPos.y + t * t * handoffEndPos.y;
-          flyingDoc.position.z = u * u * handoffStartPos.z + 2 * u * t * handoffMidPos.z + t * t * handoffEndPos.z;
-          flyingDoc.rotation.y += 0.12;
-          flyingDoc.rotation.z += 0.08;
+      // Document flight
+      if (isDocInFlight) {
+        const elapsed = now - flightStart;
+        const t = Math.min(elapsed / flightDur, 1);
+        const u = 1 - t;
+        flyingDoc.position.x = u * u * pStart.x + 2 * u * t * pMid.x + t * t * pEnd.x;
+        flyingDoc.position.y = u * u * pStart.y + 2 * u * t * pMid.y + t * t * pEnd.y;
+        flyingDoc.position.z = u * u * pStart.z + 2 * u * t * pMid.z + t * t * pEnd.z;
+        flyingDoc.rotation.y += 0.12;
+
+        if (t >= 1) {
+          isDocInFlight = false;
+          if (flightCb) flightCb();
         }
       }
 
-      // Smooth Camera Lerp
-      if (cameraLerpProgress < 1) {
-        cameraLerpProgress += 0.045;
-        const ease = Math.sin((cameraLerpProgress * Math.PI) / 2);
-        camera.position.lerpVectors(cameraStartPos, cameraEndPos, ease);
-        if (controls) {
-          controls.target.lerpVectors(cameraLookStart, cameraLookEnd, ease);
-        }
-      }
-
-      // Robot Idle Bobbing & Jumping
-      robots.forEach((bot, idx) => {
-        const t = now * 0.003 + idx;
-        const jumpY = bot.userData.jumpOffset || 0;
-        bot.userData.bodyGroup.position.y = bot.userData.baseY + Math.sin(t) * 0.2 + jumpY;
-        bot.userData.headGroup.rotation.y = Math.sin(t * 0.4) * 0.2;
-        bot.userData.leftHand.position.y = 2.3 + Math.sin(t) * 0.25;
-        bot.userData.rightHand.position.y = 2.3 - Math.sin(t) * 0.25;
+      // Robot bobbing
+      robots.forEach((b, i) => {
+        const t = now * 0.003 + i;
+        b.userData.bodyGrp.position.y = b.userData.baseY + Math.sin(t) * 0.15 + (b.userData.jumpY || 0);
+        b.userData.headGrp.rotation.y = Math.sin(t * 0.4) * 0.15;
       });
 
       if (controls) controls.update();
 
-      // Update Speech Bubbles in Screen Space
-      robots.forEach((bot, idx) => {
-        const bubble = document.getElementById(`bubble_${idx}`);
-        if (!bubble) return;
+      // Update 3D Speech Bubbles
+      robots.forEach((b, i) => {
+        const bub = document.getElementById(`bub_${i}`);
+        if (!bub) return;
         const v = new THREE.Vector3();
-        bot.getWorldPosition(v);
-        v.y += 10.5;
+        b.getWorldPosition(v);
+        v.y += 9.5;
         v.project(camera);
-        const x = (v.x * 0.5 + 0.5) * window.innerWidth;
-        const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
-        bubble.style.left = `${x}px`;
-        bubble.style.top = `${y}px`;
+        const rect = renderer.domElement.getBoundingClientRect();
+        const x = (v.x * 0.5 + 0.5) * rect.width;
+        const y = (-(v.y * 0.5) + 0.5) * rect.height;
+        bub.style.left = `${x}px`;
+        bub.style.top = `${y}px`;
       });
 
       renderer.render(scene, camera);
     }
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    function flyDoc(start, end, duration) {
+      return new Promise(res => {
+        isDocInFlight = true;
+        flightStart = performance.now();
+        flightDur = duration;
+        pStart.copy(start);
+        pEnd.copy(end);
+        pMid.addVectors(start, end).multiplyScalar(0.5);
+        pMid.y += 11;
+        flightCb = res;
+      });
     }
 
-    setup3D();
+    function hopRobot(idx) {
+      const b = robots[idx];
+      let t = 0;
+      const iv = setInterval(() => {
+        t += 0.2;
+        b.userData.jumpY = Math.sin(t) * 2.5;
+        if (t >= Math.PI) {
+          b.userData.jumpY = 0;
+          clearInterval(iv);
+        }
+      }, 25);
+    }
+
+    function showBubble(idx, text) {
+      const b = document.getElementById(`bub_${idx}`);
+      if (!b) return;
+      b.textContent = text;
+      b.classList.add('active');
+      setTimeout(() => b.classList.remove('active'), 2800);
+    }
+
+    // =========================================================
+    // REAL CONTINUOUS AUTONOMOUS PIPELINE LOOP
+    // =========================================================
+    async function loadRealJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        const data = await res.json();
+        realJobsQueue = data.jobs || [];
+        document.getElementById('jobCountBadge').textContent = realJobsQueue.length;
+        renderFeedList(realJobsQueue);
+
+        if (realJobsQueue.length > 0 && isAutoStreaming) {
+          runNextPipelineCycle();
+        }
+      } catch (e) {
+        console.error("Error loading real jobs:", e);
+      }
+    }
+
+    async function runNextPipelineCycle() {
+      if (!isAutoStreaming || realJobsQueue.length === 0) return;
+
+      const job = realJobsQueue[currentJobIdx % realJobsQueue.length];
+      currentJobIdx++;
+
+      // Update HUD with Real Job Metadata
+      document.getElementById('hudJobTitle').textContent = job.title;
+      document.getElementById('hudCompany').textContent = job.company;
+      document.getElementById('hudPortal').textContent = job.portal || 'Verified Remote';
+      document.getElementById('hudSalary').textContent = job.estimated_monthly_pay || job.salary || '$3,500/mo';
+      document.getElementById('hudScore').textContent = `${job.ai_executability_score || 90}% AI-Doable`;
+      document.getElementById('hudLocation').textContent = `${job.country_flag || '🌐'} ${job.country_name || job.location || 'Remote'}`;
+      document.getElementById('hudTimestamp').textContent = job.date || 'Today';
+
+      // STEP 1: Scout Harvests
+      setStepActive('scout');
+      document.getElementById('hudStepName').textContent = 'STEP 1: SCOUT HARVESTED REAL JOB';
+      showBubble(1, `Found ${job.title} at ${job.company}!`);
+      hopRobot(1);
+
+      const p1 = new THREE.Vector3().copy(robots[1].position).add(new THREE.Vector3(0, 5, 0));
+      const p2 = new THREE.Vector3().copy(robots[2].position).add(new THREE.Vector3(0, 5, 0));
+      flyingDoc.position.copy(p1);
+
+      await flyDoc(p1, p2, 1100);
+
+      // STEP 2: Auditor Inspects
+      setStepActive('auditor');
+      document.getElementById('hudStepName').textContent = `STEP 2: AUDITOR APPROVED (${job.ai_executability_score || 90}% AI EASE)`;
+      showBubble(2, `Approved! ($3k-$6k sweet spot, Low Stress)`);
+      hopRobot(2);
+
+      const p3 = new THREE.Vector3().copy(robots[3].position).add(new THREE.Vector3(0, 5, 0));
+      await flyDoc(p2, p3, 1100);
+
+      // STEP 3: Strategist Crafts Pitch
+      setStepActive('strategist');
+      document.getElementById('hudStepName').textContent = 'STEP 3: STRATEGIST CRAFTING TAILORED PITCH';
+      showBubble(3, `Custom C# / API pitch generated for ${job.company}!`);
+      hopRobot(3);
+
+      const p4 = new THREE.Vector3().copy(robots[4].position).add(new THREE.Vector3(0, 5, 0));
+      await flyDoc(p3, p4, 1100);
+
+      // STEP 4: Dispatcher Launches
+      setStepActive('dispatcher');
+      document.getElementById('hudStepName').textContent = `STEP 4: DISPATCHED TO ${job.company.toUpperCase()}`;
+      showBubble(4, `WOOSH! Dispatched to ${job.portal}!`);
+      hopRobot(4);
+
+      const sky = new THREE.Vector3().copy(p4).add(new THREE.Vector3(0, 30, 0));
+      await flyDoc(p4, sky, 700);
+      flyingDoc.position.set(0, -50, 0);
+
+      // Highlight in feed
+      highlightJobCard(job.id);
+
+      // Schedule next real job cycle
+      if (isAutoStreaming) {
+        streamTimer = setTimeout(runNextPipelineCycle, 3500);
+      }
+    }
+
+    function setStepActive(stepName) {
+      document.querySelectorAll('.step-node').forEach(n => {
+        n.classList.remove('active', 'done');
+      });
+      const order = ['scout', 'auditor', 'strategist', 'dispatcher'];
+      const curIdx = order.indexOf(stepName);
+      order.forEach((s, idx) => {
+        const el = document.getElementById(`step_${s}`);
+        if (idx < curIdx) el.classList.add('done');
+        else if (idx === curIdx) el.classList.add('active');
+      });
+    }
+
+    function renderFeedList(jobs) {
+      const container = document.getElementById('jobsFeedView');
+      if (!jobs || jobs.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 30px; color: #64748b;">No jobs loaded yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = jobs.map((j, idx) => `
+        <div class="job-item-card" id="card_${j.id}">
+          <div class="card-top-row">
+            <div>
+              <div class="job-title-text">${escapeHtml(j.title)}</div>
+              <div class="card-meta-row" style="margin-top: 3px;">
+                <span style="font-weight: 700; color: #fff;">${escapeHtml(j.company)}</span>
+                <span>•</span>
+                <span class="pill-tag pill-portal">${escapeHtml(j.portal || 'Remote Portal')}</span>
+                <span class="pill-tag pill-pay">${escapeHtml(j.estimated_monthly_pay || j.salary)}</span>
+                <span class="pill-tag pill-score">⚡ ${j.ai_executability_score || 90}% AI-Doable</span>
+              </div>
+            </div>
+            <span style="font-size: 0.68rem; font-family: var(--font-mono); color: #64748b;">${escapeHtml(j.date || 'Recent')}</span>
+          </div>
+
+          <div style="font-size: 0.76rem; color: #94a3b8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;">
+            ${escapeHtml((j.description || '').replace(/<[^>]*>?/gm, ' ').substring(0, 160))}...
+          </div>
+
+          <div class="card-action-row">
+            <span style="font-size: 0.7rem; color: #34d399; font-weight: 700;">🟢 ${escapeHtml(j.stress_level || 'Low Stress / Task Based')}</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-pitch-view" onclick="openPitchModal(${idx})">📄 View Pitch</button>
+              <a href="${j.url}" target="_blank" class="btn-apply-direct">Apply on Portal ↗</a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function highlightJobCard(id) {
+      const card = document.getElementById(`card_${id}`);
+      if (card) {
+        card.classList.add('highlight-new');
+        setTimeout(() => card.classList.remove('highlight-new'), 2500);
+      }
+    }
+
+    function toggleAutoStream() {
+      isAutoStreaming = !isAutoStreaming;
+      const dot = document.getElementById('streamDot');
+      const text = document.getElementById('streamBtnText');
+      if (isAutoStreaming) {
+        dot.style.color = '#10b981';
+        text.textContent = 'Streaming: ON';
+        document.getElementById('pipelineStatusText').textContent = 'Auto-Streaming Real Jobs Live';
+        runNextPipelineCycle();
+      } else {
+        dot.style.color = '#ef4444';
+        text.textContent = 'Streaming: PAUSED';
+        document.getElementById('pipelineStatusText').textContent = 'Streaming Paused';
+        clearTimeout(streamTimer);
+      }
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tabJobsBtn').classList.toggle('active', tab === 'jobs');
+      document.getElementById('tabLogsBtn').classList.toggle('active', tab === 'logs');
+      document.getElementById('jobsFeedView').classList.toggle('hidden', tab !== 'jobs');
+      document.getElementById('cyberLogsView').classList.toggle('hidden', tab !== 'logs');
+    }
+
+    function openPitchModal(idx) {
+      const j = realJobsQueue[idx];
+      if (!j) return;
+      document.getElementById('modalJobTitle').textContent = j.title;
+      document.getElementById('modalCompany').textContent = `${j.company} • ${j.portal || 'Portal'} • ${j.estimated_monthly_pay || j.salary}`;
+      document.getElementById('modalReason').textContent = j.reason || "Approved task-oriented remote developer role matching modern AI tooling.";
+      document.getElementById('modalPitch').textContent = j.tailored_pitch || "Pitch ready to send.";
+      document.getElementById('modalApplyLink').href = j.url;
+      document.getElementById('pitchModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('pitchModal').classList.remove('active');
+    }
+
+    function copyModalPitch() {
+      const text = document.getElementById('modalPitch').innerText;
+      navigator.clipboard.writeText(text).then(() => alert("Pitch copied to clipboard!"));
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Init 3D & Load Real Jobs
+    init3D();
+    loadRealJobs();
   </script>
 </body>
 </html>
