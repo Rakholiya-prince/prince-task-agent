@@ -3,111 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Prince's 3D Autonomous War Room | Multi-Agent Command Deck</title>
+  <title>Prince's Holographic Autonomous War Room | 3D Cyber Command</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Three.js for 3D Cyber Deck Visuals -->
+  <!-- Three.js + OrbitControls for Smooth 3D Navigation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Tween.js for Smooth Camera Zooms -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 
   <style>
     :root {
-      --bg-void: #060608;
-      --bg-panel: rgba(18, 18, 24, 0.82);
-      --border-cyber: rgba(6, 182, 212, 0.25);
+      --void-black: #030305;
+      --cyber-panel: rgba(10, 12, 18, 0.88);
+      --border-neon: rgba(6, 182, 212, 0.35);
       --border-subtle: rgba(255, 255, 255, 0.08);
       
-      --cyan-glow: #06b6d4;
-      --emerald-glow: #10b981;
-      --purple-glow: #a855f7;
-      --amber-glow: #f59e0b;
+      --cyan-core: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --emerald-core: #10b981;
+      --purple-core: #a855f7;
+      --amber-core: #f59e0b;
+      --rose-core: #f43f5e;
       
-      --text-white: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      
-      --font-sans: 'Plus Jakarta Sans', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --font-ui: 'Plus Jakarta Sans', sans-serif;
+      --font-tech: 'JetBrains Mono', monospace;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: var(--bg-void);
-      color: var(--text-white);
-      font-family: var(--font-sans);
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    /* 3D Canvas Background */
-    #canvas3d {
-      position: fixed;
-      top: 0;
-      left: 0;
+      background-color: var(--void-black);
+      color: #f8fafc;
+      font-family: var(--font-ui);
+      overflow: hidden;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
-      pointer-events: all;
     }
 
-    /* UI Overlay */
-    .deck-container {
-      position: relative;
-      z-index: 10;
-      max-width: 1360px;
-      margin: 0 auto;
-      padding: 20px;
+    /* 3D Viewport */
+    #viewport3d {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+    #viewport3d:active {
+      cursor: grabbing;
+    }
+
+    /* Scanline & Vignette Overlay */
+    .crt-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(circle at center, transparent 60%, rgba(3, 3, 5, 0.85) 100%),
+                  repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0px, rgba(0, 0, 0, 0.12) 1px, transparent 1px, transparent 2px);
+    }
+
+    /* HUD OVERLAY LAYER */
+    .hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
     }
 
     .interactive {
       pointer-events: all;
     }
 
-    /* TOP HEADER */
-    header {
+    /* TOP COMMAND BAR */
+    .top-command-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      background: var(--bg-panel);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-cyber);
-      border-radius: 18px;
-      padding: 16px 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 32px rgba(6, 182, 212, 0.12);
+      background: var(--cyber-panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      padding: 14px 22px;
+      box-shadow: 0 0 35px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .brand-group {
+    .brand-title {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .brand-crest {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+    .holo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #06b6d4, #10b981);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+      font-size: 22px;
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+      animation: pulseCore 3s infinite alternate;
+    }
+    @keyframes pulseCore {
+      from { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+      to { box-shadow: 0 0 30px rgba(16, 185, 129, 0.8); }
     }
 
-    .brand-title h1 {
-      font-size: 1.35rem;
+    .brand-text h1 {
+      font-size: 1.25rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       display: flex;
@@ -115,505 +143,642 @@
       gap: 10px;
     }
 
-    .badge-live {
-      font-size: 0.72rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 2px 8px;
-      border-radius: 6px;
-      display: inline-flex;
+    .brand-text p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-family: var(--font-tech);
+      display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 8px;
     }
 
-    .pulse-dot {
-      width: 6px;
-      height: 6px;
+    .status-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-      animation: blink 1.5s infinite;
+      box-shadow: 0 0 10px #10b981;
+      animation: blink 1.2s infinite;
     }
-    @keyframes blink {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(0.8); }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .telemetry-pills {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .header-ctrls {
+    .telem-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: var(--font-tech);
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .telem-pill span:first-child {
+      font-size: 0.65rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .telem-pill span:last-child {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .top-actions {
       display: flex;
       gap: 10px;
     }
 
-    .btn {
-      padding: 9px 18px;
+    .btn-holo {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(16, 185, 129, 0.9));
+      color: #000;
+      font-weight: 800;
+      border: none;
+      padding: 10px 18px;
       border-radius: 10px;
-      font-size: 0.88rem;
-      font-weight: 700;
       cursor: pointer;
-      font-family: var(--font-sans);
-      display: inline-flex;
+      font-family: var(--font-ui);
+      font-size: 0.86rem;
+      display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.2s ease;
-      text-decoration: none;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+      transition: all 0.2s;
     }
-
-    .btn-command {
-      background: linear-gradient(135deg, #06b6d4, #10b981);
-      color: #000;
-      border: none;
-      box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
-    }
-    .btn-command:hover {
+    .btn-holo:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 24px rgba(6, 182, 212, 0.6);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.8);
     }
 
-    .btn-glass {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-white);
+    .btn-dark {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
       border: 1px solid var(--border-subtle);
-    }
-    .btn-glass:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: var(--cyan-glow);
-    }
-
-    /* 3D HINT BANNER */
-    .hint-banner {
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      border-radius: 12px;
-      padding: 10px 18px;
-      margin-bottom: 20px;
-      font-size: 0.85rem;
-      color: #bae6fd;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-size: 0.86rem;
+      text-decoration: none;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-dark:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--cyan-core);
     }
 
-    /* AGENT CARDS GRID */
-    .agent-deck-grid {
+    /* BOTTOM DOCK & LIVE HUD */
+    .bottom-hud-dock {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: 320px 1fr 340px;
       gap: 16px;
-      margin-bottom: 20px;
+      align-items: end;
     }
 
-    .agent-node-card {
-      background: var(--bg-panel);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 18px;
-      transition: all 0.25s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .agent-node-card:hover {
-      border-color: var(--cyan-glow);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(6, 182, 212, 0.15);
-    }
-
-    .card-leader {
-      border-color: rgba(16, 185, 129, 0.4);
-      background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--bg-panel) 100%);
-      grid-column: 1 / -1;
-    }
-
-    .node-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .node-avatar {
-      font-size: 24px;
-    }
-
-    .node-role {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--cyan-glow);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .node-title {
-      font-size: 1.05rem;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    .node-status {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-      font-family: var(--font-mono);
-    }
-
-    /* LIVE TERMINAL LOGS */
-    .terminal-section {
-      background: rgba(10, 10, 14, 0.9);
+    /* AGENT QUICK SELECTOR (LEFT) */
+    .agent-selector-card {
+      background: var(--cyber-panel);
       backdrop-filter: blur(20px);
-      border: 1px solid var(--border-cyber);
-      border-radius: 18px;
-      padding: 20px;
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
 
-    .terminal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .terminal-title {
-      font-size: 0.88rem;
+    .section-label {
+      font-family: var(--font-tech);
+      font-size: 0.72rem;
       font-weight: 700;
-      font-family: var(--font-mono);
-      color: var(--cyan-glow);
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
-    .log-stream {
-      font-family: var(--font-mono);
+    .agent-row-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
       font-size: 0.82rem;
-      color: #cbd5e1;
+      color: #e2e8f0;
+    }
+    .agent-row-btn:hover, .agent-row-btn.active {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--cyan-core);
+      transform: translateX(4px);
+    }
+
+    /* CENTER CYBER LOG STREAM */
+    .center-log-deck {
+      background: rgba(8, 10, 14, 0.94);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      padding: 16px 20px;
       height: 180px;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      padding-right: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
     }
 
-    .log-entry {
-      line-height: 1.5;
-      padding: 3px 0;
+    .log-stream-content {
+      flex: 1;
+      overflow-y: auto;
+      font-family: var(--font-tech);
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-right: 6px;
+    }
+    .log-item {
+      line-height: 1.45;
+      padding: 2px 0;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.04);
     }
+    .log-item.lead { color: #34d399; font-weight: 600; }
+    .log-item.scout { color: #38bdf8; }
+    .log-item.auditor { color: #c084fc; }
+    .log-item.dispatch { color: #fb7185; }
 
-    .spinner {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(0, 0, 0, 0.3);
-      border-top-color: #000;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    /* RIGHT AGENT INSPECT CARD */
+    .inspect-panel {
+      background: var(--cyber-panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 768px) {
-      .deck-container { padding: 12px; }
-      header { flex-direction: column; align-items: flex-start; }
-      .header-ctrls { width: 100%; }
-      .btn { flex: 1; justify-content: center; }
+    .inspect-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .inspect-avatar {
+      font-size: 26px;
+      background: rgba(255, 255, 255, 0.06);
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .inspect-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .inspect-role {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      font-family: var(--font-tech);
+    }
+
+    .inspect-status-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-family: var(--font-tech);
+      font-size: 0.78rem;
+      color: #38bdf8;
+      line-height: 1.4;
+    }
+
+    /* 3D FLOATING LABELS */
+    .holo-label-3d {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      font-family: var(--font-tech);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid var(--cyan-core);
+      padding: 3px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+      transition: opacity 0.2s;
+    }
+
+    @media (max-width: 900px) {
+      .bottom-hud-dock {
+        grid-template-columns: 1fr;
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+      .hud-layer { padding: 12px; }
+      .telemetry-pills { display: none; }
     }
   </style>
 </head>
 <body>
-  <!-- 3D Scene Viewport -->
-  <canvas id="canvas3d"></canvas>
+  <!-- 3D WebGL Canvas -->
+  <canvas id="viewport3d"></canvas>
+  <div class="crt-overlay"></div>
 
-  <!-- Interactive Cyber Command Overlay -->
-  <div class="deck-container">
-    <header class="interactive">
-      <div class="brand-group">
-        <div class="brand-crest">👑</div>
-        <div class="brand-title">
-          <h1>Prince's Autonomous War Room</h1>
-          <p style="font-size: 0.82rem; color: var(--text-dim); margin-top: 2px;">
-            <span class="badge-live"><span class="pulse-dot"></span> 5 Specialized AI Brains + Team Lead Active</span>
+  <!-- HUD INTERACTIVE LAYER -->
+  <div class="hud-layer">
+    <!-- TOP BAR -->
+    <header class="top-command-bar interactive">
+      <div class="brand-title">
+        <div class="holo-badge">👑</div>
+        <div class="brand-text">
+          <h1>Prince's 3D Autonomous War Room</h1>
+          <p>
+            <span class="status-dot"></span> 5 Autonomous Brains + Chief of Staff Active
           </p>
         </div>
       </div>
-      <div class="header-ctrls">
-        <button id="cycleBtn" class="btn btn-command" onclick="triggerMultiAgentCycle()">
-          <span>⚡</span> <span id="btnText">Command Team Cycle</span>
+
+      <div class="telemetry-pills">
+        <div class="telem-pill">
+          <span>Target Sweet Spot</span>
+          <span>$3k - $6k / mo</span>
+        </div>
+        <div class="telem-pill">
+          <span>Stress Filter</span>
+          <span style="color: #34d399;">Zero Meetings &lt; 5h</span>
+        </div>
+        <div class="telem-pill">
+          <span>AI Precision</span>
+          <span style="color: #c084fc;">99.8% (0 Shortcuts)</span>
+        </div>
+        <div class="telem-pill">
+          <span>Daily Reports</span>
+          <span style="color: #f59e0b;">7:45 AM & 8:30 PM</span>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="cycleBtn" class="btn-holo" onclick="triggerCycle()">
+          <span>⚡</span> <span id="btnText">Command Live Cycle</span>
         </button>
-        <a href="/jobs" class="btn btn-glass">
-          <span>📊</span> Job Radar Feed
+        <a href="/jobs" class="btn-dark">
+          <span>📊</span> Radar Feed
         </a>
       </div>
     </header>
 
-    <div class="hint-banner interactive">
-      <span>🌌 <strong>Interactive 3D Deck:</strong> Drag with mouse or swipe on screen to rotate and inspect the 3D Agent Network!</span>
-      <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #38bdf8;">Multi-Agent Mesh: 100% Synchronized</span>
-    </div>
-
-    <!-- AGENT STATUS CARDS -->
-    <div class="agent-deck-grid interactive">
-      <!-- LEADER -->
-      <div class="agent-node-card card-leader" id="cardLead">
-        <div class="node-header">
-          <div class="node-role">Chief of Staff & Quality Controller</div>
-          <span class="badge-live">99.8% Precision</span>
+    <!-- BOTTOM HUD DOCK -->
+    <div class="bottom-hud-dock interactive">
+      <!-- AGENT SELECTOR -->
+      <div class="agent-selector-card">
+        <div class="section-label">
+          <span>📡</span> Multi-Agent Array
         </div>
-        <div class="node-title">👑 Antigravity Orchestrator (Team Lead)</div>
-        <div class="node-status" id="leadStatus">Supervising 24/7 Operations across all 5 specialist agents...</div>
+        <div class="agent-row-btn active" onclick="focusAgent(0)">
+          <span>👑 Chief of Staff (Team Lead)</span>
+          <span style="color: #34d399;">100%</span>
+        </div>
+        <div class="agent-row-btn" onclick="focusAgent(1)">
+          <span>🕵️ Agent 1: Scout Brain</span>
+          <span style="color: #38bdf8;">7 Portals</span>
+        </div>
+        <div class="agent-row-btn" onclick="focusAgent(2)">
+          <span>🧠 Agent 2: Auditor Brain</span>
+          <span style="color: #c084fc;">$3k-$6k</span>
+        </div>
+        <div class="agent-row-btn" onclick="focusAgent(3)">
+          <span>📝 Agent 3: Strategist Brain</span>
+          <span style="color: #fbbf24;">C# / API</span>
+        </div>
+        <div class="agent-row-btn" onclick="focusAgent(4)">
+          <span>🚀 Agent 4: Dispatcher Brain</span>
+          <span style="color: #f43f5e;">Dispatched</span>
+        </div>
+        <div class="agent-row-btn" onclick="focusAgent(5)">
+          <span>📡 Agent 5: Radar Brain</span>
+          <span style="color: #10b981;">Listening</span>
+        </div>
       </div>
 
-      <!-- AGENT 1 -->
-      <div class="agent-node-card">
-        <div class="node-header">
-          <div class="node-avatar">🕵️</div>
-          <div class="node-role">Agent 1</div>
+      <!-- STREAMING LOGS -->
+      <div class="center-log-deck">
+        <div class="section-label" style="justify-content: space-between;">
+          <span>⚡ Real-Time Cognitive Decision Matrix (Zero Shortcuts)</span>
+          <span style="color: #64748b;">Render Cloud 24/7 Engine</span>
         </div>
-        <div class="node-title">Scout Brain</div>
-        <div class="node-status" id="scoutStatus">Standby. Ready to harvest 7+ global portals.</div>
+        <div class="log-stream-content" id="logContent">
+          <div class="log-item lead">[SYSTEM] 👑 Team Lead: Initializing volumetric cyber-deck for Boss Prince...</div>
+          <div class="log-item scout">[SCOUT] 🕵️ Agent 1: Harvesting verified job boards across US, UK, Germany, Japan, UAE...</div>
+          <div class="log-item auditor">[AUDITOR] 🧠 Agent 2: Sweet spot validation active ($3,000 - $6,000/mo). Rejecting 100k+ traps.</div>
+          <div class="log-item">[STRATEGIST] 📝 Agent 3: Asynchronous C# API high-conversion proposals calibrated.</div>
+          <div class="log-item dispatch">[DISPATCH] 🚀 Agent 4: Zero duplicate submission guarantee verified.</div>
+        </div>
       </div>
 
-      <!-- AGENT 2 -->
-      <div class="agent-node-card">
-        <div class="node-header">
-          <div class="node-avatar">🧠</div>
-          <div class="node-role">Agent 2</div>
+      <!-- INSPECT CARD -->
+      <div class="inspect-panel">
+        <div class="section-label"><span>🔍</span> Agent Telemetry Inspector</div>
+        <div class="inspect-header">
+          <div class="inspect-avatar" id="inspAvatar">👑</div>
+          <div>
+            <div class="inspect-name" id="inspName">Antigravity Chief of Staff</div>
+            <div class="inspect-role" id="inspRole">Team Commander & Quality Overseer</div>
+          </div>
         </div>
-        <div class="node-title">Auditor Brain</div>
-        <div class="node-status" id="auditorStatus">Sweet Spot: $3k - $6k/mo. Stress Filter Active.</div>
-      </div>
-
-      <!-- AGENT 3 -->
-      <div class="agent-node-card">
-        <div class="node-header">
-          <div class="node-avatar">📝</div>
-          <div class="node-role">Agent 3</div>
+        <div class="inspect-status-box" id="inspStatus">
+          Supervising 24/7 Operations across all 5 specialist agents with 99.8% precision.
         </div>
-        <div class="node-title">Strategist Brain</div>
-        <div class="node-status" id="strategistStatus">Psychological Pitch & Tailored Bullet Points.</div>
-      </div>
-
-      <!-- AGENT 4 -->
-      <div class="agent-node-card">
-        <div class="node-header">
-          <div class="node-avatar">🚀</div>
-          <div class="node-role">Agent 4</div>
-        </div>
-        <div class="node-title">Dispatcher Brain</div>
-        <div class="node-status" id="dispatcherStatus">Verifying deliverability & logging submissions.</div>
-      </div>
-
-      <!-- AGENT 5 -->
-      <div class="agent-node-card">
-        <div class="node-header">
-          <div class="node-avatar">📡</div>
-          <div class="node-role">Agent 5</div>
-        </div>
-        <div class="node-title">Radar Brain</div>
-        <div class="node-status" id="radarStatus">Monitoring incoming responses & interview signals.</div>
-      </div>
-    </div>
-
-    <!-- LIVE CYBER LOGS -->
-    <div class="terminal-section interactive">
-      <div class="terminal-header">
-        <div class="terminal-title">
-          <span>⚡</span> LIVE MULTI-AGENT THOUGHT & DECISION STREAM
-        </div>
-        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: #64748b;">Protocol: Direct Cognitive Loop</span>
-      </div>
-      <div class="log-stream" id="logStream">
-        <div class="log-entry">[00:00:00 UTC] 👑 Team Lead: Initializing Prince's Autonomous Multi-Agent Command Deck...</div>
-        <div class="log-entry">[00:00:01 UTC] 🕵️ Scout Agent: Calibrating global endpoints (US, UK, Germany, Japan, UAE)...</div>
-        <div class="log-entry">[00:00:02 UTC] 🧠 Auditor Agent: Loaded criteria: $3,000 - $6,000/mo sweet spot, zero meeting stress.</div>
       </div>
     </div>
   </div>
 
-  <!-- THREE.JS 3D BACKGROUND ENGINE -->
+  <!-- 3D THREE.JS VOLUMETRIC SCENE SCRIPT -->
   <script>
-    let scene, camera, renderer, nodesGroup, connectionsGroup, particlesGroup;
-    let isDragging = false, prevMousePos = { x: 0, y: 0 };
+    let scene, camera, renderer, controls;
+    let agentStations = [];
+    let beamParticles = [];
+    let currentFocus = 0;
 
-    function init3D() {
-      const canvas = document.getElementById('canvas3d');
+    const AGENT_CONFIGS = [
+      { id: 0, name: "Antigravity Chief of Staff", role: "Team Commander & Quality Overseer", avatar: "👑", color: 0x10b981, pos: [0, 6, 0] },
+      { id: 1, name: "Agent 1 (Scout Brain)", role: "Global Multi-Portal Research Specialist", avatar: "🕵️", color: 0x06b6d4, pos: [-38, 3, -15] },
+      { id: 2, name: "Agent 2 (Auditor Brain)", role: "Stress & Feasibility Evaluation Engine", avatar: "🧠", color: 0xa855f7, pos: [-24, 3, 30] },
+      { id: 3, name: "Agent 3 (Strategist Brain)", role: "Psychological Pitch & Resume Architect", avatar: "📝", color: 0xf59e0b, pos: [24, 3, 30] },
+      { id: 4, name: "Agent 4 (Dispatcher Brain)", role: "Submission & Protocol Executioner", avatar: "🚀", color: 0xf43f5e, pos: [38, 3, -15] },
+      { id: 5, name: "Agent 5 (Radar Brain)", role: "Callback & Interview Signal Detector", avatar: "📡", color: 0x38bdf8, pos: [0, 3, -42] }
+    ];
+
+    function initVolumetric3D() {
+      const canvas = document.getElementById('viewport3d');
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x060608, 0.002);
+      scene.fog = new THREE.FogExp2(0x030305, 0.0035);
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 30, 95);
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera.position.set(0, 48, 95);
 
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-      nodesGroup = new THREE.Group();
-      connectionsGroup = new THREE.Group();
-      particlesGroup = new THREE.Group();
+      controls = new THREE.OrbitControls(camera, canvas);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.maxPolarAngle = Math.PI / 2.05; // prevent going below floor
+      controls.minDistance = 25;
+      controls.maxDistance = 180;
+      controls.target.set(0, 6, 0);
 
-      scene.add(nodesGroup);
-      scene.add(connectionsGroup);
-      scene.add(particlesGroup);
+      // 1. Cyber Holographic Grid Floor
+      const gridHelper = new THREE.GridHelper(180, 45, 0x06b6d4, 0x1e293b);
+      gridHelper.position.y = 0;
+      gridHelper.material.transparent = true;
+      gridHelper.material.opacity = 0.45;
+      scene.add(gridHelper);
 
-      // 1. Central Core Node (Team Lead)
-      const leadGeo = new THREE.IcosahedronGeometry(6, 2);
-      const leadMat = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true });
-      const leadMesh = new THREE.Mesh(leadGeo, leadMat);
-      leadMesh.position.set(0, 0, 0);
-      nodesGroup.add(leadMesh);
-
-      // Glowing Core sphere inside lead
-      const innerLeadGeo = new THREE.SphereGeometry(3.5, 16, 16);
-      const innerLeadMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-      const innerLeadMesh = new THREE.Mesh(innerLeadGeo, innerLeadMat);
-      leadMesh.add(innerLeadMesh);
-
-      // 2. Five Orbital Specialist Agent Nodes
-      const agentColors = [0x06b6d4, 0xa855f7, 0xf59e0b, 0xec4899, 0x3b82f6];
-      const radius = 45;
-      const agentPositions = [];
-
-      for (let i = 0; i < 5; i++) {
-        const angle = (i / 5) * Math.PI * 2;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y = Math.sin(i * 1.5) * 8;
-
-        const nodeGeo = new THREE.OctahedronGeometry(4, 1);
-        const nodeMat = new THREE.MeshBasicMaterial({ color: agentColors[i], wireframe: true });
-        const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
-        nodeMesh.position.set(x, y, z);
-        nodesGroup.add(nodeMesh);
-        agentPositions.push(new THREE.Vector3(x, y, z));
-
-        // Connect Leader to Agent Node with glowing lines
-        const lineGeo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(x, y, z)
-        ]);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.35 });
-        const line = new THREE.Line(lineGeo, lineMat);
-        connectionsGroup.add(line);
+      // Radial floor rings
+      for (let r = 25; r <= 85; r += 20) {
+        const ringGeo = new THREE.RingGeometry(r - 0.2, r + 0.2, 64);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.25 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.1;
+        scene.add(ring);
       }
 
-      // Connect peripheral circle between agents
-      for (let i = 0; i < 5; i++) {
-        const p1 = agentPositions[i];
-        const p2 = agentPositions[(i + 1) % 5];
-        const circGeo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
-        const circMat = new THREE.LineBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.4 });
-        connectionsGroup.add(new THREE.Line(circGeo, circMat));
-      }
+      // 2. Build 6 3D Holographic Agent Stations
+      AGENT_CONFIGS.forEach((cfg, idx) => {
+        const stationGroup = new THREE.Group();
+        stationGroup.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
 
-      // 3. Ambient Particle Cloud
-      const partCount = 450;
-      const partGeo = new THREE.BufferGeometry();
-      const partPos = new Float32Array(partCount * 3);
+        // A. Base Pedestal (Glowing Holographic Cylinder)
+        const baseGeo = new THREE.CylinderGeometry(cfg.id === 0 ? 7 : 4.5, cfg.id === 0 ? 8 : 5.5, 4, 32);
+        const baseMat = new THREE.MeshBasicMaterial({ color: cfg.color, wireframe: true, transparent: true, opacity: 0.7 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = 0;
+        stationGroup.add(base);
 
-      for (let i = 0; i < partCount * 3; i += 3) {
-        partPos[i] = (Math.random() - 0.5) * 220;
-        partPos[i + 1] = (Math.random() - 0.5) * 140;
-        partPos[i + 2] = (Math.random() - 0.5) * 220;
-      }
-      partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
-      const partMat = new THREE.PointsMaterial({ size: 1.6, color: 0x06b6d4, transparent: true, opacity: 0.5 });
-      particlesGroup.add(new THREE.Points(partGeo, partMat));
+        // Core glow ring on base
+        const coreRingGeo = new THREE.RingGeometry(cfg.id === 0 ? 5 : 3, cfg.id === 0 ? 6.5 : 4.2, 32);
+        const coreRingMat = new THREE.MeshBasicMaterial({ color: cfg.color, side: THREE.DoubleSide });
+        const coreRing = new THREE.Mesh(coreRingGeo, coreRingMat);
+        coreRing.rotation.x = Math.PI / 2;
+        coreRing.position.y = 2.05;
+        stationGroup.add(coreRing);
 
-      // Interaction listeners
-      window.addEventListener('resize', onWindowResize);
-      window.addEventListener('mousedown', (e) => { isDragging = true; prevMousePos = { x: e.clientX, y: e.clientY }; });
-      window.addEventListener('mouseup', () => { isDragging = false; });
-      window.addEventListener('mousemove', onMouseMove);
-      
-      window.addEventListener('touchstart', (e) => { isDragging = true; prevMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
-      window.addEventListener('touchend', () => { isDragging = false; });
-      window.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        const deltaX = e.touches[0].clientX - prevMousePos.x;
-        const deltaY = e.touches[0].clientY - prevMousePos.y;
-        nodesGroup.rotation.y += deltaX * 0.005;
-        connectionsGroup.rotation.y += deltaX * 0.005;
-        prevMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        // B. Floating Holographic Polyhedron (Agent Brain Avatar)
+        const polyGeo = cfg.id === 0 
+          ? new THREE.IcosahedronGeometry(4.5, 2)
+          : new THREE.OctahedronGeometry(3.2, 1);
+        const polyMat = new THREE.MeshBasicMaterial({ color: cfg.color, wireframe: true });
+        const poly = new THREE.Mesh(polyGeo, polyMat);
+        poly.position.y = cfg.id === 0 ? 9 : 7;
+        stationGroup.add(poly);
+
+        // Inner solid glowing core
+        const innerGeo = new THREE.SphereGeometry(cfg.id === 0 ? 2.8 : 1.8, 16, 16);
+        const innerMat = new THREE.MeshBasicMaterial({ color: cfg.color });
+        const inner = new THREE.Mesh(innerGeo, innerMat);
+        inner.position.y = poly.position.y;
+        stationGroup.add(inner);
+
+        // Energy orbit rings around brain
+        const orbitGeo = new THREE.TorusGeometry(cfg.id === 0 ? 5.8 : 4.2, 0.12, 8, 48);
+        const orbitMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.8 });
+        const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+        orbit.position.y = poly.position.y;
+        orbit.rotation.x = Math.PI / 3;
+        stationGroup.add(orbit);
+
+        stationGroup.userData = { cfg: cfg, poly: poly, orbit: orbit, baseY: cfg.pos[1] };
+        scene.add(stationGroup);
+        agentStations.push(stationGroup);
+
+        // C. Connect each specialist to Central Leader with glowing laser conduits
+        if (cfg.id !== 0) {
+          const leadPos = new THREE.Vector3(0, 8, 0);
+          const agentPos = new THREE.Vector3(cfg.pos[0], cfg.pos[1] + 6, cfg.pos[2]);
+
+          const conduitGeo = new THREE.BufferGeometry().setFromPoints([leadPos, agentPos]);
+          const conduitMat = new THREE.LineBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.45 });
+          scene.add(new THREE.Line(conduitGeo, conduitMat));
+
+          // Create moving photon energy packets along this path
+          createPhotonStreams(leadPos, agentPos, cfg.color);
+        }
       });
 
+      // 3. Ambient Particle Starfield
+      const pCount = 500;
+      const pGeo = new THREE.BufferGeometry();
+      const pPos = new Float32Array(pCount * 3);
+      for (let i = 0; i < pCount * 3; i += 3) {
+        pPos[i] = (Math.random() - 0.5) * 240;
+        pPos[i + 1] = Math.random() * 120;
+        pPos[i + 2] = (Math.random() - 0.5) * 240;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+      const pMat = new THREE.PointsMaterial({ size: 1.5, color: 0x06b6d4, transparent: true, opacity: 0.4 });
+      scene.add(new THREE.Points(pGeo, pMat));
+
+      window.addEventListener('resize', onResize);
       animate();
     }
 
-    function onMouseMove(e) {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-      nodesGroup.rotation.y += deltaX * 0.005;
-      connectionsGroup.rotation.y += deltaX * 0.005;
-      prevMousePos = { x: e.clientX, y: e.clientY };
+    function createPhotonStreams(start, end, color) {
+      const pCount = 6;
+      for (let i = 0; i < pCount; i++) {
+        const geo = new THREE.SphereGeometry(0.35, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: color });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+        beamParticles.push({
+          mesh: mesh,
+          start: start,
+          end: end,
+          progress: i / pCount,
+          speed: 0.006 + Math.random() * 0.004
+        });
+      }
     }
 
-    function onWindowResize() {
+    function onResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    function animate() {
+    function animate(time) {
       requestAnimationFrame(animate);
-      if (!isDragging) {
-        nodesGroup.rotation.y += 0.002;
-        connectionsGroup.rotation.y += 0.002;
-        particlesGroup.rotation.y += 0.0006;
-      }
+      TWEEN.update();
+
+      // Rotate Station Brains & Orbits
+      agentStations.forEach(st => {
+        st.userData.poly.rotation.y += 0.015;
+        st.userData.poly.rotation.x += 0.008;
+        st.userData.orbit.rotation.z += 0.02;
+        // Floating hover
+        st.position.y = st.userData.baseY + Math.sin(Date.now() * 0.0025 + st.userData.cfg.id) * 0.7;
+      });
+
+      // Animate Moving Photons along Laser Lines
+      beamParticles.forEach(p => {
+        p.progress += p.speed;
+        if (p.progress > 1) p.progress = 0;
+        p.mesh.position.lerpVectors(p.start, p.end, p.progress);
+      });
+
+      controls.update();
       renderer.render(scene, camera);
     }
 
-    init3D();
+    initVolumetric3D();
 
     // =========================================================
-    // LIVE TELEMETRY & MULTI-AGENT SYNC
+    // FOCUS & INTERACTIVE CAMERA ZOOM
     // =========================================================
-    async function fetchTelemetry() {
+    function focusAgent(idx) {
+      currentFocus = idx;
+      const targetCfg = AGENT_CONFIGS[idx];
+      
+      // Update UI selection
+      document.querySelectorAll('.agent-row-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx);
+      });
+
+      // Update Inspector Panel
+      document.getElementById('inspAvatar').textContent = targetCfg.avatar;
+      document.getElementById('inspName').textContent = targetCfg.name;
+      document.getElementById('inspRole').textContent = targetCfg.role;
+
+      // Smooth 3D Camera Tween
+      const camOffset = idx === 0 ? new THREE.Vector3(0, 35, 75) : new THREE.Vector3(targetCfg.pos[0] * 1.5, targetCfg.pos[1] + 20, targetCfg.pos[2] * 1.5 + 30);
+      const lookTarget = new THREE.Vector3(targetCfg.pos[0], targetCfg.pos[1] + 5, targetCfg.pos[2]);
+
+      new TWEEN.Tween(camera.position)
+        .to(camOffset, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to(lookTarget, 1200)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    // =========================================================
+    // TELEMETRY SYNC
+    // =========================================================
+    async function syncTelemetry() {
       try {
         const res = await fetch('/api/team/status');
         const data = await res.json();
-        if (data.lead) {
-          document.getElementById('leadStatus').textContent = data.lead.status || 'Active';
+        
+        // Update Inspector text based on current focused agent
+        if (currentFocus === 0 && data.lead) {
+          document.getElementById('inspStatus').textContent = data.lead.status || 'Active';
+        } else if (data.agents && data.agents[currentFocus - 1]) {
+          document.getElementById('inspStatus').textContent = data.agents[currentFocus - 1].status || 'Active';
         }
-        if (data.agents && data.agents.length >= 5) {
-          document.getElementById('scoutStatus').textContent = data.agents[0].status || 'Active';
-          document.getElementById('auditorStatus').textContent = data.agents[1].status || 'Active';
-          document.getElementById('strategistStatus').textContent = data.agents[2].status || 'Active';
-          document.getElementById('dispatcherStatus').textContent = data.agents[3].status || 'Active';
-          document.getElementById('radarStatus').textContent = data.agents[4].status || 'Active';
-        }
+
+        // Update Live Stream Logs
         if (data.live_logs && data.live_logs.length > 0) {
-          const stream = document.getElementById('logStream');
-          stream.innerHTML = data.live_logs.map(l => `<div class="log-entry">${escapeHtml(l)}</div>`).join('');
-          stream.scrollTop = stream.scrollHeight;
+          const logBox = document.getElementById('logContent');
+          logBox.innerHTML = data.live_logs.map(l => {
+            let cls = "";
+            if (l.includes("👑")) cls = "lead";
+            else if (l.includes("🕵️")) cls = "scout";
+            else if (l.includes("🧠")) cls = "auditor";
+            else if (l.includes("🚀")) cls = "dispatch";
+            return `<div class="log-item ${cls}">${escapeHtml(l)}</div>`;
+          }).join('');
+          logBox.scrollTop = logBox.scrollHeight;
         }
-      } catch (e) {
-        console.error("Telemetry sync error:", e);
+      } catch (err) {
+        console.error("Telemetry sync error:", err);
       }
     }
 
-    async function triggerMultiAgentCycle() {
+    async function triggerCycle() {
       const btn = document.getElementById('cycleBtn');
       const text = document.getElementById('btnText');
       btn.disabled = true;
-      text.innerHTML = '<span class="spinner"></span> Commanding Team...';
+      text.textContent = 'Commanding Team...';
 
       try {
         await fetch('/api/team/cycle', { method: 'POST' });
         setTimeout(() => {
-          fetchTelemetry();
+          syncTelemetry();
           btn.disabled = false;
-          text.textContent = 'Command Team Cycle';
-          alert('👑 Team Lead: Multi-Agent Cycle executed with 100% precision for Boss Prince!');
-        }, 4000);
+          text.textContent = 'Command Live Cycle';
+          alert('👑 Team Lead: High-precision cycle triggered across all 5 specialist brains for Boss Prince!');
+        }, 3500);
       } catch (e) {
         btn.disabled = false;
-        text.textContent = 'Command Team Cycle';
+        text.textContent = 'Command Live Cycle';
       }
     }
 
@@ -622,8 +787,8 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    fetchTelemetry();
-    setInterval(fetchTelemetry, 3000); // 3-second live pulse
+    syncTelemetry();
+    setInterval(syncTelemetry, 3000);
   </script>
 </body>
 </html>

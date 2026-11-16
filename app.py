@@ -32,7 +32,8 @@ START_TIME = time.time()
 last_morning_sent_date = ""
 last_night_sent_date = ""
 last_job_scan_time = 0
-last_job_report_date = ""
+last_morning_job_date = ""
+last_evening_job_date = ""
 
 # ----------------- AGENT TOOLS ----------------- #
 def tool_web_search(query: str) -> str:
@@ -573,7 +574,7 @@ def send_night_digest(chat_id: int = PRINCE_CHAT_ID):
 # ----------------- 24/7 BACKGROUND SCHEDULER ----------------- #
 def run_daily_scheduler():
     """Background daemon checking IST time for daily triggers & running 24/7 autonomous job radar."""
-    global last_morning_sent_date, last_night_sent_date, last_job_scan_time, last_job_report_date
+    global last_morning_sent_date, last_night_sent_date, last_job_scan_time, last_morning_job_date, last_evening_job_date
     print("[*] 24/7 Daily Learning & Global Job Radar Scheduler started...")
     
     last_ping_time = time.time()
@@ -582,7 +583,7 @@ def run_daily_scheduler():
     time.sleep(15)
     try:
         print("[*] Triggering startup Global Job Radar scan...")
-        threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+        threading.Thread(target=multi_agent_team.orchestrator.execute_team_cycle, args=(PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
         last_job_scan_time = time.time()
     except Exception as e:
         print(f"[!] Initial job scan error: {e}")
@@ -596,35 +597,46 @@ def run_daily_scheduler():
             hour = ist_now.hour
             minute = ist_now.minute
             
-            # 1. Morning Trigger: 7:30 AM IST (Hour 7, Minute 30)
+            # 1. Morning Digest Trigger: 7:30 AM IST (Hour 7, Minute 30)
             if hour == 7 and minute >= 30 and minute <= 35:
                 if last_morning_sent_date != today_str:
                     print(f"[*] Triggering 7:30 AM IST Morning Digest for {today_str}...")
                     send_morning_digest(PRINCE_CHAT_ID)
                     last_morning_sent_date = today_str
+
+            # 2. Morning Job Briefing: 7:45 AM IST (Hour 7, Minute 45)
+            if hour == 7 and minute >= 45 and minute <= 50:
+                if last_morning_job_date != today_str:
+                    print(f"[*] Sending 7:45 AM IST Morning Job Briefing for {today_str}...")
+                    try:
+                        summary_msg = "🌅 *MORNING EXECUTIVE JOB BRIEFING FOR BOSS PRINCE*\n" + job_hunter.generate_daily_jobs_telegram_summary()
+                        telegram_send_message(PRINCE_CHAT_ID, summary_msg)
+                    except Exception as e:
+                        print(f"[!] Error sending morning job report: {e}")
+                    last_morning_job_date = today_str
             
-            # 2. Night Trigger: 9:00 PM IST (Hour 21, Minute 00)
+            # 3. Evening Comprehensive Job Report: 8:30 PM IST (Hour 20, Minute 30)
+            if hour == 20 and minute >= 30 and minute <= 35:
+                if last_evening_job_date != today_str:
+                    print(f"[*] Sending 8:30 PM IST Evening Job Report for {today_str}...")
+                    try:
+                        summary_msg = "🌙 *EVENING COMPREHENSIVE JOB REPORT FOR BOSS PRINCE*\n" + job_hunter.generate_daily_jobs_telegram_summary()
+                        telegram_send_message(PRINCE_CHAT_ID, summary_msg)
+                    except Exception as e:
+                        print(f"[!] Error sending evening job report: {e}")
+                    last_evening_job_date = today_str
+
+            # 4. Night Digest Trigger: 9:00 PM IST (Hour 21, Minute 00)
             if hour == 21 and minute >= 0 and minute <= 5:
                 if last_night_sent_date != today_str:
                     print(f"[*] Triggering 9:00 PM IST Night Digest for {today_str}...")
                     send_night_digest(PRINCE_CHAT_ID)
                     last_night_sent_date = today_str
 
-            # 3. Daily Global Job Radar Report: 9:15 PM IST (Hour 21, Minute 15)
-            if hour == 21 and minute >= 15 and minute <= 20:
-                if last_job_report_date != today_str:
-                    print(f"[*] Sending 9:15 PM IST Daily Job Radar Report for {today_str}...")
-                    try:
-                        summary_msg = job_hunter.generate_daily_jobs_telegram_summary()
-                        telegram_send_message(PRINCE_CHAT_ID, summary_msg)
-                    except Exception as e:
-                        print(f"[!] Error sending daily job report: {e}")
-                    last_job_report_date = today_str
-
-            # 4. Periodic Autonomous Job Scanning (Every 4 hours = 14400 seconds)
+            # 5. Periodic Autonomous Job Scanning (Every 4 hours = 14400 seconds)
             if time.time() - last_job_scan_time > 14400:
                 print("[*] Periodic 4-hour Global Job Radar Scan executing...")
-                threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+                threading.Thread(target=multi_agent_team.orchestrator.execute_team_cycle, args=(PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
                 last_job_scan_time = time.time()
                     
             # 5. Prevent Render from sleeping: Self-ping every 10 minutes
