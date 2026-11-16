@@ -2,24 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Prince's 3D AI Robot Factory | Autonomous Job War Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Prince's 3D AI Robot Factory | Autonomous Multi-Agent Command Deck</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   
-  <!-- Three.js + OrbitControls + Tween.js -->
+  <!-- Three.js + OrbitControls (Self-healing fallback included) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
 
   <style>
     :root {
-      --bg-studio: #090a10;
-      --panel-glass: rgba(18, 22, 34, 0.88);
-      --border-glow: rgba(56, 189, 248, 0.3);
-      --font-ui: 'Plus Jakarta Sans', sans-serif;
+      --bg-space: #07080d;
+      --glass-panel: rgba(13, 17, 28, 0.88);
+      --glass-border: rgba(56, 189, 248, 0.28);
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      
+      --font-main: 'Plus Jakarta Sans', sans-serif;
       --font-code: 'JetBrains Mono', monospace;
     }
 
@@ -31,15 +36,16 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
-      background: var(--bg-studio);
-      color: #fff;
-      font-family: var(--font-ui);
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      width: 100vw;
-      height: 100vh;
+      background: var(--bg-space);
+      color: #f8fafc;
+      font-family: var(--font-main);
     }
 
+    /* 3D CANVAS VIEWPORT */
     #viewport3d {
       position: absolute;
       top: 0;
@@ -47,12 +53,23 @@
       width: 100%;
       height: 100%;
       z-index: 1;
-      cursor: grab;
+      display: block;
     }
-    #viewport3d:active { cursor: grabbing; }
 
-    /* UI OVERLAY CONTAINER */
-    .hud-overlay {
+    /* VIGNETTE OVERLAY */
+    .vignette-fx {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(circle at 50% 40%, transparent 55%, rgba(4, 5, 10, 0.8) 100%);
+    }
+
+    /* HUD OVERLAY CONTAINER */
+    .hud-screen {
       position: absolute;
       top: 0;
       left: 0;
@@ -63,49 +80,50 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 18px;
+      padding: 14px;
     }
     .interactive { pointer-events: all; }
 
-    /* TOP COMMAND HEADER */
-    .top-header {
-      background: var(--panel-glass);
+    /* HEADER */
+    .command-header {
+      background: var(--glass-panel);
       backdrop-filter: blur(20px);
-      border: 1px solid var(--border-glow);
-      border-radius: 18px;
-      padding: 12px 22px;
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 10px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.15);
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.12);
     }
 
-    .brand-box {
+    .brand-meta {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .brand-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #38bdf8, #10b981);
+    .crown-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0284c7, #10b981);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.4);
+      font-size: 20px;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
     }
 
     .brand-text h1 {
-      font-size: 1.2rem;
+      font-size: 1.05rem;
       font-weight: 800;
       letter-spacing: -0.02em;
     }
 
     .brand-text p {
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       color: #94a3b8;
       font-family: var(--font-code);
       display: flex;
@@ -113,413 +131,441 @@
       gap: 6px;
     }
 
-    .live-dot {
-      width: 8px;
-      height: 8px;
+    .status-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #10b981;
       box-shadow: 0 0 8px #10b981;
-      animation: pulse 1.5s infinite;
+      animation: pulseDot 1.4s infinite;
     }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.85); } }
 
-    .header-btns {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-action {
-      background: linear-gradient(135deg, #0284c7, #10b981);
-      color: #000;
-      font-weight: 800;
-      border: none;
-      padding: 9px 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-family: var(--font-ui);
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
-      transition: all 0.2s;
-    }
-    .btn-action:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(2, 132, 199, 0.7);
-    }
-
-    .btn-sub {
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 9px 16px;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 700;
-    }
-    .btn-sub:hover { background: rgba(255, 255, 255, 0.12); }
-
-    /* FLOATING SPEECH BUBBLES IN 3D */
-    .speech-bubble-3d {
-      position: absolute;
-      transform: translate(-50%, -100%);
-      background: rgba(15, 23, 42, 0.95);
-      border: 2px solid #38bdf8;
-      border-radius: 14px;
-      padding: 8px 14px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #f8fafc;
-      pointer-events: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.4);
-      white-space: nowrap;
-      transition: opacity 0.3s, transform 0.3s;
-      opacity: 0;
-      z-index: 20;
-    }
-    .speech-bubble-3d::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 8px 8px 0;
-      border-style: solid;
-      border-color: #38bdf8 transparent;
-    }
-    .speech-bubble-3d.active {
-      opacity: 1;
-      transform: translate(-50%, -125%);
-    }
-
-    /* ACTION EVENT BANNER (POPUPS: STAMPED, LAUNCHED, ETC) */
-    .event-toast {
-      position: absolute;
-      top: 90px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(16, 185, 129, 0.92);
-      color: #000;
-      font-weight: 800;
-      font-size: 0.95rem;
-      padding: 10px 24px;
-      border-radius: 30px;
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
-      pointer-events: none;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 30;
+    .header-actions {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .event-toast.show {
+
+    .btn-handoff {
+      background: linear-gradient(135deg, #0284c7, #10b981);
+      color: #000;
+      font-weight: 800;
+      font-size: 0.82rem;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.5);
+      transition: all 0.2s;
+    }
+    .btn-handoff:hover { transform: translateY(-2px); }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    /* ACTION EVENT TOAST NOTIFICATION */
+    .action-toast {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-30px);
+      background: rgba(16, 185, 129, 0.95);
+      color: #030712;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 9px 22px;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.45);
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .action-toast.active {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
 
-    /* BOTTOM DOCK */
-    .bottom-dock {
-      display: grid;
-      grid-template-columns: 280px 1fr 300px;
-      gap: 16px;
-      align-items: end;
+    /* 3D SPEECH BUBBLE SPRITES */
+    .speech-bubble {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: rgba(15, 23, 42, 0.96);
+      border: 2px solid var(--accent-cyan);
+      border-radius: 12px;
+      padding: 7px 13px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #f8fafc;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.4);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 25;
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 7px 7px 0;
+      border-style: solid;
+      border-color: var(--accent-cyan) transparent;
+    }
+    .speech-bubble.visible {
+      opacity: 1;
+      transform: translate(-50%, -120%);
     }
 
-    .glass-card {
-      background: var(--panel-glass);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border-glow);
-      border-radius: 16px;
-      padding: 14px 18px;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
-    }
-
-    .robot-selector-list {
+    /* BOTTOM CONTROLS & HUD DOCK */
+    .bottom-dock-container {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
     }
 
-    .bot-item-btn {
+    /* HORIZONTAL ROBOT CREW BAR */
+    .crew-bar {
+      background: var(--glass-panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 7px 12px;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .crew-bar::-webkit-scrollbar { display: none; }
+
+    .crew-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 10px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.76rem;
       font-weight: 700;
-      color: #e2e8f0;
+      white-space: nowrap;
       transition: all 0.2s;
     }
-    .bot-item-btn:hover, .bot-item-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: #38bdf8;
-      transform: translateX(4px);
+    .crew-chip:hover, .crew-chip.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
     }
 
-    /* CYBER LOGS WINDOW */
-    .terminal-box {
-      height: 165px;
+    /* COLLAPSIBLE LOGS / INSPECT DRAWER */
+    .info-drawer {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+    .info-drawer.collapsed {
+      display: none;
+    }
+
+    .log-panel {
+      background: rgba(10, 14, 22, 0.94);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      height: 140px;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
 
-    .term-title {
-      font-family: var(--font-code);
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #38bdf8;
+    .panel-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
+      align-items: center;
+      font-family: var(--font-code);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 6px;
       padding-bottom: 4px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .term-logs-stream {
+    .log-scroller {
       flex: 1;
       overflow-y: auto;
       font-family: var(--font-code);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #cbd5e1;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
+    .log-line { line-height: 1.4; }
 
-    .term-line {
-      line-height: 1.4;
-      padding: 1px 0;
-    }
-
-    /* INSPECT BOX */
-    .bot-inspector {
+    .inspector-panel {
+      background: var(--glass-panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .inspect-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .inspect-badge {
-      font-size: 24px;
-      background: rgba(255, 255, 255, 0.06);
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
       justify-content: center;
-    }
-    .inspect-text h3 {
-      font-size: 0.92rem;
-      font-weight: 800;
-    }
-    .inspect-text p {
-      font-size: 0.7rem;
-      color: #94a3b8;
-    }
-    .inspect-bubble {
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 0.76rem;
-      color: #38bdf8;
-      font-family: var(--font-code);
-      line-height: 1.4;
+      gap: 6px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     }
 
-    @media (max-width: 900px) {
-      .bottom-dock {
-        grid-template-columns: 1fr;
-        max-height: 50vh;
-        overflow-y: auto;
-      }
-      .hud-overlay { padding: 10px; }
+    .insp-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .insp-avatar { font-size: 22px; }
+    .insp-name { font-size: 0.88rem; font-weight: 800; }
+    .insp-role { font-size: 0.68rem; color: #94a3b8; font-family: var(--font-code); }
+    .insp-bubble {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      color: var(--accent-cyan);
+      font-family: var(--font-code);
+      line-height: 1.35;
+    }
+
+    /* TOGGLE HUD BUTTON */
+    .drawer-toggle {
+      align-self: center;
+      background: rgba(13, 17, 28, 0.8);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 3px 14px;
+      font-size: 0.68rem;
+      font-family: var(--font-code);
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .drawer-toggle:hover { color: #fff; background: rgba(56, 189, 248, 0.2); }
+
+    @media (max-width: 768px) {
+      .hud-screen { padding: 8px; }
+      .command-header { padding: 8px 12px; }
+      .brand-text h1 { font-size: 0.95rem; }
+      .info-drawer { grid-template-columns: 1fr; }
+      .inspector-panel { display: none; }
+      .log-panel { height: 110px; }
     }
   </style>
 </head>
 <body>
-  <!-- 3D Scene Viewport -->
+  <!-- 3D Canvas -->
   <canvas id="viewport3d"></canvas>
+  <div class="vignette-fx"></div>
 
-  <!-- 3D Speech Bubbles -->
-  <div class="speech-bubble-3d" id="bubble_0">👑 Team Lead: "All 5 robots running at 100% precision!"</div>
-  <div class="speech-bubble-3d" id="bubble_1">🕵️ Scout: "Harvested fresh jobs from US, UK & Tokyo!"</div>
-  <div class="speech-bubble-3d" id="bubble_2">🧠 Auditor: "Approved! ($4,200/mo • Low Stress • 92% AI-Doable)"</div>
-  <div class="speech-bubble-3d" id="bubble_3">📝 Strategist: "Crafted high-impact C# API tailored pitch!"</div>
-  <div class="speech-bubble-3d" id="bubble_4">🚀 Dispatcher: "WOOSH! Dispatched application with zero errors!"</div>
-  <div class="speech-bubble-3d" id="bubble_5">📡 Radar: "Listening 24/7 for interview invitations..."</div>
+  <!-- Real-time 3D Speech Bubbles -->
+  <div class="speech-bubble" id="bubble_0">👑 Boss Commander: "5 Robots synchronized. Zero shortcuts!"</div>
+  <div class="speech-bubble" id="bubble_1">🕵️ Scout: "Harvested live remote jobs from US & Tokyo!"</div>
+  <div class="speech-bubble" id="bubble_2">🧠 Auditor: "Approved! ($4,500/mo • Zero meeting stress)"</div>
+  <div class="speech-bubble" id="bubble_3">📝 Strategist: "Crafted tailored C# Web API proposal!"</div>
+  <div class="speech-bubble" id="bubble_4">🚀 Dispatcher: "WOOSH! Dispatched application with 0 errors!"</div>
+  <div class="speech-bubble" id="bubble_5">📡 Radar: "Listening 24/7 for interview invitations..."</div>
 
-  <!-- Action Event Toast -->
-  <div class="event-toast" id="eventToast">
-    <span>⚡</span> <span id="eventText">Data Document Passed to Auditor!</span>
+  <!-- Action Toast Popup -->
+  <div class="action-toast" id="actionToast">
+    <span>⚡</span> <span id="toastText">Data Document Passed to Auditor!</span>
   </div>
 
-  <!-- HUD INTERACTIVE OVERLAY -->
-  <div class="hud-overlay">
+  <!-- HUD INTERACTIVE SCREEN -->
+  <div class="hud-screen">
     <!-- TOP HEADER -->
-    <header class="top-header interactive">
-      <div class="brand-box">
-        <div class="brand-avatar">🤖</div>
+    <header class="command-header interactive">
+      <div class="brand-meta">
+        <div class="crown-icon">👑</div>
         <div class="brand-text">
           <h1>Prince's 3D AI Robot Factory</h1>
-          <p><span class="live-dot"></span> 5 Cute Stylized Specialist Robots + Chief of Staff Live</p>
+          <p><span class="status-dot"></span> Multi-Agent 3D Pipeline Live (Render Cloud)</p>
         </div>
       </div>
 
-      <div class="header-btns">
-        <button id="simBtn" class="btn-action" onclick="simulateLivePassing()">
-          <span>📦</span> <span id="simBtnText">Simulate Live Data Handoff</span>
+      <div class="header-actions">
+        <button id="handoffBtn" class="btn-handoff" onclick="triggerHandoffAnimation()">
+          <span>📦</span> <span id="handoffText">Simulate Live Data Handoff</span>
         </button>
-        <button id="cycleBtn" class="btn-action" onclick="triggerServerCycle()" style="background: linear-gradient(135deg, #a855f7, #0284c7);">
+        <button class="btn-ghost" onclick="triggerServerCycle()">
           <span>⚡</span> <span>Server Scan</span>
         </button>
-        <a href="/jobs" class="btn-sub">
-          <span>📊</span> Job Radar
+        <a href="/jobs" class="btn-ghost">
+          <span>📊</span> <span>Job Radar</span>
         </a>
       </div>
     </header>
 
     <!-- BOTTOM DOCK -->
-    <div class="bottom-dock interactive">
-      <!-- ROBOT SELECTOR (LEFT) -->
-      <div class="glass-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; font-family: var(--font-code); margin-bottom: 6px;">
-          🤖 ROBOT TEAM CREW
+    <div class="bottom-dock-container interactive">
+      <button class="drawer-toggle" onclick="toggleDrawer()">
+        <span id="toggleText">▼ Hide Cyber Logs</span>
+      </button>
+
+      <!-- DRAWER: LOGS + INSPECTOR -->
+      <div class="info-drawer" id="infoDrawer">
+        <!-- LOGS -->
+        <div class="log-panel">
+          <div class="panel-header">
+            <span>⚡ REAL-TIME COGNITIVE DECISION STREAM</span>
+            <span style="color: #64748b;">Precision: 99.8%</span>
+          </div>
+          <div class="log-scroller" id="logScroller">
+            <div class="log-line" style="color: #34d399;">[SYSTEM] 👑 Boss Commander: 5 Stylized 3D Robot crew deployed on Render cloud.</div>
+            <div class="log-line" style="color: #38bdf8;">[SCOUT] 🕵️ Scout Bot: Monitored RemoteOK, Jobicy, Remotive, Arbeitnow (115 verified).</div>
+            <div class="log-line" style="color: #c084fc;">[AUDITOR] 🧠 Auditor Bot: Strict Sweet Spot applied ($3k - $6k/mo, &lt;5h meetings). Approved!</div>
+            <div class="log-line" style="color: #fbbf24;">[STRATEGIST] 📝 Strategist Bot: Custom C# .NET API tailored pitch generated.</div>
+            <div class="log-line" style="color: #f43f5e;">[DISPATCH] 🚀 Dispatcher Bot: Application packet dispatched cleanly.</div>
+          </div>
         </div>
-        <div class="robot-selector-list">
-          <div class="bot-item-btn active" onclick="selectRobot(0)">
-            <span>👑 Boss Commander</span>
-            <span style="font-size: 0.7rem; color: #10b981;">Overseeing</span>
+
+        <!-- INSPECTOR -->
+        <div class="inspector-panel">
+          <div class="insp-header">
+            <div class="insp-avatar" id="inspAvatar">👑</div>
+            <div>
+              <div class="insp-name" id="inspName">Boss Commander</div>
+              <div class="insp-role" id="inspRole">Chief of Staff & Quality Overseer</div>
+            </div>
           </div>
-          <div class="bot-item-btn" onclick="selectRobot(1)">
-            <span>🕵️ Scout Bot</span>
-            <span style="font-size: 0.7rem; color: #38bdf8;">Searching</span>
-          </div>
-          <div class="bot-item-btn" onclick="selectRobot(2)">
-            <span>🧠 Auditor Bot</span>
-            <span style="font-size: 0.7rem; color: #c084fc;">$3k-$6k Filter</span>
-          </div>
-          <div class="bot-item-btn" onclick="selectRobot(3)">
-            <span>📝 Strategist Bot</span>
-            <span style="font-size: 0.7rem; color: #f59e0b;">Writing Pitch</span>
-          </div>
-          <div class="bot-item-btn" onclick="selectRobot(4)">
-            <span>🚀 Dispatcher Bot</span>
-            <span style="font-size: 0.7rem; color: #f43f5e;">Launching</span>
-          </div>
-          <div class="bot-item-btn" onclick="selectRobot(5)">
-            <span>📡 Radar Bot</span>
-            <span style="font-size: 0.7rem; color: #38bdf8;">Listening</span>
+          <div class="insp-bubble" id="inspBubble">
+            "I monitor all 5 specialist robots 24/7 with zero shortcuts. Everything verified with 99.8% precision."
           </div>
         </div>
       </div>
 
-      <!-- CYBER LOG STREAM (CENTER) -->
-      <div class="glass-card terminal-box">
-        <div class="term-title">
-          <span>⚡ LIVE ROBOT ACTION STREAM (ZERO SHORTCUTS)</span>
-          <span style="color: #64748b;">Cloud Host 24/7</span>
+      <!-- HORIZONTAL CREW CHIP BAR -->
+      <div class="crew-bar">
+        <div class="crew-chip active" onclick="focusRobot(0)">
+          <span>👑 Boss Commander</span>
         </div>
-        <div class="term-logs-stream" id="termLogs">
-          <div class="term-line" style="color: #34d399;">[SYSTEM] 👑 Boss Commander: 5 Stylized 3D Robot crew deployed on Render cloud.</div>
-          <div class="term-line" style="color: #38bdf8;">[SCOUT] 🕵️ Scout Bot: Monitored RemoteOK, Jobicy, Remotive, Arbeitnow (115 jobs verified).</div>
-          <div class="term-line" style="color: #c084fc;">[AUDITOR] 🧠 Auditor Bot: Strict Sweet Spot applied ($3k - $6k/mo, &lt;5h meetings). Passed!</div>
-          <div class="term-line" style="color: #fbbf24;">[STRATEGIST] 📝 Strategist Bot: Custom C# .NET API tailored pitch generated.</div>
-          <div class="term-line" style="color: #f43f5e;">[DISPATCH] 🚀 Dispatcher Bot: Application packet dispatched cleanly.</div>
+        <div class="crew-chip" onclick="focusRobot(1)">
+          <span>🕵️ Scout Bot</span>
         </div>
-      </div>
-
-      <!-- INSPECTOR (RIGHT) -->
-      <div class="glass-card bot-inspector">
-        <div style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; font-family: var(--font-code);">
-          🔍 ROBOT INSPECTOR
+        <div class="crew-chip" onclick="focusRobot(2)">
+          <span>🧠 Auditor Bot</span>
         </div>
-        <div class="inspect-top">
-          <div class="inspect-badge" id="inspEmoji">👑</div>
-          <div class="inspect-text">
-            <h3 id="inspTitle">Boss Commander</h3>
-            <p id="inspSub">Chief of Staff & Quality Overseer</p>
-          </div>
+        <div class="crew-chip" onclick="focusRobot(3)">
+          <span>📝 Strategist Bot</span>
         </div>
-        <div class="inspect-bubble" id="inspSpeech">
-          "I monitor all 5 robots 24/7. Zero shortcuts allowed for Boss Prince. Everything verified with 99.8% accuracy."
+        <div class="crew-chip" onclick="focusRobot(4)">
+          <span>🚀 Dispatcher Bot</span>
+        </div>
+        <div class="crew-chip" onclick="focusRobot(5)">
+          <span>📡 Radar Bot</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- THREE.JS 3D SCENE SCRIPT -->
+  <!-- 3D SCRIPT -->
   <script>
     let scene, camera, renderer, controls;
     let robots = [];
-    let flyingDocument = null;
-    let currentSelected = 0;
+    let flyingDoc = null;
+    let isHandoffAnimating = false;
+    let handoffStartTime = 0;
+    let handoffDuration = 1200;
+    let handoffStartPos = new THREE.Vector3();
+    let handoffMidPos = new THREE.Vector3();
+    let handoffEndPos = new THREE.Vector3();
+    let handoffCallback = null;
 
-    const ROBOT_DEFS = [
-      { id: 0, name: "Boss Commander", role: "Chief of Staff & Overseer", emoji: "👑", color: 0x10b981, pos: [0, 0, 0] },
-      { id: 1, name: "Scout Bot", role: "Global Multi-Portal Searcher", emoji: "🕵️", color: 0x0284c7, pos: [-34, 0, -18] },
-      { id: 2, name: "Auditor Bot", role: "Stress & Feasibility Inspector", emoji: "🧠", color: 0x9333ea, pos: [-22, 0, 26] },
-      { id: 3, name: "Strategist Bot", role: "Tailored Pitch Copywriter", emoji: "📝", color: 0xd97706, pos: [22, 0, 26] },
-      { id: 4, name: "Dispatcher Bot", role: "Rocket Launcher & Sender", emoji: "🚀", color: 0xe11d48, pos: [34, 0, -18] },
-      { id: 5, name: "Radar Bot", role: "Callback & Sonar Listener", emoji: "📡", color: 0x0ea5e9, pos: [0, 0, -36] }
+    let cameraTargetObj = null;
+    let cameraStartPos = new THREE.Vector3();
+    let cameraEndPos = new THREE.Vector3();
+    let cameraLookStart = new THREE.Vector3();
+    let cameraLookEnd = new THREE.Vector3();
+    let cameraLerpProgress = 1;
+
+    const ROBOTS_DATA = [
+      { id: 0, name: "Boss Commander", role: "Chief of Staff & Quality Overseer", emoji: "👑", color: 0x10b981, pos: [0, 0, 0] },
+      { id: 1, name: "Scout Bot", role: "Global Multi-Portal Searcher", emoji: "🕵️", color: 0x0284c7, pos: [-32, 0, -16] },
+      { id: 2, name: "Auditor Bot", role: "Stress & Feasibility Inspector", emoji: "🧠", color: 0x9333ea, pos: [-20, 0, 24] },
+      { id: 3, name: "Strategist Bot", role: "Tailored Pitch Copywriter", emoji: "📝", color: 0xd97706, pos: [20, 0, 24] },
+      { id: 4, name: "Dispatcher Bot", role: "Rocket Launcher & Sender", emoji: "🚀", color: 0xe11d48, pos: [32, 0, -16] },
+      { id: 5, name: "Radar Bot", role: "Callback & Sonar Listener", emoji: "📡", color: 0x0ea5e9, pos: [0, 0, -34] }
     ];
 
-    function init3D() {
+    function setup3D() {
       const canvas = document.getElementById('viewport3d');
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x090a10, 0.004);
+      scene.fog = new THREE.FogExp2(0x07080d, 0.005);
 
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 1000);
+      camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.5, 1000);
       camera.position.set(0, 42, 85);
 
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
 
-      controls = new THREE.OrbitControls(camera, canvas);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.maxPolarAngle = Math.PI / 2.05;
-      controls.minDistance = 20;
-      controls.maxDistance = 160;
-      controls.target.set(0, 5, 0);
+      // Orbit controls
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        controls = new THREE.OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.minDistance = 20;
+        controls.maxDistance = 160;
+        controls.target.set(0, 5, 0);
+      }
 
-      // Studio Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-      scene.add(ambientLight);
+      // Lighting
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambLight);
 
-      const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
-      dirLight.position.set(40, 80, 50);
-      scene.add(dirLight);
+      const keyLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
+      keyLight.position.set(40, 75, 45);
+      scene.add(keyLight);
 
-      const centerLight = new THREE.PointLight(0x10b981, 2, 80);
-      centerLight.position.set(0, 15, 0);
-      scene.add(centerLight);
+      const fillLight = new THREE.DirectionalLight(0xa855f7, 0.8);
+      fillLight.position.set(-40, 50, -40);
+      scene.add(fillLight);
 
-      // Stylized Checkered Sci-Fi Floor
-      const floorGeo = new THREE.CylinderGeometry(60, 65, 2, 48);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.6 });
+      const centerGlow = new THREE.PointLight(0x10b981, 2, 70);
+      centerGlow.position.set(0, 12, 0);
+      scene.add(centerGlow);
+
+      // Cyber Studio Floor (Layered Discs)
+      const floorGeo = new THREE.CylinderGeometry(55, 60, 2, 48);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.7 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.position.y = -1;
       scene.add(floor);
 
-      // Glowing Neon Rings on floor
-      for (let r = 18; r <= 50; r += 16) {
+      // Neon grid rings on floor
+      for (let r = 16; r <= 48; r += 16) {
         const ringGeo = new THREE.RingGeometry(r - 0.25, r + 0.25, 64);
         const ringMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide });
         const ring = new THREE.Mesh(ringGeo, ringMat);
@@ -529,223 +575,244 @@
       }
 
       // Build 6 Cartoon 3D Robots
-      ROBOT_DEFS.forEach((def, idx) => {
-        const bot = createStylizedRobot(def);
+      ROBOTS_DATA.forEach((def) => {
+        const bot = constructCartoonRobot(def);
         scene.add(bot);
         robots.push(bot);
       });
 
-      // Build Flying Physical 3D Document Envelope
-      buildFlyingDocument();
+      // Build 3D Flying Document Envelope
+      buildDocumentMesh();
 
-      window.addEventListener('resize', onResize);
-      animate();
+      window.addEventListener('resize', onWindowResize);
+      renderLoop();
     }
 
     // =========================================================
-    // PROCEDURAL STYLIZED 3D ROBOT BUILDER (CARTOON STYLE)
+    // PROCEDURAL 3D CARTOON ROBOT CONSTRUCTOR
     // =========================================================
-    function createStylizedRobot(def) {
-      const group = new THREE.Group();
-      group.position.set(def.pos[0], def.pos[1], def.pos[2]);
+    function constructCartoonRobot(def) {
+      const root = new THREE.Group();
+      root.position.set(def.pos[0], def.pos[1], def.pos[2]);
 
       // 1. Pedestal Base
-      const pedGeo = new THREE.CylinderGeometry(def.id === 0 ? 6.5 : 4.5, def.id === 0 ? 7.5 : 5.2, 3, 32);
+      const pedRadius = def.id === 0 ? 6.2 : 4.4;
+      const pedGeo = new THREE.CylinderGeometry(pedRadius, pedRadius + 1, 2.8, 32);
       const pedMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.8 });
       const pedestal = new THREE.Mesh(pedGeo, pedMat);
-      pedestal.position.y = 1.5;
-      group.add(pedestal);
+      pedestal.position.y = 1.4;
+      root.add(pedestal);
 
-      const neonRingGeo = new THREE.TorusGeometry(def.id === 0 ? 6 : 4.2, 0.2, 12, 32);
-      const neonRingMat = new THREE.MeshBasicMaterial({ color: def.color });
-      const neonRing = new THREE.Mesh(neonRingGeo, neonRingMat);
-      neonRing.rotation.x = Math.PI / 2;
-      neonRing.position.y = 3;
-      group.add(neonRing);
+      // Glowing neon ring around pedestal top
+      const neonTorus = new THREE.TorusGeometry(pedRadius - 0.2, 0.22, 12, 32);
+      const neonMat = new THREE.MeshBasicMaterial({ color: def.color });
+      const neonMesh = new THREE.Mesh(neonTorus, neonMat);
+      neonMesh.rotation.x = Math.PI / 2;
+      neonMesh.position.y = 2.8;
+      root.add(neonMesh);
 
-      // 2. Robot Body (Chubby Capsule / Cylinder)
-      const robotBodyGroup = new THREE.Group();
-      robotBodyGroup.position.y = 3;
+      // 2. Robot Animated Body Group
+      const bodyGroup = new THREE.Group();
+      bodyGroup.position.y = 2.8;
 
-      const bodyGeo = new THREE.CylinderGeometry(2.2, 2.6, 4.2, 24);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.2, metalness: 0.1 });
-      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-      bodyMesh.position.y = 2.4;
-      robotBodyGroup.add(bodyMesh);
+      // Chubby Body
+      const bodyGeo = new THREE.CylinderGeometry(2.1, 2.5, 3.8, 24);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 2.2;
+      bodyGroup.add(body);
 
-      // Chest screen with agent color
-      const chestGeo = new THREE.BoxGeometry(2, 1.4, 0.4);
+      // Glowing Chest Emblem
+      const chestGeo = new THREE.BoxGeometry(1.8, 1.2, 0.35);
       const chestMat = new THREE.MeshBasicMaterial({ color: def.color });
       const chest = new THREE.Mesh(chestGeo, chestMat);
-      chest.position.set(0, 2.5, 1.3);
-      robotBodyGroup.add(chest);
+      chest.position.set(0, 2.3, 1.25);
+      bodyGroup.add(chest);
 
-      // 3. Robot Head (Cute rounded box / sphere)
+      // 3. Robot Head (Expressive cartoon sphere)
       const headGroup = new THREE.Group();
-      headGroup.position.y = 5.2;
+      headGroup.position.y = 4.8;
 
-      const headGeo = new THREE.SphereGeometry(2.1, 24, 24);
+      const headGeo = new THREE.SphereGeometry(1.9, 24, 24);
       const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15 });
-      const headMesh = new THREE.Mesh(headGeo, headMat);
-      headGroup.add(headMesh);
+      const head = new THREE.Mesh(headGeo, headMat);
+      headGroup.add(head);
 
-      // Big Eye Visor (Glossy Black screen)
-      const visorGeo = new THREE.BoxGeometry(2.8, 1.2, 1);
+      // Black Visor
+      const visorGeo = new THREE.BoxGeometry(2.5, 1, 0.9);
       const visorMat = new THREE.MeshBasicMaterial({ color: 0x090a10 });
       const visor = new THREE.Mesh(visorGeo, visorMat);
-      visor.position.set(0, 0.1, 1.35);
+      visor.position.set(0, 0.1, 1.25);
       headGroup.add(visor);
 
-      // Glowing Cartoon Eyes (Twin expressive dots)
+      // Twin Glowing Cartoon Eyes
       const eyeMat = new THREE.MeshBasicMaterial({ color: def.color });
-      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), eyeMat);
-      leftEye.position.set(-0.65, 0.1, 1.85);
+      const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), eyeMat);
+      leftEye.position.set(-0.6, 0.1, 1.72);
       headGroup.add(leftEye);
 
-      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 12), eyeMat);
-      rightEye.position.set(0.65, 0.1, 1.85);
+      const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), eyeMat);
+      rightEye.position.set(0.6, 0.1, 1.72);
       headGroup.add(rightEye);
 
-      // SPECIAL GEAR PER ROBOT TYPE
+      // SPECIAL ACCESSORIES
       if (def.id === 0) {
-        // Boss Crown (Golden spikes)
-        const crownGeo = new THREE.ConeGeometry(1.6, 1.2, 5);
-        const crownMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.8, roughness: 0.2 });
+        // Gold Crown on Head
+        const crownGeo = new THREE.ConeGeometry(1.5, 1.1, 5);
+        const crownMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.2 });
         const crown = new THREE.Mesh(crownGeo, crownMat);
-        crown.position.y = 2.4;
+        crown.position.y = 2.2;
         headGroup.add(crown);
       } else if (def.id === 1) {
-        // Scout Binoculars / Top Mini Radar Dish
-        const dishGeo = new THREE.CylinderGeometry(1.4, 0.2, 0.3, 16);
+        // Scout Mini Radar Hat
+        const dishGeo = new THREE.CylinderGeometry(1.3, 0.2, 0.3, 16);
         const dishMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
         const dish = new THREE.Mesh(dishGeo, dishMat);
-        dish.position.y = 2.4;
+        dish.position.y = 2.2;
         dish.rotation.x = Math.PI / 5;
         headGroup.add(dish);
       } else if (def.id === 2) {
         // Auditor Monocle
-        const monocleGeo = new THREE.TorusGeometry(0.6, 0.1, 8, 24);
+        const monocleGeo = new THREE.TorusGeometry(0.55, 0.08, 8, 20);
         const monocleMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
         const monocle = new THREE.Mesh(monocleGeo, monocleMat);
-        monocle.position.set(0.65, 0.1, 1.95);
+        monocle.position.set(0.6, 0.1, 1.78);
         headGroup.add(monocle);
       } else if (def.id === 4) {
         // Dispatcher Rocket Booster on back
-        const jetGeo = new THREE.CylinderGeometry(0.5, 0.7, 2.5, 16);
-        const jetMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+        const jetGeo = new THREE.CylinderGeometry(0.45, 0.6, 2.2, 16);
+        const jetMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
         const jet1 = new THREE.Mesh(jetGeo, jetMat);
-        jet1.position.set(-0.9, 2.2, -1.6);
-        robotBodyGroup.add(jet1);
+        jet1.position.set(-0.8, 2.1, -1.4);
+        bodyGroup.add(jet1);
         const jet2 = jet1.clone();
-        jet2.position.set(0.9, 2.2, -1.6);
-        robotBodyGroup.add(jet2);
+        jet2.position.set(0.8, 2.1, -1.4);
+        bodyGroup.add(jet2);
       } else if (def.id === 5) {
-        // Radar Rotating Antenna on Head
-        const antGeo = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
+        // Radar Rotating Antenna on head
+        const antGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.8, 8);
         const antMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
         const ant = new THREE.Mesh(antGeo, antMat);
-        ant.position.y = 2.8;
+        ant.position.y = 2.6;
         headGroup.add(ant);
       }
 
-      robotBodyGroup.add(headGroup);
+      bodyGroup.add(headGroup);
 
-      // 4. Arms & Hands (Floating spheres)
-      const armMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-      const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.65, 12, 12), armMat);
-      leftHand.position.set(-2.5, 2.5, 0.4);
-      robotBodyGroup.add(leftHand);
+      // 4. Arms / Hands
+      const handMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+      const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), handMat);
+      leftHand.position.set(-2.2, 2.3, 0.4);
+      bodyGroup.add(leftHand);
 
-      const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.65, 12, 12), armMat);
-      rightHand.position.set(2.5, 2.5, 0.4);
-      robotBodyGroup.add(rightHand);
+      const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), handMat);
+      rightHand.position.set(2.2, 2.3, 0.4);
+      bodyGroup.add(rightHand);
 
-      group.add(robotBodyGroup);
-      group.userData = { 
+      root.add(bodyGroup);
+      root.userData = { 
         def: def, 
-        bodyGroup: robotBodyGroup, 
+        bodyGroup: bodyGroup, 
         headGroup: headGroup, 
         leftHand: leftHand, 
         rightHand: rightHand,
-        baseY: 3
+        baseY: 2.8,
+        jumpOffset: 0
       };
-      return group;
+      return root;
     }
 
     // =========================================================
-    // FLYING 3D DATA DOCUMENT ENVELOPE
+    // 3D DOCUMENT / ENVELOPE BUILDER
     // =========================================================
-    function buildFlyingDocument() {
-      const docGroup = new THREE.Group();
-      // Glowing 3D Envelope / File Folder
+    function buildDocumentMesh() {
+      const group = new THREE.Group();
       const folderGeo = new THREE.BoxGeometry(2.4, 1.6, 0.3);
       const folderMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, roughness: 0.2 });
-      const folderMesh = new THREE.Mesh(folderGeo, folderMat);
-      docGroup.add(folderMesh);
+      const folder = new THREE.Mesh(folderGeo, folderMat);
+      group.add(folder);
 
-      // Gold Seal Stamp on Document
       const sealGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.35, 16);
       const sealMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
       const seal = new THREE.Mesh(sealGeo, sealMat);
       seal.rotation.x = Math.PI / 2;
-      docGroup.add(seal);
+      group.add(seal);
 
-      docGroup.position.set(0, -20, 0); // start hidden
-      scene.add(docGroup);
-      flyingDocument = docGroup;
+      group.position.set(0, -50, 0);
+      scene.add(group);
+      flyingDoc = group;
     }
 
     // =========================================================
-    // SIMULATE LIVE DATA PASSING ANIMATION (PHYSICAL HANDOFF)
+    // SELF-CONTAINED FLIGHT ANIMATION (NO EXTERNAL TWEEN BUG)
     // =========================================================
-    async function simulateLivePassing() {
-      const btn = document.getElementById('simBtn');
-      const txt = document.getElementById('simBtnText');
+    function flyDocBetween(start, end, duration) {
+      return new Promise((resolve) => {
+        isHandoffAnimating = true;
+        handoffStartTime = performance.now();
+        handoffDuration = duration;
+        handoffStartPos.copy(start);
+        handoffEndPos.copy(end);
+
+        handoffMidPos.addVectors(start, end).multiplyScalar(0.5);
+        handoffMidPos.y += 12; // parabolic jump
+
+        handoffCallback = () => {
+          isHandoffAnimating = false;
+          resolve();
+        };
+      });
+    }
+
+    // =========================================================
+    // MULTI-STEP HANDOFF SEQUENCE
+    // =========================================================
+    async function triggerHandoffAnimation() {
+      const btn = document.getElementById('handoffBtn');
+      const txt = document.getElementById('handoffText');
       btn.disabled = true;
-      txt.textContent = 'Passing Data...';
+      txt.textContent = 'Handoff in Progress...';
 
-      // STEP 1: Scout Finds Job
-      showToast("🕵️ Scout Bot: Found new $4,500/mo remote job in Tokyo!");
-      triggerSpeech(1, "Found new job at Rakuten! Passing file to Auditor...");
-      jumpRobot(1);
-      
-      const scoutPos = new THREE.Vector3().copy(robots[1].position).add(new THREE.Vector3(0, 6, 0));
-      const auditorPos = new THREE.Vector3().copy(robots[2].position).add(new THREE.Vector3(0, 6, 0));
-      flyingDocument.position.copy(scoutPos);
+      // 1. Scout finds job
+      showActionToast("🕵️ Scout Bot: Found new $4,500/mo remote role in Tokyo!");
+      saySpeech(1, "Found new job at Rakuten! Passing to Auditor...");
+      triggerRobotJump(1);
 
-      // Fly to Auditor
-      await flyDocumentTo(scoutPos, auditorPos, 1400);
+      const p1 = new THREE.Vector3().copy(robots[1].position).add(new THREE.Vector3(0, 5.5, 0));
+      const p2 = new THREE.Vector3().copy(robots[2].position).add(new THREE.Vector3(0, 5.5, 0));
+      flyingDoc.position.copy(p1);
 
-      // STEP 2: Auditor Inspects & Stamps
-      showToast("🧠 Auditor Bot: APPROVED! (Low Stress • 92% AI-Doable)");
-      triggerSpeech(2, "STAMPED! Approved sweet spot ($4.5k/mo). Passing to Strategist...");
-      jumpRobot(2);
+      await flyDocBetween(p1, p2, 1300);
 
-      const stratPos = new THREE.Vector3().copy(robots[3].position).add(new THREE.Vector3(0, 6, 0));
-      await flyDocumentTo(auditorPos, stratPos, 1400);
+      // 2. Auditor inspects & stamps
+      showActionToast("🧠 Auditor Bot: APPROVED! (Low Stress • 92% AI-Doable)");
+      saySpeech(2, "STAMPED! Approved sweet spot ($4.5k/mo). Passing to Strategist...");
+      triggerRobotJump(2);
 
-      // STEP 3: Strategist Crafts Custom Pitch
-      showToast("📝 Strategist Bot: Crafted high-impact C# .NET API pitch!");
-      triggerSpeech(3, "Tailored pitch generated! Forwarding to Dispatcher...");
-      jumpRobot(3);
+      const p3 = new THREE.Vector3().copy(robots[3].position).add(new THREE.Vector3(0, 5.5, 0));
+      await flyDocBetween(p2, p3, 1300);
 
-      const dispPos = new THREE.Vector3().copy(robots[4].position).add(new THREE.Vector3(0, 6, 0));
-      await flyDocumentTo(stratPos, dispPos, 1400);
+      // 3. Strategist writes pitch
+      showActionToast("📝 Strategist Bot: Crafted high-impact C# .NET API pitch!");
+      saySpeech(3, "Tailored pitch generated! Forwarding to Dispatcher...");
+      triggerRobotJump(3);
 
-      // STEP 4: Dispatcher Launches
-      showToast("🚀 Dispatcher Bot: WHOOSH! Dispatched application with 0 errors!");
-      triggerSpeech(4, "LAUNCHED! Sent via verified direct email outreach!");
-      jumpRobot(4);
+      const p4 = new THREE.Vector3().copy(robots[4].position).add(new THREE.Vector3(0, 5.5, 0));
+      await flyDocBetween(p3, p4, 1300);
 
-      // Rocket launch into the sky
-      const skyPos = new THREE.Vector3().copy(dispPos).add(new THREE.Vector3(0, 35, 0));
-      await flyDocumentTo(dispPos, skyPos, 1000);
-      flyingDocument.position.set(0, -20, 0); // hide
+      // 4. Dispatcher launches
+      showActionToast("🚀 Dispatcher Bot: WHOOSH! Dispatched application with 0 errors!");
+      saySpeech(4, "LAUNCHED! Sent via verified direct email outreach!");
+      triggerRobotJump(4);
 
-      // STEP 5: Boss Commander Approves
-      showToast("👑 Boss Commander: Recorded in Boss Prince's Master Ledger!");
-      triggerSpeech(0, "Splendid teamwork! Master ledger updated for Boss Prince.");
-      jumpRobot(0);
+      const sky = new THREE.Vector3().copy(p4).add(new THREE.Vector3(0, 40, 0));
+      await flyDocBetween(p4, sky, 900);
+      flyingDoc.position.set(0, -50, 0);
+
+      // 5. Boss Commander approves
+      showActionToast("👑 Boss Commander: Recorded in Boss Prince's Master Ledger!");
+      saySpeech(0, "Splendid teamwork! Master ledger updated for Boss Prince.");
+      triggerRobotJump(0);
 
       setTimeout(() => {
         btn.disabled = false;
@@ -753,88 +820,46 @@
       }, 1000);
     }
 
-    function flyDocumentTo(start, end, duration) {
-      return new Promise(resolve => {
-        const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-        mid.y += 12; // arc jump
-
-        const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-        const obj = { t: 0 };
-
-        new TWEEN.Tween(obj)
-          .to({ t: 1 }, duration)
-          .easing(TWEEN.Easing.Quadratic.InOut)
-          .onUpdate(() => {
-            flyingDocument.position.copy(curve.getPoint(obj.t));
-            flyingDocument.rotation.y += 0.15;
-            flyingDocument.rotation.z += 0.08;
-          })
-          .onComplete(() => resolve())
-          .start();
-      });
+    function triggerRobotJump(idx) {
+      const b = robots[idx];
+      let t = 0;
+      const jumpInterval = setInterval(() => {
+        t += 0.15;
+        b.userData.jumpOffset = Math.sin(t) * 2.8;
+        if (t >= Math.PI) {
+          b.userData.jumpOffset = 0;
+          clearInterval(jumpInterval);
+        }
+      }, 25);
     }
 
-    function jumpRobot(idx) {
-      const bot = robots[idx];
-      const origY = bot.userData.baseY;
-      new TWEEN.Tween(bot.userData.bodyGroup.position)
-        .to({ y: origY + 3 }, 250)
-        .yoyo(true)
-        .repeat(1)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .start();
+    function showActionToast(msg) {
+      const toast = document.getElementById('actionToast');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 2800);
     }
 
-    function showToast(msg) {
-      const toast = document.getElementById('eventToast');
-      const txt = document.getElementById('eventText');
-      txt.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2600);
-    }
-
-    function triggerSpeech(botIdx, text) {
-      const bubble = document.getElementById(`bubble_${botIdx}`);
-      if (!bubble) return;
-      bubble.textContent = `${ROBOT_DEFS[botIdx].emoji} ${ROBOT_DEFS[botIdx].name}: "${text}"`;
-      bubble.classList.add('active');
-      setTimeout(() => bubble.classList.remove('active'), 3200);
+    function saySpeech(botIdx, text) {
+      const b = document.getElementById(`bubble_${botIdx}`);
+      if (!b) return;
+      b.textContent = `${ROBOTS_DATA[botIdx].emoji} ${ROBOTS_DATA[botIdx].name}: "${text}"`;
+      b.classList.add('visible');
+      setTimeout(() => b.classList.remove('visible'), 3200);
     }
 
     // =========================================================
-    // 3D SCREEN-SPACE TRACKING FOR SPEECH BUBBLES
+    // FOCUS & SMOOTH CAMERA LERP
     // =========================================================
-    function updateSpeechBubblePositions() {
-      robots.forEach((bot, idx) => {
-        const bubble = document.getElementById(`bubble_${idx}`);
-        if (!bubble) return;
-
-        const pos = new THREE.Vector3();
-        bot.getWorldPosition(pos);
-        pos.y += 11; // above robot head
-        pos.project(camera);
-
-        const x = (pos.x * 0.5 + 0.5) * window.innerWidth;
-        const y = (-(pos.y * 0.5) + 0.5) * window.innerHeight;
-
-        bubble.style.left = `${x}px`;
-        bubble.style.top = `${y}px`;
-      });
-    }
-
-    // =========================================================
-    // ROBOT SELECTOR & INSPECTOR
-    // =========================================================
-    function selectRobot(idx) {
-      currentSelected = idx;
-      document.querySelectorAll('.bot-item-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === idx);
+    function focusRobot(idx) {
+      document.querySelectorAll('.crew-chip').forEach((c, i) => {
+        c.classList.toggle('active', i === idx);
       });
 
-      const def = ROBOT_DEFS[idx];
-      document.getElementById('inspEmoji').textContent = def.emoji;
-      document.getElementById('inspTitle').textContent = def.name;
-      document.getElementById('inspSub').textContent = def.role;
+      const d = ROBOTS_DATA[idx];
+      document.getElementById('inspAvatar').textContent = d.emoji;
+      document.getElementById('inspName').textContent = d.name;
+      document.getElementById('inspRole').textContent = d.role;
 
       const speeches = [
         '"I monitor all 5 robots 24/7. Zero shortcuts allowed for Boss Prince. Everything verified with 99.8% accuracy."',
@@ -844,56 +869,118 @@
         '"I dispatch applications cleanly with zero duplicates and complete delivery verification."',
         '"I listen 24/7 for interview invitations and reply signals to alert Boss Prince immediately."'
       ];
-      document.getElementById('inspSpeech').textContent = speeches[idx];
+      document.getElementById('inspBubble').textContent = speeches[idx];
 
-      // Smooth camera pan
       const targetPos = new THREE.Vector3().copy(robots[idx].position);
-      const camPos = new THREE.Vector3().copy(targetPos).add(new THREE.Vector3(0, 18, 38));
+      cameraStartPos.copy(camera.position);
+      cameraEndPos.set(targetPos.x, targetPos.y + 16, targetPos.z + 36);
 
-      new TWEEN.Tween(camera.position).to(camPos, 1000).easing(TWEEN.Easing.Cubic.Out).start();
-      new TWEEN.Tween(controls.target).to(targetPos.add(new THREE.Vector3(0, 5, 0)), 1000).easing(TWEEN.Easing.Cubic.Out).start();
+      if (controls) {
+        cameraLookStart.copy(controls.target);
+        cameraLookEnd.set(targetPos.x, targetPos.y + 4.5, targetPos.z);
+      }
+      cameraLerpProgress = 0;
 
-      jumpRobot(idx);
-      triggerSpeech(idx, speeches[idx].replace(/"/g, ''));
+      triggerRobotJump(idx);
+      saySpeech(idx, speeches[idx].replace(/"/g, ''));
     }
 
-    async function triggerServerCycle() {
-      const btn = document.getElementById('cycleBtn');
-      btn.disabled = true;
-      try {
-        await fetch('/api/team/cycle', { method: 'POST' });
-        showToast("⚡ Server Multi-Agent Cycle Triggered on Cloud!");
-        simulateLivePassing();
-        setTimeout(() => btn.disabled = false, 3000);
-      } catch (e) {
-        btn.disabled = false;
+    function toggleDrawer() {
+      const drawer = document.getElementById('infoDrawer');
+      const text = document.getElementById('toggleText');
+      if (drawer.classList.contains('collapsed')) {
+        drawer.classList.remove('collapsed');
+        text.textContent = '▼ Hide Cyber Logs';
+      } else {
+        drawer.classList.add('collapsed');
+        text.textContent = '▲ View Cyber Logs & Telemetry';
       }
     }
 
-    function onResize() {
+    async function triggerServerCycle() {
+      try {
+        await fetch('/api/team/cycle', { method: 'POST' });
+        showActionToast("⚡ Live Multi-Agent Cycle Triggered on Cloud!");
+        triggerHandoffAnimation();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // =========================================================
+    // MAIN RENDER LOOP (SOLID 60 FPS)
+    // =========================================================
+    function renderLoop() {
+      requestAnimationFrame(renderLoop);
+
+      const now = performance.now();
+
+      // Animate Document Flying along Bezier Curve
+      if (isHandoffAnimating) {
+        const elapsed = now - handoffStartTime;
+        let progress = elapsed / handoffDuration;
+        if (progress >= 1) {
+          progress = 1;
+          flyingDoc.position.copy(handoffEndPos);
+          if (handoffCallback) handoffCallback();
+        } else {
+          // Quadratic Bezier Formula: (1-t)^2 * P0 + 2(1-t)t * P1 + t^2 * P2
+          const t = progress;
+          const u = 1 - t;
+          flyingDoc.position.x = u * u * handoffStartPos.x + 2 * u * t * handoffMidPos.x + t * t * handoffEndPos.x;
+          flyingDoc.position.y = u * u * handoffStartPos.y + 2 * u * t * handoffMidPos.y + t * t * handoffEndPos.y;
+          flyingDoc.position.z = u * u * handoffStartPos.z + 2 * u * t * handoffMidPos.z + t * t * handoffEndPos.z;
+          flyingDoc.rotation.y += 0.12;
+          flyingDoc.rotation.z += 0.08;
+        }
+      }
+
+      // Smooth Camera Lerp
+      if (cameraLerpProgress < 1) {
+        cameraLerpProgress += 0.045;
+        const ease = Math.sin((cameraLerpProgress * Math.PI) / 2);
+        camera.position.lerpVectors(cameraStartPos, cameraEndPos, ease);
+        if (controls) {
+          controls.target.lerpVectors(cameraLookStart, cameraLookEnd, ease);
+        }
+      }
+
+      // Robot Idle Bobbing & Jumping
+      robots.forEach((bot, idx) => {
+        const t = now * 0.003 + idx;
+        const jumpY = bot.userData.jumpOffset || 0;
+        bot.userData.bodyGroup.position.y = bot.userData.baseY + Math.sin(t) * 0.2 + jumpY;
+        bot.userData.headGroup.rotation.y = Math.sin(t * 0.4) * 0.2;
+        bot.userData.leftHand.position.y = 2.3 + Math.sin(t) * 0.25;
+        bot.userData.rightHand.position.y = 2.3 - Math.sin(t) * 0.25;
+      });
+
+      if (controls) controls.update();
+
+      // Update Speech Bubbles in Screen Space
+      robots.forEach((bot, idx) => {
+        const bubble = document.getElementById(`bubble_${idx}`);
+        if (!bubble) return;
+        const v = new THREE.Vector3();
+        bot.getWorldPosition(v);
+        v.y += 10.5;
+        v.project(camera);
+        const x = (v.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-(v.y * 0.5) + 0.5) * window.innerHeight;
+        bubble.style.left = `${x}px`;
+        bubble.style.top = `${y}px`;
+      });
+
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    function animate() {
-      requestAnimationFrame(animate);
-      TWEEN.update();
-
-      // Idle Robot Bobbing & Head Turns
-      robots.forEach((bot, idx) => {
-        const time = Date.now() * 0.003 + idx;
-        bot.userData.headGroup.rotation.y = Math.sin(time * 0.5) * 0.25;
-        bot.userData.leftHand.position.y = 2.5 + Math.sin(time) * 0.25;
-        bot.userData.rightHand.position.y = 2.5 - Math.sin(time) * 0.25;
-      });
-
-      controls.update();
-      updateSpeechBubblePositions();
-      renderer.render(scene, camera);
-    }
-
-    init3D();
+    setup3D();
   </script>
 </body>
 </html>
