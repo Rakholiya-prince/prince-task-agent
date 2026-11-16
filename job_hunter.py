@@ -162,9 +162,72 @@ def fetch_himalayas_jobs():
         print(f"[!] Himalayas scrape error: {e}")
     return jobs
 
+def fetch_remoteok_jobs():
+    """Fetches high-paying global remote tech jobs from RemoteOK API."""
+    jobs = []
+    url = "https://remoteok.com/api?tag=dev"
+    try:
+        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for item in data:
+                if not isinstance(item, dict) or not item.get("position"):
+                    continue
+                min_s = item.get("salary_min")
+                max_s = item.get("salary_max")
+                salary_str = f"USD ${min_s:,} - ${max_s:,}/yr" if min_s and max_s else "$3,500 - $5,500/mo (Remote)"
+                
+                jobs.append({
+                    "id": f"remoteok_{item.get('id', str(time.time()))}",
+                    "title": item.get("position", "").strip(),
+                    "company": item.get("company", "").strip(),
+                    "portal": "RemoteOK Global",
+                    "url": item.get("url") or f"https://remoteok.com/remote-jobs/{item.get('id')}",
+                    "location": item.get("location") or "Worldwide / Anywhere",
+                    "salary": salary_str,
+                    "description": item.get("description", "")[:2500],
+                    "date": datetime.now().strftime("%Y-%m-%d")
+                })
+    except Exception as e:
+        print(f"[!] RemoteOK scrape error: {e}")
+    return jobs[:25]
+
+def fetch_jobicy_jobs():
+    """Fetches verified remote tech jobs from Jobicy API."""
+    jobs = []
+    url = "https://jobicy.com/api/v2/remote-jobs?count=25&tag=backend"
+    try:
+        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for item in data.get("jobs", []):
+                min_s = item.get("annualSalaryMin")
+                max_s = item.get("annualSalaryMax")
+                curr = item.get("salaryCurrency", "USD")
+                salary_str = f"{curr} ${min_s:,} - ${max_s:,}" if min_s and max_s else f"{curr} $3,500 - $5,000/mo"
+                
+                jobs.append({
+                    "id": f"jobicy_{item.get('id')}",
+                    "title": item.get("jobTitle", "").strip(),
+                    "company": item.get("companyName", "").strip(),
+                    "portal": "Jobicy Verified",
+                    "url": item.get("url", ""),
+                    "location": item.get("jobGeo", "Worldwide Remote"),
+                    "salary": salary_str,
+                    "description": item.get("jobExcerpt", "")[:2500],
+                    "date": item.get("pubDate", "")[:10] or datetime.now().strftime("%Y-%m-%d")
+                })
+    except Exception as e:
+        print(f"[!] Jobicy scrape error: {e}")
+    return jobs
+
 def collect_all_global_jobs():
     """Aggregates all remote tech jobs across verified global portals."""
     all_jobs = []
+    print("[*] Fetching live jobs from RemoteOK...")
+    all_jobs.extend(fetch_remoteok_jobs())
+    print("[*] Fetching live jobs from Jobicy...")
+    all_jobs.extend(fetch_jobicy_jobs())
     print("[*] Fetching live jobs from Remotive...")
     all_jobs.extend(fetch_remotive_jobs())
     print("[*] Fetching live jobs from Arbeitnow (Europe)...")
@@ -175,7 +238,7 @@ def collect_all_global_jobs():
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss", "FullStack"))
     print("[*] Fetching live jobs from Himalayas...")
     all_jobs.extend(fetch_himalayas_jobs())
-    print(f"[+] Total raw jobs scraped: {len(all_jobs)}")
+    print(f"[+] Total raw jobs scraped across 7 verified portals: {len(all_jobs)}")
     return all_jobs
 
 # ====================================================================
@@ -188,20 +251,26 @@ def clean_html_text(raw_html):
 
 def evaluate_job_with_ai(job, gemini_api_key):
     """
-    Evaluates the job through Prince's criteria:
-    - 100% Remote?
-    - Non-India foreign currency (USD, EUR, GBP, JPY, AUD, CAD, AED)?
-    - AI-Executability: Can 80%+ be executed using AI tools/coding assistants?
-    - Stress Level: Low/Medium (async, task-based) vs High (meeting heavy)?
-    - Generates a tailored, compelling application pitch for Prince.
+    Evaluates the job through Prince's exact Sweet Spot criteria:
+    - 100% Remote, Non-India foreign currency (USD, GBP, EUR, JPY, AUD, CAD).
+    - SWEET SPOT SALARY: $3,000 - $6,000 / month ($35,000 - $72,000 / year).
+    - REJECT HIGH STRESS: Reject Staff, Principal, Director, VP, Architect, or $150k+ roles that require 10+ years experience, heavy micromanagement, and endless meetings.
+    - PRIORITIZE: Mid/Junior-to-Mid developer, task-based, deliverable-focused (Backend APIs, C# / .NET, Web Dev, Automation, QA, Bug Fixing).
+    - AI-Executability: Can Prince build and deliver 80%+ using AI coding tools with low stress?
     """
     clean_desc = clean_html_text(job.get("description", ""))[:1500]
     
     prompt = f"""
-You are the Cognitive AI Evaluator for Prince, a skilled software developer (ASP.NET Core, C#, Web APIs, Full Stack, Python automation, AI tooling).
-Prince wants foreign high-paying remote tech jobs (USD, GBP, EUR, JPY, AUD, CAD) that he can execute smoothly with AI assistance with low stress and high autonomy.
+You are the Cognitive AI Job Evaluator for Prince, a practical software developer (ASP.NET Core, C#, Web APIs, Full Stack, Python automation, AI tooling).
 
-Evaluate this job:
+CRITICAL SWEET-SPOT CRITERIA FOR PRINCE:
+1. Target Monthly Income: $3,000 to $6,000 / month (or equivalent: £2,500 - £4,500/mo, €2,800 - €5,200/mo, ¥450k - ¥800k/mo).
+2. DO NOT APPROVE super senior 100k+ or 150k+ roles (e.g. Staff, Principal, Director, VP, Lead Architect) that carry massive responsibility, micromanagement, and endless meetings.
+3. APPROVE realistic, deliverable-focused roles: Mid/Junior-Mid Backend, C# / .NET, Web APIs, Full Stack, Automation, Bug Fixing, Web Scraping.
+4. "The client just wants the task/ticket done, Prince builds it smoothly with AI assistance, delivers it, and gets paid."
+5. Must be 100% Remote and Foreign (US, UK, Germany, Europe, Japan, Canada, Australia, UAE). No India.
+
+Job to Evaluate:
 Title: {job.get('title')}
 Company: {job.get('company')}
 Location/Restrictions: {job.get('location')}
@@ -214,35 +283,34 @@ Respond ONLY in strict valid JSON (no markdown formatting, no code blocks):
   "is_remote": true,
   "is_non_india": true,
   "currency": "USD",
-  "estimated_monthly_pay": "$4,000 - $6,500/mo",
+  "estimated_monthly_pay": "$3,500 - $5,000/mo",
   "country_flag": "🇺🇸",
   "country_name": "United States",
-  "ai_executability_score": 90,
-  "stress_level": "Low Stress (Async & Independent)",
+  "ai_executability_score": 92,
+  "stress_level": "Low Stress (Task & Deliverable Based)",
   "verdict": "APPROVED",
-  "reason": "Clear backend API and fullstack work that can be 85% built and tested using modern AI tools.",
-  "tailored_pitch": "Dear Hiring Team at {job.get('company')},\n\nI am excited to apply for the {job.get('title')} position. With extensive hands-on experience in building scalable backend APIs, C#, .NET microservices, and AI-accelerated workflows, I specialize in shipping clean, test-driven, and robust software with high autonomy.\n\nI thrive in remote, asynchronous teams where delivery and clean architecture matter most. I would love to contribute to {job.get('company')}'s vision. Looking forward to discussing how I can add immediate value.\n\nBest regards,\nPrince",
-  "key_skills_match": ["C#", "Web APIs", "Backend Automation", "Clean Architecture"]
+  "reason": "Realistic deliverable-focused role without meeting overload. Prince can easily build features/APIs with AI coding tools.",
+  "tailored_pitch": "Hello {job.get('company')} Team,\n\nI am writing to express my strong interest in the {job.get('title')} role. I specialize in building reliable backend APIs, clean architecture, and rapid feature development. I work asynchronously with high discipline, ensuring tickets and features are delivered cleanly, tested, and on time.\n\nExcited to help your team ship faster. Looking forward to discussing this opportunity.\n\nBest regards,\nPrince",
+  "key_skills_match": ["C#", "Web APIs", "Clean Architecture", "Fast Delivery"]
 }}
-If the job is India-only or not remote, set verdict to "REJECTED".
+If the role requires 8+ years experience, is a Staff/Principal/Director role, or is not remote, set verdict to "REJECTED".
 Ensure ai_executability_score is an integer between 0 and 100.
 """
 
     if not gemini_api_key:
-        # Fallback heuristic if API key is temporarily unavailable
         return {
             "is_remote": True,
             "is_non_india": True,
             "currency": "USD",
-            "estimated_monthly_pay": job.get("salary") or "$4,500/mo",
+            "estimated_monthly_pay": "$3,500 - $5,000/mo",
             "country_flag": "🌐",
             "country_name": "Global Remote",
-            "ai_executability_score": 85,
-            "stress_level": "Low Stress (Async & Independent)",
+            "ai_executability_score": 90,
+            "stress_level": "Low Stress (Task & Deliverable Based)",
             "verdict": "APPROVED",
-            "reason": "Remote tech role matching modern software development capabilities.",
-            "tailored_pitch": f"Hello {job.get('company')} Team,\n\nI am applying for the {job.get('title')} role. I bring strong expertise in backend APIs, software architecture, and fast AI-assisted development. Excited to help your team ship faster.",
-            "key_skills_match": ["Backend", "API Integration", "Full Stack"]
+            "reason": "Realistic task-focused remote developer role matching modern AI-assisted engineering.",
+            "tailored_pitch": f"Hello {job.get('company')} Team,\n\nI am applying for the {job.get('title')} position. I bring strong skills in backend APIs and disciplined asynchronous delivery. Excited to help your team build and ship features smoothly.\n\nBest regards,\nPrince",
+            "key_skills_match": ["Backend APIs", "Clean Code", "Async Delivery"]
         }
 
     try:
