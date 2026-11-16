@@ -280,20 +280,50 @@ def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
     return "Task reached maximum tool iterations."
 
 # ----------------- CONTENT SCRAPERS (HHH & BBC) ----------------- #
+def get_seen_articles() -> list:
+    history_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seen_articles.json")
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def mark_article_seen(title: str, link: str):
+    history_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "seen_articles.json")
+    seen = get_seen_articles()
+    seen.append({"title": title, "link": link, "date": time.strftime("%Y-%m-%d")})
+    # Keep last 150 items
+    seen = seen[-150:]
+    try:
+        with open(history_file, "w", encoding="utf-8") as f:
+            json.dump(seen, f, indent=2)
+    except Exception as e:
+        print(f"[!] mark_article_seen error: {e}")
+
 def fetch_latest_bbc() -> dict:
-    """Smartly curates the highest-value Technology & Science article from BBC."""
+    """Smartly curates the highest-value, non-repeating article across Space, AI, Science, Business & Discoveries."""
     feeds = [
-        "https://feeds.bbci.co.uk/news/technology/rss.xml",
         "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+        "https://feeds.bbci.co.uk/news/technology/rss.xml",
+        "https://feeds.bbci.co.uk/news/business/rss.xml",
         "https://feeds.bbci.co.uk/news/world/rss.xml"
     ]
+    seen = get_seen_articles()
+    seen_links = {item.get("link", "").lower() for item in seen}
+    seen_titles = {item.get("title", "").lower() for item in seen}
+
+    # Also avoid the previous Microsoft outage article
+    seen_titles.add("microsoft says services fully restored after day-long global outage")
+
     candidates = []
     for url in feeds:
         try:
             resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=10)
             root = ET.fromstring(resp.content)
             items = root.findall('.//item')
-            for item in items[:8]:
+            for item in items[:10]:
                 title = item.find('title').text.strip() if item.find('title') is not None else ""
                 desc = item.find('description').text.strip() if item.find('description') is not None else ""
                 raw_link = item.find('link').text.strip() if item.find('link') is not None else ""
@@ -301,18 +331,27 @@ def fetch_latest_bbc() -> dict:
                 
                 if not title or not clean_link:
                     continue
+                
+                # Check if already seen recently
+                if clean_link.lower() in seen_links or title.lower() in seen_titles:
+                    continue
                     
                 lower = (title + " " + desc).lower()
-                # Filter out tragedies, crimes, accidents
-                if any(w in lower for w in ['killed', 'dead', 'death', 'murder', 'war', 'crash', 'stab', 'arrest', 'shooting', 'violence']):
+                # Filter out tragedies, crimes, accidents, violent politics
+                if any(w in lower for w in ['killed', 'dead', 'death', 'murder', 'war', 'crash', 'stab', 'arrest', 'shooting', 'violence', 'hostage']):
                     continue
                     
                 score = 0
-                tech_words = ['ai', 'tech', 'software', 'cloud', 'digital', 'science', 'breakthrough', 'computer', 'model', 'data', 'space', 'upgrade', 'system', 'microsoft', 'google', 'engineer', 'research']
-                for tw in tech_words:
-                    if tw in lower:
-                        score += 2
-                if len(desc) > 75:
+                high_value_words = [
+                    'spacex', 'starship', 'rocket', 'nasa', 'moon', 'mars', 'space', 'astronomy',
+                    'ai', 'artificial intelligence', 'robot', 'chip', 'nvidia', 'quantum', 'breakthrough',
+                    'discovery', 'brain', 'psychology', 'science', 'ocean', 'climate', 'energy', 'innovation',
+                    'startup', 'google', 'apple', 'meta', 'amazon', 'software', 'technology'
+                ]
+                for hw in high_value_words:
+                    if hw in lower:
+                        score += 3
+                if len(desc) > 60:
                     score += 1
                 candidates.append({"title": title, "desc": desc, "link": clean_link, "score": score})
         except Exception as e:
@@ -321,12 +360,13 @@ def fetch_latest_bbc() -> dict:
     if candidates:
         candidates.sort(key=lambda x: x["score"], reverse=True)
         best = candidates[0]
+        mark_article_seen(best["title"], best["link"])
         return {"title": best["title"], "desc": best["desc"], "link": best["link"]}
         
     return {
-        "title": "Microsoft says services fully restored after day-long global outage",
-        "desc": "Microsoft has said its services have been fully restored after a worldwide outage affected several of its tools.",
-        "link": "https://www.bbc.co.uk/news/articles/c6rrg51rkz09o"
+        "title": "SpaceX successfully catches top of huge Starship rocket for first time",
+        "desc": "The rocket booster was caught mid air using huge mechanical arms nicknamed chopsticks in an engineering milestone.",
+        "link": "https://www.bbc.co.uk/news/articles/ckregdgnl0xpo"
     }
 
 def fetch_latest_hhh() -> dict:
