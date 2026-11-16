@@ -14,6 +14,7 @@ import urllib3.util.connection as urllib_connection
 import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
+import job_hunter
 
 # Force IPv4 for all outbound connections (fixes Render -> Google/Telegram latency)
 urllib_connection.allowed_gai_family = lambda: socket.AF_INET
@@ -29,6 +30,8 @@ START_TIME = time.time()
 # Scheduler tracking
 last_morning_sent_date = ""
 last_night_sent_date = ""
+last_job_scan_time = 0
+last_job_report_date = ""
 
 # ----------------- AGENT TOOLS ----------------- #
 def tool_web_search(query: str) -> str:
@@ -568,11 +571,20 @@ def send_night_digest(chat_id: int = PRINCE_CHAT_ID):
 
 # ----------------- 24/7 BACKGROUND SCHEDULER ----------------- #
 def run_daily_scheduler():
-    """Background daemon checking IST time every 30 seconds for 7:30 AM & 9:00 PM triggers."""
-    global last_morning_sent_date, last_night_sent_date
-    print("[*] 24/7 Daily Learning Scheduler started (Monitoring 7:30 AM & 9:00 PM IST)...")
+    """Background daemon checking IST time for daily triggers & running 24/7 autonomous job radar."""
+    global last_morning_sent_date, last_night_sent_date, last_job_scan_time, last_job_report_date
+    print("[*] 24/7 Daily Learning & Global Job Radar Scheduler started...")
     
     last_ping_time = time.time()
+    
+    # Run initial job radar scan shortly after startup
+    time.sleep(15)
+    try:
+        print("[*] Triggering startup Global Job Radar scan...")
+        threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+        last_job_scan_time = time.time()
+    except Exception as e:
+        print(f"[!] Initial job scan error: {e}")
     
     while True:
         try:
@@ -596,8 +608,25 @@ def run_daily_scheduler():
                     print(f"[*] Triggering 9:00 PM IST Night Digest for {today_str}...")
                     send_night_digest(PRINCE_CHAT_ID)
                     last_night_sent_date = today_str
+
+            # 3. Daily Global Job Radar Report: 9:15 PM IST (Hour 21, Minute 15)
+            if hour == 21 and minute >= 15 and minute <= 20:
+                if last_job_report_date != today_str:
+                    print(f"[*] Sending 9:15 PM IST Daily Job Radar Report for {today_str}...")
+                    try:
+                        summary_msg = job_hunter.generate_daily_jobs_telegram_summary()
+                        telegram_send_message(PRINCE_CHAT_ID, summary_msg)
+                    except Exception as e:
+                        print(f"[!] Error sending daily job report: {e}")
+                    last_job_report_date = today_str
+
+            # 4. Periodic Autonomous Job Scanning (Every 4 hours = 14400 seconds)
+            if time.time() - last_job_scan_time > 14400:
+                print("[*] Periodic 4-hour Global Job Radar Scan executing...")
+                threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+                last_job_scan_time = time.time()
                     
-            # 3. Prevent Render from sleeping: Self-ping every 10 minutes
+            # 5. Prevent Render from sleeping: Self-ping every 10 minutes
             if time.time() - last_ping_time > 600:
                 try:
                     requests.get("https://prince-task-agent.onrender.com/", headers={"Connection": "close"}, timeout=8)
@@ -668,8 +697,22 @@ def process_message(message: dict):
             send_night_digest(chat_id)
             return
             
+        elif text.lower().strip() in ["/jobs", "jobs", "/radar", "radar", "job report"]:
+            telegram_send_message(chat_id, "⏳ *Fetching your Global Job Radar Report, Sir...*")
+            try:
+                summary_msg = job_hunter.generate_daily_jobs_telegram_summary()
+                telegram_send_message(chat_id, summary_msg)
+            except Exception as e:
+                telegram_send_message(chat_id, f"⚠️ Error generating job summary: {e}")
+            return
+
+        elif text.lower().strip() in ["/scan", "scan", "jobscan", "/jobscan"]:
+            telegram_send_message(chat_id, "⚡ *Initiating live 24/7 Global Autonomous Job Radar Scan across US, UK, Germany, Japan, UAE...*\n\n_The AI Cognitive Evaluator will review new foreign remote tech jobs and notify you of high-scoring opportunities!_")
+            threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, chat_id, telegram_send_message), daemon=True).start()
+            return
+
         elif text.lower().strip() in ["hi", "hello", "hey", "kem cho", "namaste"]:
-            telegram_send_message(chat_id, f"👋 Hello {user_first_name} Sir!\n\nI am online 24/7 on the cloud. How can I assist your learning or tasks right now?")
+            telegram_send_message(chat_id, f"👋 Hello {user_first_name} Sir!\n\nI am online 24/7 on the cloud.\n\n⚡ *Quick Commands:*\n• `/jobs` - View latest foreign remote job matches & stats\n• `/scan` - Trigger live job radar scan now\n• `/morning` - Tech & English Morning Digest\n• `/night` - Night Review & DSA/ASP.NET Core Drill\n\nOr simply send me any task instruction to execute!")
             return
             
         # Normal task execution
@@ -709,7 +752,39 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.wfile.write(html_content.encode("utf-8"))
                 return
 
-        # 2. Dynamic Calendar .ics Feed Endpoint (For Google Calendar Sync)
+        # 2. Minimalist Global Job Radar Dashboard
+        if self.path in ["/jobs", "/radar", "/dashboard"]:
+            jobs_html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jobs.html")
+            if os.path.exists(jobs_html_path):
+                with open(jobs_html_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Connection", "close")
+                self.end_headers()
+                self.wfile.write(html_content.encode("utf-8"))
+                return
+
+        # 3. Job Radar API Endpoints
+        if self.path == "/api/jobs":
+            db_data = job_hunter.load_jobs_db()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(json.dumps(db_data, ensure_ascii=False).encode("utf-8"))
+            return
+
+        if self.path in ["/api/jobs/scan", "/cron/jobs"]:
+            threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(b'{"status": "job_scan_triggered"}')
+            return
+
+        # 4. Dynamic Calendar .ics Feed Endpoint (For Google Calendar Sync)
         if self.path in ["/calendar.ics", "/routine.ics", "/schedule.ics", "/feed.ics"]:
             ics_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prince_Daily_Routine.ics")
             if os.path.exists(ics_path):
@@ -723,7 +798,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
                 self.wfile.write(ics_data.encode("utf-8"))
                 return
 
-        # 3. Manual cron trigger endpoints
+        # 5. Manual cron trigger endpoints
         if self.path == "/cron/morning":
             threading.Thread(target=send_morning_digest, args=(PRINCE_CHAT_ID,), daemon=True).start()
             self.send_response(200)
@@ -787,8 +862,18 @@ class WebhookHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 print(f"[!] Error handling delegation: {e}")
             return
+
+        # 2. Job Radar Scan POST Endpoint
+        if self.path in ["/api/jobs/scan", "/cron/jobs"]:
+            threading.Thread(target=job_hunter.run_job_hunter_cycle, args=(GEMINI_API_KEY, PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Connection", "close")
+            self.end_headers()
+            self.wfile.write(b'{"status": "job_scan_triggered"}')
+            return
             
-        # 2. Telegram Webhook endpoint
+        # 3. Telegram Webhook endpoint
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.send_header("Connection", "close")

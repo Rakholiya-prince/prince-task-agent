@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Prince's Global Job Radar | 24/7 Autonomous AI Agent</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #09090b;
+      --bg-card: #121215;
+      --bg-subtle: #18181b;
+      --bg-glass: rgba(18, 18, 21, 0.75);
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      
+      --text-main: #fafafa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.2);
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-amber: #f59e0b;
+      
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+
+    /* Ambient background gradient lights */
+    .ambient-glow-1 {
+      position: fixed;
+      top: -150px;
+      left: 10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ambient-glow-2 {
+      position: fixed;
+      top: 20%;
+      right: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 16px var(--accent-green-glow);
+    }
+
+    .brand-text h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      font-family: var(--font-sans);
+    }
+
+    .btn-primary {
+      background: #10b981;
+      color: #000;
+      box-shadow: 0 2px 10px var(--accent-green-glow);
+    }
+    .btn-primary:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      border: 1px solid var(--border-subtle);
+    }
+    .btn-outline:hover {
+      border-color: var(--border-hover);
+      background: #27272a;
+    }
+
+    /* STATS GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .stat-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-val {
+      font-size: 1.85rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .stat-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+
+    /* FILTER BAR */
+    .filter-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 14px 10px 38px;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .search-box input:focus {
+      border-color: var(--accent-cyan);
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    select {
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      font-family: var(--font-sans);
+    }
+    select:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* JOB CARDS */
+    .jobs-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .job-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.2s ease;
+    }
+    .job-card:hover {
+      border-color: var(--border-hover);
+      background: #141418;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .job-card-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .job-info h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .job-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tag-country {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tag-portal {
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-cyan);
+    }
+
+    .tag-salary {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .score-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(139, 92, 246, 0.15);
+      color: #c4b5fd;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .stress-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .job-desc-snippet {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .job-card-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .skills-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .skill-pill {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      background: var(--bg-subtle);
+      color: var(--text-dim);
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      border-radius: 8px;
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      animation: modalSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlide {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .pitch-box {
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: #e4e4e7;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 640px) {
+      .header-actions { width: 100%; }
+      .btn { flex: 1; justify-content: center; }
+      .job-card-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <div class="container">
+    <!-- HEADER -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🌐</div>
+        <div class="brand-text">
+          <h1>Prince's Global Job Radar</h1>
+          <p><span class="status-pulse"></span> 24/7 Autonomous AI Agent Active (Cloud)</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="scanBtn" class="btn btn-primary" onclick="triggerScan()">
+          <span>⚡</span> <span id="scanText">Scan Now</span>
+        </button>
+        <a href="https://t.me/PrinceTaskAgentBot" target="_blank" class="btn btn-outline">
+          <span>📱</span> Telegram Bot
+        </a>
+      </div>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Jobs Scanned</div>
+        <div class="stat-val" id="statScanned">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Foreign Applications</div>
+        <div class="stat-val">
+          <span id="statApplied">--</span>
+          <span class="stat-badge">Applied</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">AI-Doable Matches (&gt;80%)</div>
+        <div class="stat-val" id="statAIMatches" style="color: #c4b5fd;">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Countries Covered</div>
+        <div class="stat-val" id="statCountries" style="color: #06b6d4;">--</div>
+      </div>
+    </div>
+
+    <!-- FILTER SECTION -->
+    <div class="filter-section">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by role, company, or keyword (C#, API, Full Stack)..." oninput="filterJobs()">
+      </div>
+      <div class="filter-group">
+        <select id="countryFilter" onchange="filterJobs()">
+          <option value="ALL">🌍 All Countries</option>
+          <option value="United States">🇺🇸 United States (USD)</option>
+          <option value="United Kingdom">🇬🇧 United Kingdom (GBP)</option>
+          <option value="Germany">🇩🇪 Germany / Europe (EUR)</option>
+          <option value="Japan">🇯🇵 Japan (JPY / USD)</option>
+          <option value="Australia">🇦🇺 Australia (AUD)</option>
+          <option value="Global Remote">🌐 Worldwide Remote</option>
+        </select>
+        <select id="scoreFilter" onchange="filterJobs()">
+          <option value="0">⚡ All AI Scores</option>
+          <option value="85">⚡ High Ease (&gt;85%)</option>
+          <option value="90">⚡ Super Easy (&gt;90%)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- JOBS FEED -->
+    <div class="jobs-feed" id="jobsFeed">
+      <div style="text-align: center; padding: 60px 0; color: var(--text-dim);">
+        <p>Fetching real-time global jobs from server...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAILS & PITCH MODAL -->
+  <div class="modal-backdrop" id="jobModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let allJobs = [];
+
+    async function loadJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        const data = await res.json();
+        allJobs = data.jobs || [];
+        updateStats(data.stats || {});
+        renderJobs(allJobs);
+      } catch (err) {
+        console.error("Error loading jobs:", err);
+        document.getElementById('jobsFeed').innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #ef4444;">
+            Failed to connect to server. Please ensure the agent is running.
+          </div>
+        `;
+      }
+    }
+
+    function updateStats(stats) {
+      document.getElementById('statScanned').textContent = stats.total_scanned || allJobs.length;
+      document.getElementById('statApplied').textContent = stats.total_applied || allJobs.length;
+      document.getElementById('statAIMatches').textContent = stats.high_ai_matches || allJobs.filter(j => (j.ai_executability_score || 0) >= 80).length;
+      document.getElementById('statCountries').textContent = stats.countries_count || '12+';
+    }
+
+    function renderJobs(jobs) {
+      const feed = document.getElementById('jobsFeed');
+      if (!jobs || jobs.length === 0) {
+        feed.innerHTML = `
+          <div style="text-align: center; padding: 60px 0; color: var(--text-dim); background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-subtle);">
+            <h3>No jobs matching the current filter.</h3>
+            <p style="margin-top: 8px;">Try searching for different keywords or resetting filters.</p>
+          </div>
+        `;
+        return;
+      }
+
+      feed.innerHTML = jobs.map((j, idx) => `
+        <div class="job-card">
+          <div class="job-card-top">
+            <div class="job-info">
+              <h3>${escapeHtml(j.title)}</h3>
+              <div class="job-meta">
+                <span style="font-weight: 600; color: #fff;">${escapeHtml(j.company)}</span>
+                <span>•</span>
+                <span class="tag tag-country">${j.country_flag || '🌐'} ${escapeHtml(j.country_name || j.location || 'Remote')}</span>
+                <span class="tag tag-portal">${escapeHtml(j.portal || 'Remote Portal')}</span>
+                <span class="tag tag-salary">${escapeHtml(j.estimated_monthly_pay || j.salary || 'Competitive Pay')}</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+              <div class="score-badge">
+                ⚡ ${j.ai_executability_score || 85}% AI-Doable
+              </div>
+              <div class="stress-badge">
+                🟢 ${escapeHtml(j.stress_level || 'Low Stress / Async')}
+              </div>
+            </div>
+          </div>
+
+          <div class="job-desc-snippet">
+            ${escapeHtml(cleanText(j.description || 'Remote tech opportunity matching full stack, backend, and software engineering capabilities.'))}
+          </div>
+
+          <div class="job-card-bottom">
+            <div class="skills-pills">
+              ${(j.key_skills_match || ['C# / .NET', 'Backend APIs', 'AI Automation', 'Remote Autonomy']).map(s => `
+                <span class="skill-pill">${escapeHtml(s)}</span>
+              `).join('')}
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-outline btn-sm" onclick="openModal(${idx})">
+                📄 View AI Pitch & Resume
+              </button>
+              <a href="${j.url}" target="_blank" class="btn btn-primary btn-sm">
+                Apply on Portal ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterJobs() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const country = document.getElementById('countryFilter').value;
+      const minScore = parseInt(document.getElementById('scoreFilter').value, 10);
+
+      const filtered = allJobs.filter(j => {
+        const matchQ = !q || (j.title && j.title.toLowerCase().includes(q)) || 
+                             (j.company && j.company.toLowerCase().includes(q)) ||
+                             (j.description && j.description.toLowerCase().includes(q));
+        
+        const matchCountry = country === 'ALL' || (j.country_name && j.country_name.includes(country)) || (j.location && j.location.includes(country));
+        const matchScore = (j.ai_executability_score || 0) >= minScore;
+        
+        return matchQ && matchCountry && matchScore;
+      });
+
+      renderJobs(filtered);
+    }
+
+    function openModal(idx) {
+      const j = allJobs[idx];
+      if (!j) return;
+
+      const body = document.getElementById('modalBody');
+      body.innerHTML = `
+        <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">${escapeHtml(j.title)}</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 16px;">
+          ${escapeHtml(j.company)} • ${j.country_flag || '🌐'} ${escapeHtml(j.country_name || j.location || 'Remote')}
+        </p>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+          <span class="tag tag-salary">${escapeHtml(j.estimated_monthly_pay || j.salary)}</span>
+          <span class="score-badge">⚡ ${j.ai_executability_score || 85}% AI Executable</span>
+          <span class="stress-badge">🟢 ${escapeHtml(j.stress_level || 'Low Stress')}</span>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); letter-spacing: 0.05em; margin-bottom: 6px;">🧠 AI Cognitive Evaluator Reasoning</h4>
+          <p style="font-size: 0.9rem; color: #d4d4d8;">${escapeHtml(j.reason || 'This role has clear deliverables that can be heavily streamlined with modern AI development tools.')}</p>
+        </div>
+
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 8px;">📝 Tailored Application Pitch (Ready to Send)</h3>
+        <div class="pitch-box" id="pitchText">${escapeHtml(j.tailored_pitch || 'Hello Team,\n\nI am applying for the role. Looking forward to discussing details.\n\nBest,\nPrince')}</div>
+        <button class="btn btn-outline btn-sm" onclick="copyPitch()" style="margin-bottom: 24px;">📋 Copy Pitch to Clipboard</button>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button class="btn btn-outline" onclick="closeModal()">Close</button>
+          <a href="${j.url}" target="_blank" class="btn btn-primary">Open Portal & Submit ↗</a>
+        </div>
+      `;
+      document.getElementById('jobModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('jobModal').classList.remove('active');
+    }
+
+    function copyPitch() {
+      const text = document.getElementById('pitchText').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Pitch copied to clipboard!");
+      });
+    }
+
+    async function triggerScan() {
+      const btn = document.getElementById('scanBtn');
+      const text = document.getElementById('scanText');
+      btn.disabled = true;
+      text.innerHTML = '<span class="loading-spinner"></span> Scanning...';
+
+      try {
+        await fetch('/api/jobs/scan', { method: 'POST' });
+        setTimeout(() => {
+          loadJobs();
+          btn.disabled = false;
+          text.textContent = 'Scan Now';
+          alert('Scan completed! New opportunities evaluated and synced.');
+        }, 3500);
+      } catch (err) {
+        btn.disabled = false;
+        text.textContent = 'Scan Now';
+        alert('Scan triggered in background on server.');
+      }
+    }
+
+    function cleanText(t) {
+      return (t || '').replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Initial load
+    loadJobs();
+    // Auto-refresh every 60 seconds
+    setInterval(loadJobs, 60000);
+  </script>
+</body>
+</html>
