@@ -239,7 +239,34 @@ def collect_all_global_jobs():
     print("[*] Fetching live jobs from Himalayas...")
     all_jobs.extend(fetch_himalayas_jobs())
     print(f"[+] Total raw jobs scraped across 7 verified portals: {len(all_jobs)}")
-    return all_jobs
+    
+    # Strictly filter out non-tech / medical / sales and super-senior roles
+    filtered_jobs = [j for j in all_jobs if is_prince_target_role(j)]
+    print(f"[+] Prince-targeted verified developer roles: {len(filtered_jobs)}")
+    return filtered_jobs
+
+def is_prince_target_role(job):
+    """Ensures 100% precision: only developer, backend, automation, and tech roles pass."""
+    title = (job.get("title") or "").lower()
+    
+    disqualified = [
+        "patient", "medical", "doctor", "nurse", "sales", "account executive", 
+        "recruiter", "talent acquisition", "hr manager", "human resources", 
+        "marketing", "seo specialist", "content writer", "copywriter", 
+        "community manager", "legal", "counsel", "attorney", "accountant",
+        "business development", "bizdev", "bdr", "sdr",
+        "staff engineer", "principal engineer", "director", "vice president", 
+        "vp of", "head of"
+    ]
+    if any(d in title for d in disqualified):
+        return False
+        
+    target_terms = [
+        "developer", "engineer", "programmer", "backend", "c#", ".net", "dotnet", 
+        "api", "web", "full stack", "fullstack", "software", "python", "qa", 
+        "automation", "testing", "cloud", "data", "support"
+    ]
+    return any(t in title for t in target_terms)
 
 # ====================================================================
 # 2. AI COGNITIVE EVALUATOR & BRAIN ENGINE (GEMINI FLASH LITE)
