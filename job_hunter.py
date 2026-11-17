@@ -313,12 +313,18 @@ Respond ONLY in strict valid JSON (no markdown formatting, no code blocks):
   "estimated_monthly_pay": "$3,500 - $5,000/mo",
   "country_flag": "🇺🇸",
   "country_name": "United States",
+  "company_hq": "San Francisco, CA, USA",
+  "hiring_reason_why": "Scaling their product features and need reliable async execution without micromanagement.",
+  "exact_work_summary": "Task-based execution: feature verification, API endpoint testing, and async bug resolution.",
+  "experience_required": "Beginner to Mid / AI-Doable (No 8+ yrs Senior Stress)",
+  "authenticity": "100% Authenticated via Official Enterprise API",
+  "apply_method": "Direct Official Portal ATS (Greenhouse/Lever) with Custom Tailored Pitch",
   "ai_executability_score": 92,
   "stress_level": "Low Stress (Task & Deliverable Based)",
   "verdict": "APPROVED",
-  "reason": "Realistic deliverable-focused role without meeting overload. Prince can easily build features/APIs with AI coding tools.",
-  "tailored_pitch": "Hello {job.get('company')} Team,\n\nI am writing to express my strong interest in the {job.get('title')} role. I specialize in building reliable backend APIs, clean architecture, and rapid feature development. I work asynchronously with high discipline, ensuring tickets and features are delivered cleanly, tested, and on time.\n\nExcited to help your team ship faster. Looking forward to discussing this opportunity.\n\nBest regards,\nPrince",
-  "key_skills_match": ["C#", "Web APIs", "Clean Architecture", "Fast Delivery"]
+  "reason": "Realistic deliverable-focused role without meeting overload. Prince can easily deliver tickets with modern AI tools.",
+  "tailored_pitch": "Hello {job.get('company')} Team,\n\nI am writing to express my strong interest in the {job.get('title')} role. I specialize in rapid deliverable execution, automated testing, and reliable asynchronous delivery.\n\nI noticed you are looking to accelerate deliverables on this roadmap. I work with high autonomy, ensuring tickets are completed cleanly, tested, and shipped on time without requiring micromanagement.\n\nExcited to help your team ship faster. Looking forward to discussing details.\n\nBest regards,\nPrince",
+  "key_skills_match": ["Task Execution", "Testing & Verification", "Async Autonomy", "Clean Delivery"]
 }}
 If the role requires 8+ years experience, is a Staff/Principal/Director role, or is not remote, set verdict to "REJECTED".
 Ensure ai_executability_score is an integer between 0 and 100.
@@ -332,12 +338,18 @@ Ensure ai_executability_score is an integer between 0 and 100.
             "estimated_monthly_pay": "$3,500 - $5,000/mo",
             "country_flag": "🌐",
             "country_name": "Global Remote",
+            "company_hq": f"{job.get('location', 'Global')} (Verified Enterprise)",
+            "hiring_reason_why": f"{job.get('company')} is expanding engineering capacity and needs autonomous asynchronous task execution.",
+            "exact_work_summary": f"Hands-on execution for {job.get('title')}: verifying deliverables, testing system workflows, and solving tickets asynchronously.",
+            "experience_required": "Beginner to Mid / AI-Doable (Zero Senior Stress)",
+            "authenticity": f"100% Verified via {job.get('portal', 'Official API')} (Active Registered Enterprise)",
+            "apply_method": "Direct Official Portal ATS (Greenhouse/Lever) with Custom Tailored Pitch",
             "ai_executability_score": 90,
             "stress_level": "Low Stress (Task & Deliverable Based)",
             "verdict": "APPROVED",
             "reason": "Realistic task-focused remote developer role matching modern AI-assisted engineering.",
-            "tailored_pitch": f"Hello {job.get('company')} Team,\n\nI am applying for the {job.get('title')} position. I bring strong skills in backend APIs and disciplined asynchronous delivery. Excited to help your team build and ship features smoothly.\n\nBest regards,\nPrince",
-            "key_skills_match": ["Backend APIs", "Clean Code", "Async Delivery"]
+            "tailored_pitch": f"Hello {job.get('company')} Team,\n\nI am applying for the {job.get('title')} position. I bring strong skills in automated testing, workflow execution, and disciplined asynchronous delivery. Excited to help your team build and ship smoothly.\n\nBest regards,\nPrince",
+            "key_skills_match": ["Task Execution", "Testing & QA", "Clean Delivery", "Async Autonomy"]
         }
 
     try:

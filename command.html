@@ -734,6 +734,12 @@
         <div id="modalWork" style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;">Task deliverables and execution overview.</div>
       </div>
 
+      <!-- WHY THEY ARE HIRING (THE BUSINESS PAIN POINT) -->
+      <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 12px;">
+        <div style="font-size: 0.7rem; font-weight: 800; color: #fbbf24; font-family: var(--font-mono);">🎯 WHY THEY ARE HIRING (શા માટે આ કામ કરાવવું છે - The Business Need)</div>
+        <div id="modalWhyHiring" style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;">Business need & pain point.</div>
+      </div>
+
       <!-- HOW IT WAS APPLIED -->
       <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 12px;">
         <div style="font-size: 0.7rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ HOW WAS IT APPLIED & CONTACT CHANNEL</div>
@@ -1354,12 +1360,13 @@
       const j = realJobsQueue[idx];
       if (!j) return;
       document.getElementById('modalJobTitle').textContent = j.title;
-      document.getElementById('modalCompany').textContent = `${j.company} • ${j.country_flag || '🌐'} ${j.country_name || 'Remote'} • ${j.portal || 'Official Portal'}`;
+      document.getElementById('modalCompany').textContent = `${j.company} • ${j.country_flag || '🌐'} ${j.company_hq || j.country_name || 'Remote HQ'} • ${j.portal || 'Official Portal'}`;
       document.getElementById('modalDate').textContent = j.date || 'Today (Fresh)';
       document.getElementById('modalPay').textContent = j.estimated_monthly_pay || j.salary || '$4,500/mo';
       document.getElementById('modalExp').textContent = j.experience_required || 'Beginner to Mid / AI-Doable';
       document.getElementById('modalStatus').textContent = j.status || '🟡 Applied & Awaiting Review';
       document.getElementById('modalWork').textContent = j.exact_work_summary || j.reason || 'Task-based deliverables: verifying features, testing outputs, solving tickets asynchronously.';
+      document.getElementById('modalWhyHiring').textContent = j.hiring_reason_why || 'Company is accelerating release velocity and needs autonomous asynchronous task execution.';
       document.getElementById('modalApplyMethod').textContent = j.apply_method || (j.url ? 'Direct Official Portal ATS (Greenhouse/Lever) with Custom Tailored Pitch' : 'Direct Outreach via prince.dev.contact@gmail.com');
       document.getElementById('modalPitch').textContent = j.tailored_pitch || "Pitch ready to send.";
       document.getElementById('modalApplyLink').href = j.url;
