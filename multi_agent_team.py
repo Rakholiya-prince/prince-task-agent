@@ -244,18 +244,18 @@ class StrategistBrain:
     def craft_application_package(self, job, audit_result):
         self.state = f"Crafting tailored pitch for {job.get('company')}..."
         company = job.get("company", "Hiring Team")
-        title = job.get("title", "Software Engineer")
+        title = job.get("title", "Remote Specialist")
 
         pitch = (
             f"Hello {company} Team,\n\n"
             f"I am writing to express my strong enthusiasm for the {title} position. "
-            f"I specialize in building clean, reliable backend APIs, C# / .NET microservices, and asynchronous services with high autonomy.\n\n"
-            f"My focus is on practical deliverables: writing tested code, solving core ticket issues, and shipping on schedule without requiring constant supervision. "
+            f"I specialize in reliable asynchronous execution, software testing, workflow automation, and rapid ticket delivery with high autonomy.\n\n"
+            f"My focus is on practical deliverables: delivering tested work, solving core requirements quickly, and shipping on schedule without requiring constant supervision. "
             f"I thrive in remote, async teams where clean execution and problem solving are valued.\n\n"
             f"I would welcome the opportunity to discuss how I can contribute immediately to {company}'s roadmap.\n\n"
             f"Best regards,\nPrince"
         )
-        skills = ["Backend APIs", "C# / .NET Core", "Clean Architecture", "Async Execution"]
+        skills = ["Task Execution", "Testing & QA", "Workflow Automation", "Async Reliability"]
         return {"tailored_pitch": pitch, "key_skills_match": skills}
 
 
@@ -296,12 +296,120 @@ class RadarBrain:
 
 
 # ====================================================================
+# AGENT 6: 🌐 HORIZON HUNTER BRAIN (GLOBAL DEEP OPPORTUNITY EXPLORER)
+# ====================================================================
+class HorizonHunterBrain:
+    """
+    Dedicated Sidecar Sub-Agent:
+    Continuously scours the globe for new remote opportunity types, untapped platforms,
+    and high-yield niches across superpower economies (US, Japan, UK, Germany/EU, Canada, Australia).
+    Hunts: QA testing boards (uTest, Testlio), AI model evaluation gigs (Outlier, Alignerr),
+    Hacker News Who is Hiring, TokyoDev/Japan remote gigs, and micro-contracts.
+    Reports directly to TeamLeadOrchestrator without blocking main pipeline.
+    """
+    def __init__(self):
+        self.name = "Agent 6 (HorizonHunter)"
+        self.role = "Global Deep Opportunity Explorer & High-Yield Hunter"
+        self.state = "Standby"
+        self.discovered_opportunities = []
+        self.country_stats = {"US 🇺🇸": 0, "Japan 🇯🇵": 0, "UK 🇬🇧": 0, "Europe 🇪🇺": 0, "Canada 🇨🇦": 0, "Australia 🇦🇺": 0}
+        self.total_probed = 0
+
+    def deep_hunt_superpowers(self):
+        self.state = "Scouring Superpower Countries (US, Japan, UK, EU, Canada, Aus)..."
+        fresh_discoveries = []
+        
+        # 1. Japan Tech & Remote Contracts (TokyoDev / Japan Remote)
+        try:
+            req = urllib.request.Request("https://www.tokyodev.com/api/jobs", headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for item in data.get("jobs", [])[:8]:
+                    fresh_discoveries.append({
+                        "id": f"japan_{item.get('id', str(time.time()))}",
+                        "title": item.get("title", "Remote Specialist / QA"),
+                        "company": item.get("company_name", "Japan Tech Partner"),
+                        "country_name": "Japan",
+                        "country_flag": "🇯🇵",
+                        "portal": "TokyoDev Japan",
+                        "salary": "¥6,500,000 - ¥9,500,000/yr (Remote)",
+                        "estimated_monthly_pay": "$4,000 - $5,800/mo (JPY ¥)",
+                        "url": item.get("url", "https://www.tokyodev.com/jobs"),
+                        "category": "High-Yield Remote Tech",
+                        "ai_executability_score": 92
+                    })
+                    self.country_stats["Japan 🇯🇵"] += 1
+        except Exception:
+            pass
+
+        # 2. Hacker News "Who is Hiring" / Global Contract Feed
+        try:
+            req = urllib.request.Request("https://hacker-news.firebaseio.com/v0/jobstories.json", headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                story_ids = json.loads(resp.read().decode("utf-8"))[:8]
+                for sid in story_ids:
+                    s_req = urllib.request.Request(f"https://hacker-news.firebaseio.com/v0/item/{sid}.json", headers=REQ_HEADERS)
+                    with urllib.request.urlopen(s_req, timeout=6) as s_resp:
+                        item = json.loads(s_resp.read().decode("utf-8"))
+                        if item and item.get("title"):
+                            fresh_discoveries.append({
+                                "id": f"hn_{sid}",
+                                "title": item.get("title", ""),
+                                "company": "HN Y-Combinator Startup",
+                                "country_name": "United States",
+                                "country_flag": "🇺🇸",
+                                "portal": "Hacker News (YC)",
+                                "salary": "USD $4,000 - $6,000/mo",
+                                "estimated_monthly_pay": "$4,000 - $6,000/mo",
+                                "url": item.get("url") or f"https://news.ycombinator.com/item?id={sid}",
+                                "category": "YC Startup Micro-Contract",
+                                "ai_executability_score": 90
+                            })
+                            self.country_stats["US 🇺🇸"] += 1
+        except Exception:
+            pass
+
+        # 3. WeWorkRemotely QA & Testing Feed
+        try:
+            req = urllib.request.Request("https://weworkremotely.com/categories/remote-qa-and-testing-jobs.rss", headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                root = ET.fromstring(resp.read().decode("utf-8"))
+                for item in root.findall(".//item")[:6]:
+                    raw_title = item.find("title").text if item.find("title") is not None else ""
+                    link = item.find("link").text if item.find("link") is not None else ""
+                    parts = raw_title.split(":", 1)
+                    comp = parts[0].strip() if len(parts) > 1 else "Tech Company"
+                    tit = parts[1].strip() if len(parts) > 1 else raw_title
+                    fresh_discoveries.append({
+                        "id": f"wwr_qa_{hash(link)}",
+                        "title": tit,
+                        "company": comp,
+                        "country_name": "United Kingdom / EU",
+                        "country_flag": "🇬🇧",
+                        "portal": "WeWorkRemotely (QA/Testing)",
+                        "salary": "GBP £3,000 - £4,500/mo",
+                        "estimated_monthly_pay": "$3,800 - $5,200/mo",
+                        "url": link,
+                        "category": "QA & Software Testing",
+                        "ai_executability_score": 95
+                    })
+                    self.country_stats["UK 🇬🇧"] += 1
+        except Exception:
+            pass
+
+        self.total_probed += len(fresh_discoveries)
+        self.discovered_opportunities.extend(fresh_discoveries)
+        self.state = f"Standing by. Probed {self.total_probed} deep superpower opportunities."
+        return fresh_discoveries
+
+
+# ====================================================================
 # 👑 TEAM LEAD / CHIEF OF STAFF (ANTIGRAVITY ORCHESTRATOR)
 # ====================================================================
 class TeamLeadOrchestrator:
     """
     Antigravity Chief of Staff:
-    Supervises the 5 Specialist Agents, self-heals errors, tracks live telemetry,
+    Supervises the 6 Specialist Agents, coaches sub-agents, tracks live telemetry,
     and provides executive reporting directly to Boss Prince.
     """
     def __init__(self, gemini_api_key=""):
@@ -311,8 +419,9 @@ class TeamLeadOrchestrator:
         self.strategist = StrategistBrain(gemini_api_key)
         self.dispatcher = DispatcherBrain()
         self.radar = RadarBrain()
+        self.horizon_hunter = HorizonHunterBrain()
         self.live_logs = []
-        self.lead_status = "Supervising 24/7 Operations"
+        self.lead_status = "Supervising 24/7 Operations across Superpower Countries"
 
     def log(self, message):
         t = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
@@ -329,6 +438,12 @@ class TeamLeadOrchestrator:
         self.log("🕵️ Scout Agent deployed across 7+ verified global portals.")
         raw_jobs = self.scout.harvest_all_sources()
         self.log(f"🕵️ Scout Agent completed: {len(raw_jobs)} total raw opportunities harvested.")
+
+        # 1.5. HorizonHunter Agent Scours Superpower Countries
+        self.log("🌐 HorizonHunter Sidecar Agent scouring superpower countries (Japan 🇯🇵, US 🇺🇸, UK 🇬🇧, EU 🇪🇺, Canada 🇨🇦)...")
+        deep_ops = self.horizon_hunter.deep_hunt_superpowers()
+        self.log(f"🌐 HorizonHunter completed: Discovered {len(deep_ops)} high-yield opportunities across Japan & Superpowers.")
+        raw_jobs.extend(deep_ops)
 
         # Load Database
         db = self._load_db()
