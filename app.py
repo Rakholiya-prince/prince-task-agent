@@ -707,12 +707,12 @@ def run_daily_scheduler():
                     send_morning_digest(PRINCE_CHAT_ID)
                     last_morning_sent_date = today_str
 
-            # 2. Morning Job Briefing: 7:45 AM IST (Hour 7, Minute 45)
-            if hour == 7 and minute >= 45 and minute <= 50:
+            # 2. Morning Job Briefing: 7:15 AM IST (Hour 7, Minute 15)
+            if hour == 7 and minute >= 15 and minute <= 20:
                 if last_morning_job_date != today_str:
-                    print(f"[*] Sending 7:45 AM IST Morning Job Briefing for {today_str}...")
+                    print(f"[*] Sending 7:15 AM IST Morning Job Briefing for {today_str}...")
                     try:
-                        summary_msg = "🌅 *MORNING EXECUTIVE JOB BRIEFING FOR BOSS PRINCE*\n" + job_hunter.generate_daily_jobs_telegram_summary()
+                        summary_msg = "🌅 *MORNING EXECUTIVE OVERNIGHT BRIEFING FOR BOSS PRINCE (7:15 AM IST)*\n" + job_hunter.generate_daily_jobs_telegram_summary()
                         telegram_send_message(PRINCE_CHAT_ID, summary_msg)
                     except Exception as e:
                         print(f"[!] Error sending morning job report: {e}")
