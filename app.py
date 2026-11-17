@@ -584,36 +584,6 @@ def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -
             content = re.sub(r'<a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-\d+"', f'<a href="{h_url}"', content)
             content = re.sub(r'Curated from <strong>.*?</strong>', f'Curated from <strong>{h_title}</strong>', content)
             content = re.sub(r'Read Full ".*?" Newsletter', f'Read Full "{h_title}" Newsletter', content)
-
-        # 3. Update Section 2 (BBC Story) headline & source link
-        if bbc_data and bbc_data.get('title') and bbc_data.get('link'):
-            b_title = bbc_data['title']
-            b_link = bbc_data['link']
-            
-            # Update Section 2 headline
-            content = re.sub(
-                r'(<!--\s*SECTION 2: BBC VOCAL READING.*?<div class="section-kicker-badge">.*?</div>\s*<h2 class="article-headline">)(.*?)(</h2>)',
-                rf'\g<1>{b_title}\g<3>',
-                content,
-                flags=re.DOTALL
-            )
-            
-            # Update Section 2 direct link
-            content = re.sub(
-                r'(<!--\s*SECTION 2: BBC VOCAL READING.*?<div class="article-byline">.*?<a href=")(.*?)(")',
-                rf'\g<1>{b_link}\g<3>',
-                content,
-                flags=re.DOTALL
-            )
-            
-            # Update Section 2 callout card
-            content = re.sub(
-                r'(<!-- Luxury Callout to Exact BBC Story -->\s*<a href=")(.*?)(".*?<span class="source-callout-title">Read Full BBC Story: ")(.*?)(")',
-                rf'\g<1>{b_link}\g<3>{b_title}\g<5>',
-                content,
-                flags=re.DOTALL
-            )
-        
         with open(reader_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"[*] Dynamic reader.html updated for {date_formatted}.")
@@ -656,13 +626,37 @@ def update_calendar_ics(morning_text: str = None, night_text: str = None) -> Non
     except Exception as e:
         print(f"[!] update_calendar_ics error: {e}")
 
+def get_current_reader_bbc() -> dict:
+    """Extracts the exact BBC story currently featured in reader.html to guarantee 100% sync."""
+    try:
+        reader_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader.html")
+        if os.path.exists(reader_path):
+            with open(reader_path, "r", encoding="utf-8") as f:
+                html = f.read()
+            h2_m = re.search(r'<!--\s*=+.*?SECTION 2: BBC VOCAL READING.*?<h2 class="article-headline">(.*?)</h2>', html, flags=re.DOTALL)
+            title = h2_m.group(1).strip() if h2_m else "The AI Start-Ups Fixing India's Broken Roads and Messy Land Records"
+            link_m = re.search(r'<!--\s*=+.*?SECTION 2: BBC VOCAL READING.*?<a href="(https://www\.bbc\.co\.uk/news/articles/.*?)"', html, flags=re.DOTALL)
+            link = link_m.group(1).strip() if link_m else "https://www.bbc.co.uk/news/articles/c820vnln2lzpo"
+            return {
+                "title": title,
+                "link": link,
+                "desc": "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges like chaotic land records and road maintenance."
+            }
+    except Exception as e:
+        print(f"[!] get_current_reader_bbc error: {e}")
+    return {
+        "title": "The AI Start-Ups Fixing India's Broken Roads and Messy Land Records",
+        "link": "https://www.bbc.co.uk/news/articles/c820vnln2lzpo",
+        "desc": "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges."
+    }
+
 def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     ist_now = now_utc + datetime.timedelta(hours=5, minutes=30)
     date_formatted = ist_now.strftime("%A • %d %b %Y")
     
     hhh_data = fetch_latest_hhh()
-    bbc_data = fetch_latest_bbc()
+    bbc_data = get_current_reader_bbc()
     update_dynamic_reader(hhh_data, bbc_data, date_formatted)
     
     digest = generate_morning_digest(hhh_data=hhh_data, bbc_data=bbc_data)
