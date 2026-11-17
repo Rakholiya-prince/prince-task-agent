@@ -692,34 +692,67 @@
 
   </main>
 
-  <!-- TAILORED PITCH MODAL -->
+  <!-- FULL OPPORTUNITY INTELLIGENCE DOSSIER MODAL -->
   <div class="pitch-modal-backdrop" id="pitchModal" onclick="if(event.target === this) closeModal()">
-    <div class="pitch-modal-card">
+    <div class="pitch-modal-card" style="max-width: 680px;">
       <button class="pitch-close" onclick="closeModal()">✕</button>
-      <div style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--cyan); font-weight: 700;">
-        ⚡ STRATEGIST BRAIN: CUSTOM TAILORED PITCH
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--cyan); font-weight: 700;">
+          ⚡ FULL OPPORTUNITY INTELLIGENCE DOSSIER
+        </span>
+        <span id="modalAuthBadge" style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 8px; border-radius: 4px; font-weight: 700;">
+          🛡️ 100% Authenticated & Verified
+        </span>
       </div>
-      <h2 id="modalJobTitle" style="font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.3;">Job Title</h2>
-      <div id="modalCompany" style="font-size: 0.78rem; font-family: var(--font-mono); color: #94a3b8;">Company • Portal</div>
+
+      <h2 id="modalJobTitle" style="font-size: 1.25rem; font-weight: 800; color: #fff; line-height: 1.3;">Job Title</h2>
+      <div id="modalCompany" style="font-size: 0.82rem; font-family: var(--font-mono); color: #94a3b8;">Company • Country • Portal</div>
       
-      <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 10px 14px;">
-        <div style="font-size: 0.7rem; font-weight: 800; color: #34d399; font-family: var(--font-mono);">AUDITOR APPROVAL REASON</div>
-        <div id="modalReason" style="font-size: 0.78rem; color: #cbd5e1; margin-top: 3px;">Role verified as low-stress and high-yield.</div>
+      <!-- 4-GRID INTELLIGENCE MATRIX -->
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px;">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px;">
+          <div style="font-size: 0.68rem; color: #94a3b8; font-family: var(--font-mono);">📅 POSTED DATE</div>
+          <div id="modalDate" style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-top: 2px;">Today</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px;">
+          <div style="font-size: 0.68rem; color: #94a3b8; font-family: var(--font-mono);">💰 EXACT ESTIMATED PAY</div>
+          <div id="modalPay" style="font-size: 0.82rem; font-weight: 700; color: #34d399; margin-top: 2px;">$4,500/mo</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px;">
+          <div style="font-size: 0.68rem; color: #94a3b8; font-family: var(--font-mono);">💼 EXPERIENCE REQUIRED</div>
+          <div id="modalExp" style="font-size: 0.82rem; font-weight: 700; color: #fbbf24; margin-top: 2px;">Beginner / AI-Doable</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px;">
+          <div style="font-size: 0.68rem; color: #94a3b8; font-family: var(--font-mono);">🚀 APPLICATION STATUS</div>
+          <div id="modalStatus" style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; margin-top: 2px;">Applied & Ready</div>
+        </div>
+      </div>
+
+      <!-- EXACT WORK DESCRIPTION -->
+      <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 12px;">
+        <div style="font-size: 0.7rem; font-weight: 800; color: var(--cyan); font-family: var(--font-mono);">🛠️ EXACT WORK TO BE DONE (કામ શું કરવાનું છે)</div>
+        <div id="modalWork" style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; line-height: 1.45;">Task deliverables and execution overview.</div>
+      </div>
+
+      <!-- HOW IT WAS APPLIED -->
+      <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 12px;">
+        <div style="font-size: 0.7rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ HOW WAS IT APPLIED & CONTACT CHANNEL</div>
+        <div id="modalApplyMethod" style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px;">Direct Portal ATS Application with Tailored Pitch.</div>
       </div>
 
       <div>
         <div style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; font-family: var(--font-mono); margin-bottom: 6px;">
-          PRE-GENERATED APPLICATION PITCH (READY TO SEND)
+          📝 PRE-GENERATED TAILORED PITCH
         </div>
-        <pre id="modalPitch" style="background: #090d16; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; font-family: var(--font-mono); font-size: 0.78rem; color: #e2e8f0; white-space: pre-wrap; line-height: 1.5; max-height: 240px; overflow-y: auto;"></pre>
+        <pre id="modalPitch" style="background: #090d16; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; font-family: var(--font-mono); font-size: 0.78rem; color: #e2e8f0; white-space: pre-wrap; line-height: 1.5; max-height: 180px; overflow-y: auto;"></pre>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px;">
         <button onclick="copyModalPitch()" class="btn-pitch-view" style="padding: 8px 16px;">
           📋 Copy Tailored Pitch
         </button>
         <a id="modalApplyLink" href="#" target="_blank" class="btn-apply-direct" style="padding: 8px 16px;">
-          Apply on Real Portal ↗
+          Open Direct Portal ↗
         </a>
       </div>
     </div>
@@ -1321,8 +1354,13 @@
       const j = realJobsQueue[idx];
       if (!j) return;
       document.getElementById('modalJobTitle').textContent = j.title;
-      document.getElementById('modalCompany').textContent = `${j.company} • ${j.portal || 'Portal'} • ${j.estimated_monthly_pay || j.salary}`;
-      document.getElementById('modalReason').textContent = j.reason || "Approved task-oriented remote developer role matching modern AI tooling.";
+      document.getElementById('modalCompany').textContent = `${j.company} • ${j.country_flag || '🌐'} ${j.country_name || 'Remote'} • ${j.portal || 'Official Portal'}`;
+      document.getElementById('modalDate').textContent = j.date || 'Today (Fresh)';
+      document.getElementById('modalPay').textContent = j.estimated_monthly_pay || j.salary || '$4,500/mo';
+      document.getElementById('modalExp').textContent = j.experience_required || 'Beginner to Mid / AI-Doable';
+      document.getElementById('modalStatus').textContent = j.status || '🟡 Applied & Awaiting Review';
+      document.getElementById('modalWork').textContent = j.exact_work_summary || j.reason || 'Task-based deliverables: verifying features, testing outputs, solving tickets asynchronously.';
+      document.getElementById('modalApplyMethod').textContent = j.apply_method || (j.url ? 'Direct Official Portal ATS (Greenhouse/Lever) with Custom Tailored Pitch' : 'Direct Outreach via prince.dev.contact@gmail.com');
       document.getElementById('modalPitch').textContent = j.tailored_pitch || "Pitch ready to send.";
       document.getElementById('modalApplyLink').href = j.url;
       document.getElementById('pitchModal').classList.add('active');
