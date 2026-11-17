@@ -773,8 +773,11 @@
 
         <!-- HOW IT WAS APPLIED -->
         <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-          <div style="font-size: 0.72rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono); margin-bottom: 4px;">✉️ HOW WAS IT APPLIED & CONTACT CHANNEL</div>
-          <div style="font-size: 0.84rem; color: #cbd5e1;">${escapeHtml(j.apply_method || (j.url ? 'Direct Official Portal ATS (Greenhouse/Lever) with Custom Tailored Pitch' : 'Direct Outreach via prince.dev.contact@gmail.com'))}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.72rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ APPLICATION METHOD & SUBMISSION REASON</span>
+            <span style="font-size: 0.7rem; font-family: var(--font-mono); background: rgba(168, 85, 247, 0.25); color: #e9d5ff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">${escapeHtml(j.apply_type || (j.url ? '1-Click Submission ↗' : 'Direct Email Outreach ✉️'))}</span>
+          </div>
+          <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.45;">${escapeHtml(j.submission_proof_or_reason || j.apply_method || 'Tailored pitch & answers prepared. Reason for 1-Click: Company uses ATS web form requiring manual human submission to bypass anti-bot filters.')}</div>
         </div>
 
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;">📝 Tailored Application Pitch (Ready to Send)</h3>
