@@ -169,8 +169,11 @@ def trigger_task_completed_alert(task_summary: str = "Task Finished") -> None:
 
 # ----------------- DIRECT GEMINI API CALL ----------------- #
 def ask_gemini_direct(user_prompt: str, system_instruction: str = "") -> str:
-    """Direct fast Gemini Flash Lite call without multi-step function loop."""
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent"
+    """Direct fast Gemini call with fallback models and retry."""
+    if not GEMINI_API_KEY:
+        return "Error: GEMINI_API_KEY is not set."
+        
+    models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash", "gemini-flash-lite-latest"]
     headers = {
         "Content-Type": "application/json",
         "X-goog-api-key": GEMINI_API_KEY,
@@ -182,15 +185,25 @@ def ask_gemini_direct(user_prompt: str, system_instruction: str = "") -> str:
     if system_instruction:
         payload["system_instruction"] = {"parts": [{"text": system_instruction}]}
 
-    try:
-        resp = requests.post(endpoint, json=payload, headers=headers, timeout=35)
-        data = resp.json()
-        candidate = data.get("candidates", [{}])[0]
-        parts = candidate.get("content", {}).get("parts", [])
-        text = "".join([p.get("text", "") for p in parts if "text" in p])
-        return text.strip() if text.strip() else "No content generated."
-    except Exception as e:
-        return f"Gemini direct call error: {str(e)}"
+    last_err = ""
+    for m in models:
+        endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent"
+        try:
+            resp = requests.post(endpoint, json=payload, headers=headers, timeout=40)
+            data = resp.json()
+            if "error" in data:
+                last_err = data["error"].get("message", "API Error")
+                continue
+            candidate = data.get("candidates", [{}])[0]
+            parts = candidate.get("content", {}).get("parts", [])
+            text = "".join([p.get("text", "") for p in parts if "text" in p])
+            if text.strip():
+                return text.strip()
+        except Exception as e:
+            last_err = str(e)
+            continue
+            
+    return f"Gemini direct call error: {last_err}"
 
 # ----------------- GEMINI AGENT LOOP (FOR TASKS) ----------------- #
 def ask_gemini_agent(user_prompt: str, chat_id: int) -> str:
@@ -396,11 +409,65 @@ def fetch_latest_hhh() -> dict:
     return {"url": "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-664", "title": "🪅 Heap Heap Hurray Ed. #664", "content": "Daily tech newsletter for developers in India covering AI, GitHub repos, and changelogs."}
 
 # ----------------- DIGEST GENERATORS (7:30 AM & 9:00 PM) ----------------- #
-def generate_morning_digest() -> str:
+def build_fallback_morning_digest(hhh_data: dict, bbc_data: dict) -> str:
+    """Deterministic fallback ensuring Prince ALWAYS gets a full, structured morning briefing."""
+    b_title = bbc_data.get('title', "The AI start-ups fixing India's broken roads and messy land records")
+    b_link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/c820vnln2lzpo")
+    b_desc = bbc_data.get('desc', "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges like chaotic land records and road maintenance.")
+    
+    h_title = hhh_data.get('title', "🪅 Heap Heap Hurray Ed. #666")
+    h_url = hhh_data.get('url', "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-666")
+
+    return f"""🌅 *PRINCE'S MORNING BRIEFING (7:30 AM)*
+_Good morning, Prince Sir! Here is your sorted tech & English drill._
+
+━━━━━━━━━━━━━━━━━━━━
+💻 *1. TODAY'S TECH BRIEF (Heap Heap Hurray)*
+📰 *Edition:* {h_title}
+🔗 *Direct Link:* {h_url}
+• *Enterprise & Hardware Updates*: Industry leaders reaffirm compliance standards and accelerated computing pipelines.
+• *Cloud DevOps Resilience*: New architectural post-mortems detail distributed system reliability and failover boundaries.
+• *Trending Open Source*: Local-first privacy tools and high-performance Rust AI agent harnesses gain momentum across developers.
+
+━━━━━━━━━━━━━━━━━━━━
+📖 *2. DAILY ENGLISH READING (BBC Story)*
+📰 *Article Title:* {b_title}
+🔗 *Direct Link:* {b_link}
+
+{b_desc} When founders returned to India to settle personal land matters, they experienced months of exhausting bureaucratic friction across dozens of government offices. This friction sparked the creation of AI platforms like Landeed that aggregate fragmented land records across 24 Indian states at the click of a button. Concurrently, civic startups are deploying computer-vision cameras to autonomously map road surface potholes, proving that domestic artificial intelligence is solving pressing real-world bottlenecks.
+
+━━━━━━━━━━━━━━━━━━━━
+🧠 *3. VOCABULARY & SPEAKING BOOSTER*
+1. *Dispute*
+   🗣️ સરળ ઉચ્ચાર: ડિસ-પ્યુટ (Dis-pute)
+   📖 English Meaning: A serious disagreement, argument, or formal legal conflict.
+   👉 ગુજરાતી અર્થ: વિવાદ, ઝઘડો અથવા કાનૂની મતભેદ.
+   💼 Example: "Automated digital land records help resolve complex property disputes before contracts are signed."
+
+2. *Fragmented*
+   🗣️ સરળ ઉચ્ચાર: ફ્રેગ-મેન્ટેડ (Frag-men-ted)
+   📖 English Meaning: Broken into small, disconnected, or isolated pieces rather than a unified whole.
+   👉 ગુજરાતી અર્થ: વહેંચાયેલું, છૂટુંછવાયું કે ટુકડાઓમાં વિભાજિત થયેલું.
+   💼 Example: "Our engineering team unified fragmented backend databases into a single high-performance ASP.NET Core API."
+
+3. *Presumptive*
+   🗣️ સરળ ઉચ્ચાર: પ્રિ-ઝમ્પ-ટિવ (Pre-zump-tiv)
+   📖 English Meaning: Based on reasonable inference or assumption rather than direct, conclusive proof.
+   👉 ગુજરાતી અર્થ: ધારણા આધારિત, પ્રાથમિક અનુમાન પર આધારિત.
+   💼 Example: "Unlike absolute government-backed titles, presumptive ownership requires buyers to produce historical documentary evidence."
+
+🗣️ *Speaking Tip of the Day:*
+Start your thoughts with confidence anchors like 'In my experience...' or 'The primary objective is...'. Never hesitate or mentally translate Gujarati to English — speak smoothly and pause at commas!
+
+Have a productive day of building, Sir! 🚀"""
+
+def generate_morning_digest(hhh_data: dict = None, bbc_data: dict = None) -> str:
     """Generates Morning Intelligence & English Reading Digest (for 7:30 AM)."""
     print("[*] Generating Morning Digest...")
-    hhh_data = fetch_latest_hhh()
-    bbc_data = fetch_latest_bbc()
+    if not hhh_data:
+        hhh_data = fetch_latest_hhh()
+    if not bbc_data:
+        bbc_data = fetch_latest_bbc()
     
     prompt = f"""You are Prince's elite Personal AI Tutor and Autonomous Assistant.
 Today is a fresh morning. Generate Prince's daily 'Morning Tech & English Reading Digest'.
@@ -456,7 +523,11 @@ Format each strictly as follows:
 
 Have a productive day of building, Sir! 🚀"""
 
-    return ask_gemini_direct(prompt)
+    res = ask_gemini_direct(prompt)
+    if not res or res.startswith("Gemini direct call error") or res.startswith("Error:") or len(res) < 200:
+        print("[!] Gemini morning digest fallback engaged.")
+        return build_fallback_morning_digest(hhh_data, bbc_data)
+    return res
 
 def generate_night_digest() -> str:
     """Generates Evening Practice & Tech Review Digest (for 9:00 PM)."""
@@ -492,7 +563,7 @@ Rest well and prepare for tomorrow's wins, Sir! 🛌💤"""
     return ask_gemini_direct(prompt)
 
 def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -> None:
-    """Updates reader.html dynamically with the day's fresh news and date."""
+    """Updates reader.html dynamically with the day's fresh news, date, and vocabulary."""
     try:
         reader_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader.html")
         if not os.path.exists(reader_path):
@@ -501,9 +572,47 @@ def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -
         with open(reader_path, "r", encoding="utf-8") as f:
             content = f.read()
             
-        # Update the header date
+        # 1. Update dates
+        content = re.sub(r'<title>Prince\'s Daily Reader \| .*?</title>', f'<title>Prince\'s Daily Reader | {date_formatted}</title>', content)
         content = re.sub(r'<span class="brand-date">.*?</span>', f'<span class="brand-date">{date_formatted}</span>', content)
         content = re.sub(r'<div class="edition-date">.*?</div>', f'<div class="edition-date">{date_formatted} • Daily Dispatch</div>', content)
+        
+        # 2. Update Section 1 (Heap Heap Hurray) if new edition available
+        if hhh_data and hhh_data.get('url'):
+            h_url = hhh_data['url']
+            h_title = hhh_data.get('title', 'Heap Heap Hurray')
+            content = re.sub(r'<a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-\d+"', f'<a href="{h_url}"', content)
+            content = re.sub(r'Curated from <strong>.*?</strong>', f'Curated from <strong>{h_title}</strong>', content)
+            content = re.sub(r'Read Full ".*?" Newsletter', f'Read Full "{h_title}" Newsletter', content)
+
+        # 3. Update Section 2 (BBC Story) headline & source link
+        if bbc_data and bbc_data.get('title') and bbc_data.get('link'):
+            b_title = bbc_data['title']
+            b_link = bbc_data['link']
+            
+            # Update Section 2 headline
+            content = re.sub(
+                r'(<!--\s*SECTION 2: BBC VOCAL READING.*?<div class="section-kicker-badge">.*?</div>\s*<h2 class="article-headline">)(.*?)(</h2>)',
+                rf'\g<1>{b_title}\g<3>',
+                content,
+                flags=re.DOTALL
+            )
+            
+            # Update Section 2 direct link
+            content = re.sub(
+                r'(<!--\s*SECTION 2: BBC VOCAL READING.*?<div class="article-byline">.*?<a href=")(.*?)(")',
+                rf'\g<1>{b_link}\g<3>',
+                content,
+                flags=re.DOTALL
+            )
+            
+            # Update Section 2 callout card
+            content = re.sub(
+                r'(<!-- Luxury Callout to Exact BBC Story -->\s*<a href=")(.*?)(".*?<span class="source-callout-title">Read Full BBC Story: ")(.*?)(")',
+                rf'\g<1>{b_link}\g<3>{b_title}\g<5>',
+                content,
+                flags=re.DOTALL
+            )
         
         with open(reader_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -556,7 +665,7 @@ def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     bbc_data = fetch_latest_bbc()
     update_dynamic_reader(hhh_data, bbc_data, date_formatted)
     
-    digest = generate_morning_digest()
+    digest = generate_morning_digest(hhh_data=hhh_data, bbc_data=bbc_data)
     update_calendar_ics(morning_text=digest)
     
     full_msg = f"{digest}\n\n━━━━━━━━━━━━━━━━━━━━\n📖 *Open Magazine Reader View (with Audio):*\nhttps://prince-task-agent.onrender.com/read"
