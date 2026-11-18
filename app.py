@@ -562,6 +562,247 @@ Rest well and prepare for tomorrow's wins, Sir! 🛌💤"""
 
     return ask_gemini_direct(prompt)
 
+def generate_reader_payload_ai(bbc_data: dict) -> dict:
+    """Uses Gemini to generate structured 3-tier IELTS content & vocabulary, with guaranteed deterministic fallback."""
+    title = bbc_data.get('title', "Europe Plans to Catch the Next Computer Chip Wave")
+    desc = bbc_data.get('desc', "Europe hopes to be a leader in a new generation of computer chips which use light to process data.")
+    link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/cqglwjd450k0o")
+    
+    prompt = f"""You are Prince's elite Personal AI Tutor.
+Generate daily English reading content and vocabulary based on this news:
+Article Title: {title}
+Summary: {desc}
+Link: {link}
+
+Return strictly a valid JSON object matching this schema:
+{{
+  "kicker_emoji": "⚡",
+  "kicker_topic": "Topic Name",
+  "headline": "{title}",
+  "level_a_p1": "Simple English paragraph 1 (Band 5.0-6.0)...",
+  "level_a_p2": "Simple English paragraph 2...",
+  "gujarati_summary": "Simple Gujarati summary of the article...",
+  "level_b_p1": "Professional medium English paragraph 1 (Band 7.0-7.5)...",
+  "level_b_p2": "Professional medium English paragraph 2...",
+  "level_c_p1": "Native authentic English paragraph 1 (Band 8.5-9.0)...",
+  "level_c_p2": "Native authentic English paragraph 2...",
+  "word1_title": "Word1",
+  "word1_syllables": "ગુજરાતી સિલેબલ (English-Syllable)",
+  "word1_def": "English definition",
+  "word1_guj": "ગુજરાતી અર્થ",
+  "word1_example": "Professional sentence example.",
+  "word2_title": "Word2",
+  "word2_syllables": "...",
+  "word2_def": "...",
+  "word2_guj": "...",
+  "word2_example": "...",
+  "word3_title": "Word3",
+  "word3_syllables": "...",
+  "word3_def": "...",
+  "word3_guj": "...",
+  "word3_example": "...",
+  "speaking_prompt": "Speak out loud: Explain why...",
+  "speaking_tip": "Coach tip..."
+}}
+CRITICAL RULES:
+- Never use confusing phonetic symbols like /ʌn/ or IPA. Always use simple Gujarati syllables e.g. ફો-ટો-નિક (Pho-ton-ic).
+- Return ONLY the JSON object, nothing else."""
+
+    try:
+        resp_text = ask_gemini_direct(prompt)
+        cleaned = re.sub(r'^```json\s*', '', resp_text.strip())
+        cleaned = re.sub(r'```$', '', cleaned.strip()).strip()
+        data = json.loads(cleaned)
+        if "level_a_p1" in data and "word1_title" in data:
+            data["headline"] = title
+            return data
+    except Exception as e:
+        print(f"[!] AI payload generation error: {e}, falling back.")
+
+    words = [w.strip('.,()\"\'') for w in (title + ' ' + desc).split() if len(w) > 5]
+    w1 = words[0] if len(words) > 0 else "Innovation"
+    w2 = words[1] if len(words) > 1 else "Breakthrough"
+    w3 = words[2] if len(words) > 2 else "Scalability"
+    
+    return {
+        "kicker_emoji": "⚡",
+        "kicker_topic": "Frontier Technology & Innovation",
+        "headline": title,
+        "level_a_p1": f"{desc} This development marks an exciting new milestone for modern technological progress.",
+        "level_a_p2": f"Researchers, developers, and global organizations are closely tracking these advancements to unlock high-impact real-world solutions.",
+        "gujarati_summary": f"આજના સમાચાર {title} અંગે ટેકનોલોજી અને વૈશ્વિક નવીનતા પર પ્રકાશ પાડે છે.",
+        "level_b_p1": f"{title} represents a notable paradigm shift across enterprise engineering and distributed modern infrastructure.",
+        "level_b_p2": f"{desc} Industry leaders project accelerated efficiency benchmarks alongside enhanced operational resilience.",
+        "level_c_p1": f"The architectural and strategic implications surrounding {title} signal a profound technological milestone across global systems.",
+        "level_c_p2": f"{desc} Frontier institutions anticipate unprecedented operational gains as these innovations achieve maturity.",
+        "word1_title": w1, "word1_syllables": f"{w1}", "word1_def": f"Core technical concept relating to {w1}.", "word1_guj": "મહત્વપૂર્ણ સિદ્ધાંત", "word1_example": f"The engineering team leveraged {w1} to accelerate delivery.",
+        "word2_title": w2, "word2_syllables": f"{w2}", "word2_def": f"Significant advancement resolving system constraints.", "word2_guj": "મોટી સિદ્ધિ", "word2_example": f"Achieving this {w2} unlocked substantial throughput improvements.",
+        "word3_title": w3, "word3_syllables": f"{w3}", "word3_def": f"Strategic capability essential for robust growth.", "word3_guj": "વિકાસ ક્ષમતા", "word3_example": f"System designs must prioritize {w3} under enterprise workloads.",
+        "speaking_prompt": f"Speak out loud: Explain why '{title}' is an important technological development.",
+        "speaking_tip": "Open decisively with 'The decisive factor here is...' and pause smoothly at commas."
+    }
+
+def generate_sections_html(p: dict, bbc_link: str) -> str:
+    return f"""<!-- =========================================================
+         SECTION 2: BBC VOCAL READING & AUDIO PRACTICE
+         ========================================================= -->
+    <section class="article-section">
+      <div class="section-kicker-badge">
+        <span>{p.get('kicker_emoji', '⚡')}</span> Vocal Reading • {p.get('kicker_topic', 'Technology & Innovation')}
+      </div>
+      <h2 class="article-headline">{p.get('headline', 'Frontier Technology')}</h2>
+      <div class="article-byline">
+        <span>Reported by <strong>BBC News Science & Technology</strong></span>
+        <span>•</span>
+        <span>Target: 2 Min Aloud Practice</span>
+        <span>•</span>
+        <a href="{bbc_link}" target="_blank" rel="noopener noreferrer">bbc.co.uk ↗</a>
+      </div>
+
+      <!-- IELTS Difficulty Level Switcher -->
+      <div class="level-switcher-container">
+        <div class="level-switcher-label">
+          <span>🎯 IELTS Reading Difficulty:</span>
+          <span class="level-desc" id="level-desc-badge">🌱 Band 5.0 - 6.0 • Easy Understanding</span>
+        </div>
+        <div class="level-pill-group">
+          <button class="level-pill-btn active" id="pill-level-a" onclick="switchDifficulty('a')">
+            <span class="pill-dot dot-a"></span> 🌱 Level A (Simple)
+          </button>
+          <button class="level-pill-btn" id="pill-level-b" onclick="switchDifficulty('b')">
+            <span class="pill-dot dot-b"></span> 🌿 Level B (Medium)
+          </button>
+          <button class="level-pill-btn" id="pill-level-c" onclick="switchDifficulty('c')">
+            <span class="pill-dot dot-c"></span> 🌳 Level C (IELTS Band 9)
+          </button>
+        </div>
+      </div>
+
+      <!-- Minimal Audio Player Pill -->
+      <div class="audio-player-bar">
+        <div class="audio-player-left">
+          <button class="play-trigger-btn" id="voice-play-btn" onclick="toggleReadAloud()">
+            <span>▶</span> <span id="voice-btn-label">Listen to Selected Level</span>
+          </button>
+        </div>
+        <div class="audio-player-meta">
+          <span class="audio-status-label" id="audio-status">Deliberate 0.92x Pace</span>
+          <span class="audio-sub-hint">Listen once, then read aloud</span>
+        </div>
+      </div>
+
+      <!-- Editorial Story Body with 3 IELTS Progression Levels -->
+      <div class="editorial-story" id="vocal-passage">
+        <!-- Level A: Simple English (IELTS Band 5.0 - 6.0) -->
+        <div class="story-level-content" id="content-level-a">
+          <p>{p.get('level_a_p1', '')}</p>
+          <p>{p.get('level_a_p2', '')}</p>
+          <div class="level-quick-summary">
+            💡 <strong>ગુજરાતી સારાંશ (Quick Meaning):</strong> {p.get('gujarati_summary', '')}
+          </div>
+        </div>
+
+        <!-- Level B: Medium English (IELTS Band 7.0 - 7.5) -->
+        <div class="story-level-content" id="content-level-b" style="display: none;">
+          <p>{p.get('level_b_p1', '')}</p>
+          <p>{p.get('level_b_p2', '')}</p>
+        </div>
+
+        <!-- Level C: Native / Authentic BBC (IELTS Band 8.5 - 9.0) -->
+        <div class="story-level-content" id="content-level-c" style="display: none;">
+          <p>{p.get('level_c_p1', '')}</p>
+          <p>{p.get('level_c_p2', '')}</p>
+        </div>
+      </div>
+
+      <!-- Luxury Callout to Exact BBC Story -->
+      <a href="{bbc_link}" target="_blank" rel="noopener noreferrer" class="source-callout-card bbc-border">
+        <div class="source-callout-content">
+          <span class="source-callout-label">Original BBC Coverage</span>
+          <span class="source-callout-title">Read Full BBC Story: "{p.get('headline', '')}"</span>
+        </div>
+        <span class="source-callout-arrow">↗</span>
+      </a>
+    </section>
+
+    <hr class="editorial-divider">
+
+    <!-- =========================================================
+         SECTION 3: HIGH-IMPACT VOCABULARY & SPEAKING LAB
+         ========================================================= -->
+    <section class="article-section">
+      <div class="section-kicker-badge">
+        <span>🧠</span> Professional Vocabulary • 3 Words
+      </div>
+      <h2 class="article-headline">High-Impact Professional Vocabulary</h2>
+      <div class="article-byline">
+        <span>With Simple Gujarati Syllables & Workplace Context</span>
+      </div>
+
+      <div class="vocab-deck">
+        <!-- Word 1 -->
+        <div class="vocab-unit">
+          <div class="vocab-unit-header">
+            <span class="vocab-word-title">1. {p.get('word1_title', 'Core')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word1_title', 'Core')}')" title="Listen to pronunciation">🔊</button>
+          </div>
+          <div class="vocab-pronounce-tag">
+            🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word1_syllables', '')}</strong>
+          </div>
+          <p class="vocab-definition-text">{p.get('word1_def', '')}</p>
+          <p class="vocab-gujarati-meaning">👉 ગુજરાતી અર્થ: {p.get('word1_guj', '')}</p>
+          <p class="vocab-context-sentence">
+            "{p.get('word1_example', '')}"
+          </p>
+        </div>
+
+        <!-- Word 2 -->
+        <div class="vocab-unit">
+          <div class="vocab-unit-header">
+            <span class="vocab-word-title">2. {p.get('word2_title', 'Scale')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word2_title', 'Scale')}')" title="Listen to pronunciation">🔊</button>
+          </div>
+          <div class="vocab-pronounce-tag">
+            🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word2_syllables', '')}</strong>
+          </div>
+          <p class="vocab-definition-text">{p.get('word2_def', '')}</p>
+          <p class="vocab-gujarati-meaning">👉 ગુજરાતી અર્થ: {p.get('word2_guj', '')}</p>
+          <p class="vocab-context-sentence">
+            "{p.get('word2_example', '')}"
+          </p>
+        </div>
+
+        <!-- Word 3 -->
+        <div class="vocab-unit">
+          <div class="vocab-unit-header">
+            <span class="vocab-word-title">3. {p.get('word3_title', 'Engine')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word3_title', 'Engine')}')" title="Listen to pronunciation">🔊</button>
+          </div>
+          <div class="vocab-pronounce-tag">
+            🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word3_syllables', '')}</strong>
+          </div>
+          <p class="vocab-definition-text">{p.get('word3_def', '')}</p>
+          <p class="vocab-gujarati-meaning">👉 ગુજરાતી અર્થ: {p.get('word3_guj', '')}</p>
+          <p class="vocab-context-sentence">
+            "{p.get('word3_example', '')}"
+          </p>
+        </div>
+      </div>
+
+      <!-- Speaking Practice Prompt -->
+      <div class="speaking-lab-banner">
+        <div class="speaking-lab-kicker">🗣️ Speaking Practice Drill (30 Seconds)</div>
+        <p class="speaking-lab-prompt">
+          "{p.get('speaking_prompt', '')}"
+        </p>
+        <p class="speaking-lab-tip">
+          💡 <strong>Coach Tip:</strong> {p.get('speaking_tip', '')}
+        </p>
+      </div>
+    </section>
+
+    """
+
 def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -> None:
     """Updates reader.html dynamically with the day's fresh news, date, and vocabulary."""
     try:
@@ -581,12 +822,35 @@ def update_dynamic_reader(hhh_data: dict, bbc_data: dict, date_formatted: str) -
         if hhh_data and hhh_data.get('url'):
             h_url = hhh_data['url']
             h_title = hhh_data.get('title', 'Heap Heap Hurray')
-            content = re.sub(r'<a href="https://www.heapheaphurray.com/p/heap-heap-hurray-ed-\d+"', f'<a href="{h_url}"', content)
+            content = re.sub(r'<a href="https://www\.heapheaphurray\.com/p/heap-heap-hurray-ed-\d+"', f'<a href="{h_url}"', content)
             content = re.sub(r'Curated from <strong>.*?</strong>', f'Curated from <strong>{h_title}</strong>', content)
             content = re.sub(r'Read Full ".*?" Newsletter', f'Read Full "{h_title}" Newsletter', content)
+
+        # 3. Check if this exact BBC article link is already present
+        b_link = bbc_data.get('link', '')
+        if b_link and b_link in content:
+            with open(reader_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"[*] Reader already up to date for {b_link}, updated dates for {date_formatted}.")
+            return
+
+        # 4. Generate Section 2 & 3 payload and inject HTML
+        payload = generate_reader_payload_ai(bbc_data)
+        new_sec2_3 = generate_sections_html(payload, b_link)
+        
+        s_tag = 'SECTION 2: BBC VOCAL READING'
+        e_tag = '<!-- Consistency Streak & Completion Card -->'
+        
+        s_idx = content.find(s_tag)
+        comment_start = content.rfind('<!--', 0, s_idx)
+        e_idx = content.find(e_tag)
+        
+        if comment_start != -1 and e_idx != -1:
+            content = content[:comment_start] + new_sec2_3 + content[e_idx:]
+            
         with open(reader_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"[*] Dynamic reader.html updated for {date_formatted}.")
+        print(f"[*] Dynamic reader.html FULLY REWRITTEN with new story for {date_formatted}!")
     except Exception as e:
         print(f"[!] update_dynamic_reader error: {e}")
 
@@ -626,37 +890,13 @@ def update_calendar_ics(morning_text: str = None, night_text: str = None) -> Non
     except Exception as e:
         print(f"[!] update_calendar_ics error: {e}")
 
-def get_current_reader_bbc() -> dict:
-    """Extracts the exact BBC story currently featured in reader.html to guarantee 100% sync."""
-    try:
-        reader_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader.html")
-        if os.path.exists(reader_path):
-            with open(reader_path, "r", encoding="utf-8") as f:
-                html = f.read()
-            h2_m = re.search(r'<!--\s*=+.*?SECTION 2: BBC VOCAL READING.*?<h2 class="article-headline">(.*?)</h2>', html, flags=re.DOTALL)
-            title = h2_m.group(1).strip() if h2_m else "The AI Start-Ups Fixing India's Broken Roads and Messy Land Records"
-            link_m = re.search(r'<!--\s*=+.*?SECTION 2: BBC VOCAL READING.*?<a href="(https://www\.bbc\.co\.uk/news/articles/.*?)"', html, flags=re.DOTALL)
-            link = link_m.group(1).strip() if link_m else "https://www.bbc.co.uk/news/articles/c820vnln2lzpo"
-            return {
-                "title": title,
-                "link": link,
-                "desc": "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges like chaotic land records and road maintenance."
-            }
-    except Exception as e:
-        print(f"[!] get_current_reader_bbc error: {e}")
-    return {
-        "title": "The AI Start-Ups Fixing India's Broken Roads and Messy Land Records",
-        "link": "https://www.bbc.co.uk/news/articles/c820vnln2lzpo",
-        "desc": "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges."
-    }
-
 def send_morning_digest(chat_id: int = PRINCE_CHAT_ID):
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     ist_now = now_utc + datetime.timedelta(hours=5, minutes=30)
     date_formatted = ist_now.strftime("%A • %d %b %Y")
     
     hhh_data = fetch_latest_hhh()
-    bbc_data = get_current_reader_bbc()
+    bbc_data = fetch_latest_bbc()  # <-- Always fresh unseen article from live RSS!
     update_dynamic_reader(hhh_data, bbc_data, date_formatted)
     
     digest = generate_morning_digest(hhh_data=hhh_data, bbc_data=bbc_data)
