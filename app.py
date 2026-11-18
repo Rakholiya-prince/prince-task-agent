@@ -411,12 +411,12 @@ def fetch_latest_hhh() -> dict:
 # ----------------- DIGEST GENERATORS (7:30 AM & 9:00 PM) ----------------- #
 def build_fallback_morning_digest(hhh_data: dict, bbc_data: dict) -> str:
     """Deterministic fallback ensuring Prince ALWAYS gets a full, structured morning briefing."""
-    b_title = bbc_data.get('title', "The AI start-ups fixing India's broken roads and messy land records")
-    b_link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/c820vnln2lzpo")
-    b_desc = bbc_data.get('desc', "Indian entrepreneurs are using artificial intelligence to solve real-world civic challenges like chaotic land records and road maintenance.")
+    b_title = bbc_data.get('title', "Europe Plans to Catch the Next Computer Chip Wave")
+    b_link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/cqglwjd450k0o")
+    b_desc = bbc_data.get('desc', "Europe hopes to be a leader in a new generation of computer chips which use light to process data.")
     
-    h_title = hhh_data.get('title', "🪅 Heap Heap Hurray Ed. #666")
-    h_url = hhh_data.get('url', "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-666")
+    h_title = hhh_data.get('title', "🪅 Heap Heap Hurray Ed. #667")
+    h_url = hhh_data.get('url', "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-667")
 
     return f"""🌅 *PRINCE'S MORNING BRIEFING (7:30 AM)*
 _Good morning, Prince Sir! Here is your sorted tech & English drill._
@@ -425,39 +425,39 @@ _Good morning, Prince Sir! Here is your sorted tech & English drill._
 💻 *1. TODAY'S TECH BRIEF (Heap Heap Hurray)*
 📰 *Edition:* {h_title}
 🔗 *Direct Link:* {h_url}
-• *Enterprise & Hardware Updates*: Industry leaders reaffirm compliance standards and accelerated computing pipelines.
-• *Cloud DevOps Resilience*: New architectural post-mortems detail distributed system reliability and failover boundaries.
-• *Trending Open Source*: Local-first privacy tools and high-performance Rust AI agent harnesses gain momentum across developers.
+• *Enterprise Messaging & Mobile*: Meta begins rollout of standalone Direct messaging threads for focused communications.
+• *Indigenous Robotics Milestone*: Bangalore startup General Autonomy claims gold in India's first quadruped robot race.
+• *Efficient AI Tooling*: Next-gen lightweight coding models reduce inference expenses while accelerating dev workflows.
 
 ━━━━━━━━━━━━━━━━━━━━
 📖 *2. DAILY ENGLISH READING (BBC Story)*
 📰 *Article Title:* {b_title}
 🔗 *Direct Link:* {b_link}
 
-{b_desc} When founders returned to India to settle personal land matters, they experienced months of exhausting bureaucratic friction across dozens of government offices. This friction sparked the creation of AI platforms like Landeed that aggregate fragmented land records across 24 Indian states at the click of a button. Concurrently, civic startups are deploying computer-vision cameras to autonomously map road surface potholes, proving that domestic artificial intelligence is solving pressing real-world bottlenecks.
+{b_desc} Today's society runs on silicon microchips that shuffle billions of electrons through microscopic circuits. But as frontier artificial intelligence models demand unprecedented compute, conventional electronics face thermodynamic limits and generate immense heat. European research institutes and governments are backing photonic chips that process data with light pulses rather than electrical current, offering orders-of-magnitude faster processing and negligible energy waste.
 
 ━━━━━━━━━━━━━━━━━━━━
 🧠 *3. VOCABULARY & SPEAKING BOOSTER*
-1. *Dispute*
-   🗣️ સરળ ઉચ્ચાર: ડિસ-પ્યુટ (Dis-pute)
-   📖 English Meaning: A serious disagreement, argument, or formal legal conflict.
-   👉 ગુજરાતી અર્થ: વિવાદ, ઝઘડો અથવા કાનૂની મતભેદ.
-   💼 Example: "Automated digital land records help resolve complex property disputes before contracts are signed."
+1. *Photonic*
+   🗣️ સરળ ઉચ્ચાર: ફો-ટો-નિક (Pho-ton-ic)
+   📖 English Meaning: Relating to photons or using light particles instead of electrical current to transmit and process information.
+   👉 ગુજરાતી અર્થ: પ્રકાશ આધારિત, જેમાં ડેટા પ્રોસેસિંગ માટે વીજળીના બદલે પ્રકાશના કિરણો વપરાય.
+   💼 Example: "Next-generation data centers will deploy photonic processors to train large AI models with minimal power consumption."
 
-2. *Fragmented*
-   🗣️ સરળ ઉચ્ચાર: ફ્રેગ-મેન્ટેડ (Frag-men-ted)
-   📖 English Meaning: Broken into small, disconnected, or isolated pieces rather than a unified whole.
-   👉 ગુજરાતી અર્થ: વહેંચાયેલું, છૂટુંછવાયું કે ટુકડાઓમાં વિભાજિત થયેલું.
-   💼 Example: "Our engineering team unified fragmented backend databases into a single high-performance ASP.NET Core API."
+2. *Breakthrough*
+   🗣️ સરળ ઉચ્ચાર: બ્રેક-થ્રૂ (Break-through)
+   📖 English Meaning: A sudden, dramatic, and important discovery or development that overcomes a significant obstacle.
+   👉 ગુજરાતી અર્થ: મોટી સફળતા, ક્રાંતિકારી શોધ અથવા મહત્વપૂર્ણ પ્રગતિ.
+   💼 Example: "Designing efficient optical waveguides was the decisive engineering breakthrough needed for commercial silicon photonics."
 
-3. *Presumptive*
-   🗣️ સરળ ઉચ્ચાર: પ્રિ-ઝમ્પ-ટિવ (Pre-zump-tiv)
-   📖 English Meaning: Based on reasonable inference or assumption rather than direct, conclusive proof.
-   👉 ગુજરાતી અર્થ: ધારણા આધારિત, પ્રાથમિક અનુમાન પર આધારિત.
-   💼 Example: "Unlike absolute government-backed titles, presumptive ownership requires buyers to produce historical documentary evidence."
+3. *Insatiable*
+   🗣️ સરળ ઉચ્ચાર: ઇન-સે-શિય-બલ (In-sa-tia-ble)
+   📖 English Meaning: Impossible to satisfy; having an unquenchable desire or demand.
+   👉 ગુજરાતી અર્થ: અતૃપ્ત, સંતોષી ન શકાય તેવું, અનંત ભૂખ ધરાવતું.
+   💼 Example: "The tech industry has an insatiable demand for scalable cloud infrastructure and high-throughput backend APIs."
 
 🗣️ *Speaking Tip of the Day:*
-Start your thoughts with confidence anchors like 'In my experience...' or 'The primary objective is...'. Never hesitate or mentally translate Gujarati to English — speak smoothly and pause at commas!
+Start your thoughts with confidence anchors like 'Traditional hardware is limited by...' or 'The primary breakthrough here is...'. Speak smoothly and pause naturally at commas without translating!
 
 Have a productive day of building, Sir! 🚀"""
 
