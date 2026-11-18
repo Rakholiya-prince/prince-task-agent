@@ -921,6 +921,7 @@ def run_daily_scheduler():
     print("[*] 24/7 Daily Learning & Global Job Radar Scheduler started...")
     
     last_ping_time = time.time()
+    last_email_check_time = 0
     
     # Run initial job radar scan shortly after startup
     time.sleep(15)
@@ -981,8 +982,17 @@ def run_daily_scheduler():
                 print("[*] Periodic 4-hour Global Job Radar Scan executing...")
                 threading.Thread(target=multi_agent_team.orchestrator.execute_team_cycle, args=(PRINCE_CHAT_ID, telegram_send_message), daemon=True).start()
                 last_job_scan_time = time.time()
+
+            # 6. Periodic IMAP Client Response Check (Every 5 minutes = 300 seconds)
+            if time.time() - last_email_check_time > 300:
+                try:
+                    import email_dealmaker
+                    threading.Thread(target=email_dealmaker.check_client_inbox_and_alert, args=(telegram_send_message, PRINCE_CHAT_ID, GEMINI_API_KEY), daemon=True).start()
+                except Exception as e:
+                    print(f"[!] Email inbox check error: {e}")
+                last_email_check_time = time.time()
                     
-            # 5. Prevent Render from sleeping: Self-ping every 10 minutes
+            # 7. Prevent Render from sleeping: Self-ping every 10 minutes
             if time.time() - last_ping_time > 600:
                 try:
                     requests.get("https://prince-task-agent.onrender.com/", headers={"Connection": "close"}, timeout=8)

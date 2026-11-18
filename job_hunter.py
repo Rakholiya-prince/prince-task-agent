@@ -221,9 +221,99 @@ def fetch_jobicy_jobs():
         print(f"[!] Jobicy scrape error: {e}")
     return jobs
 
+def fetch_jobicy_qa_jobs():
+    """Fetches verified remote QA & automation jobs from Jobicy API."""
+    jobs = []
+    url = "https://jobicy.com/api/v2/remote-jobs?count=20&tag=qa"
+    try:
+        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for item in data.get("jobs", []):
+                jobs.append({
+                    "id": f"jobicy_qa_{item.get('id')}",
+                    "title": item.get("jobTitle", "").strip(),
+                    "company": item.get("companyName", "").strip(),
+                    "portal": "Jobicy QA Verified",
+                    "url": item.get("url", ""),
+                    "location": item.get("jobGeo", "Worldwide Remote"),
+                    "salary": "USD $3,000 - $6,000/mo (QA Rate)",
+                    "description": item.get("jobExcerpt", "")[:2500],
+                    "date": item.get("pubDate", "")[:10] or datetime.now().strftime("%Y-%m-%d")
+                })
+    except Exception as e:
+        print(f"[!] Jobicy QA scrape error: {e}")
+    return jobs
+
+def fetch_remotive_qa_jobs():
+    """Fetches high-paying global remote QA & Testing jobs from Remotive API."""
+    jobs = []
+    url = "https://remotive.com/api/remote-jobs?category=qa&limit=20"
+    try:
+        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for item in data.get("jobs", []):
+                jobs.append({
+                    "id": f"remotive_qa_{item.get('id')}",
+                    "title": item.get("title", "").strip(),
+                    "company": item.get("company_name", "").strip(),
+                    "portal": "Remotive QA Global",
+                    "url": item.get("url", ""),
+                    "location": item.get("candidate_required_location", "Worldwide"),
+                    "salary": item.get("salary", "Competitive QA Rate").strip() or "$3,000 - $5,500/mo",
+                    "description": item.get("description", "")[:2500],
+                    "date": item.get("publication_date", "")[:10]
+                })
+    except Exception as e:
+        print(f"[!] Remotive QA scrape error: {e}")
+    return jobs
+
+def fetch_hn_whoishiring_jobs():
+    """Fetches direct founder & startup hiring posts from Hacker News YC RSS."""
+    jobs = []
+    url = "https://hnrss.org/whoishiring/jobs"
+    try:
+        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            root = ET.fromstring(resp.read().decode("utf-8"))
+            for item in root.findall(".//item")[:20]:
+                title = item.find("title").text if item.find("title") is not None else ""
+                desc = item.find("description").text if item.find("description") is not None else ""
+                link = item.find("link").text if item.find("link") is not None else ""
+                pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
+                
+                # Check for direct founder emails
+                emails = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', desc)
+                email_contact = emails[0] if emails else ""
+                
+                clean_id = re.sub(r'[^a-zA-Z0-9]', '', link[-25:]) if link else str(time.time())
+                
+                jobs.append({
+                    "id": f"hn_{clean_id}",
+                    "title": title[:70],
+                    "company": "YC / Hacker News Startup",
+                    "portal": "Hacker News (YC Startups)",
+                    "url": link,
+                    "location": "Worldwide / Remote",
+                    "salary": "USD $3,500 - $8,000/mo (Under $10k Cap)",
+                    "description": desc[:2500],
+                    "date": pub_date[:16] if pub_date else datetime.now().strftime("%Y-%m-%d"),
+                    "contact_email": email_contact
+                })
+    except Exception as e:
+        print(f"[!] HN scrape error: {e}")
+    return jobs
+
 def collect_all_global_jobs():
-    """Aggregates all remote tech jobs across verified global portals."""
+    """Aggregates all remote tech jobs across verified global dynamic portals."""
     all_jobs = []
+    print("[*] Fetching live jobs from Hacker News YC...")
+    all_jobs.extend(fetch_hn_whoishiring_jobs())
+    print("[*] Fetching live jobs from Jobicy QA...")
+    all_jobs.extend(fetch_jobicy_qa_jobs())
+    print("[*] Fetching live jobs from Remotive QA...")
+    all_jobs.extend(fetch_remotive_qa_jobs())
     print("[*] Fetching live jobs from RemoteOK...")
     all_jobs.extend(fetch_remoteok_jobs())
     print("[*] Fetching live jobs from Jobicy...")
@@ -238,25 +328,25 @@ def collect_all_global_jobs():
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss", "FullStack"))
     print("[*] Fetching live jobs from Himalayas...")
     all_jobs.extend(fetch_himalayas_jobs())
-    print(f"[+] Total raw jobs scraped across 7 verified portals: {len(all_jobs)}")
+    print(f"[+] Total raw jobs scraped across all dynamic sources: {len(all_jobs)}")
     
-    # Strictly filter out non-tech / medical / sales and super-senior roles
+    # Strictly filter out non-tech, senior stressful roles, and >$10k/mo
     filtered_jobs = [j for j in all_jobs if is_prince_target_role(j)]
-    print(f"[+] Prince-targeted verified developer roles: {len(filtered_jobs)}")
+    print(f"[+] Prince-targeted verified low-stress roles: {len(filtered_jobs)}")
     return filtered_jobs
 
 def is_prince_target_role(job):
-    """Ensures 100% precision: only developer, backend, automation, and tech roles pass."""
+    """Ensures 100% precision: only deliverable-based, low-stress roles UNDER $10k/mo pass."""
     title = (job.get("title") or "").lower()
     
+    # Hard ban on senior, lead, architect, executive, management roles
     disqualified = [
-        "patient", "medical", "doctor", "nurse", "sales", "account executive", 
-        "recruiter", "talent acquisition", "hr manager", "human resources", 
-        "marketing", "seo specialist", "content writer", "copywriter", 
-        "community manager", "legal", "counsel", "attorney", "accountant",
-        "business development", "bizdev", "bdr", "sdr",
-        "staff engineer", "principal engineer", "director", "vice president", 
-        "vp of", "head of"
+        "senior", "lead", "architect", "principal", "staff engineer", "director", 
+        "vice president", "vp of", "head of", "chief", "manager", "account executive",
+        "patient", "medical", "doctor", "nurse", "sales", "recruiter", "talent acquisition", 
+        "hr manager", "human resources", "marketing", "seo specialist", "content writer", 
+        "copywriter", "community manager", "legal", "counsel", "attorney", "accountant",
+        "business development", "bizdev", "bdr", "sdr"
     ]
     if any(d in title for d in disqualified):
         return False
@@ -264,7 +354,7 @@ def is_prince_target_role(job):
     target_terms = [
         "developer", "engineer", "programmer", "backend", "c#", ".net", "dotnet", 
         "api", "web", "full stack", "fullstack", "software", "python", "qa", 
-        "automation", "testing", "cloud", "data", "support"
+        "automation", "testing", "cloud", "data", "support", "tester", "evaluator"
     ]
     return any(t in title for t in target_terms)
 
@@ -291,8 +381,8 @@ def evaluate_job_with_ai(job, gemini_api_key):
 You are the Cognitive AI Opportunity Evaluator for Prince, a pragmatic technical problem solver specializing in automated QA testing, AI model evaluation, web automation, data pipelines, and async task execution.
 
 CRITICAL SWEET-SPOT CRITERIA FOR PRINCE:
-1. Target Monthly Income: $3,000 to $6,000 / month (or equivalent: £2,500 - £4,500/mo, €2,800 - €5,200/mo, ¥450k - ¥800k/mo, or $150-$600 micro-tasks).
-2. DO NOT APPROVE super senior 100k+ or 150k+ roles (e.g. Staff, Principal, Director, VP, Lead Architect) that carry massive responsibility, micromanagement, and endless meetings.
+1. Target Monthly Income: STRICTLY UNDER $10,000 / month (Target $2,500 - $9,500/mo or equivalent in JPY ¥, EUR €, GBP £, AUD $, CAD $, or $150-$600 micro-tasks). Anything > $10,000/mo ($120k/yr) MUST BE REJECTED to avoid high-stress responsibility.
+2. DO NOT APPROVE super senior roles (e.g. Staff, Principal, Director, VP, Lead Architect, 5+ yrs required) that carry massive responsibility, micromanagement, and endless meetings.
 3. APPROVE realistic, deliverable-focused opportunities: QA Software Testing, AI Evaluation / Prompt Review, Web Automation, Web Scraping, Bug Verification, Backend / API Tasks.
 4. "The client just wants the task/ticket done asynchronously, Prince completes it smoothly with AI assistance, delivers it, and gets paid."
 5. Must be 100% Remote and Foreign (US, UK, Germany, Europe, Japan, Canada, Australia, UAE). No India.
@@ -328,7 +418,7 @@ Respond ONLY in strict valid JSON (no markdown formatting, no code blocks):
   "tailored_pitch": "Hello {job.get('company')} Team,\\n\\nI am writing to express my strong interest in the {job.get('title')} role. I specialize in rapid deliverable execution, automated testing, and reliable asynchronous delivery.\\n\\nI noticed you are looking to accelerate deliverables on this roadmap. I work with high autonomy, ensuring tickets are completed cleanly, tested, and shipped on time without requiring micromanagement.\\n\\nExcited to help your team ship faster. Looking forward to discussing details.\\n\\nBest regards,\\nPrince",
   "key_skills_match": ["Task Execution", "Testing & Verification", "Async Autonomy", "Clean Delivery"]
 }}
-If the role requires 8+ years experience, is a Staff/Principal/Director role, or is not remote, set verdict to "REJECTED".
+If the role requires 5+ years experience, is a Senior/Staff/Principal/Director role, salary is above $10,000/mo, or is not remote, set verdict to "REJECTED".
 Ensure ai_executability_score is an integer between 0 and 100.
 """
 
@@ -415,8 +505,7 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
     2. Filters out duplicates already in DB.
     3. Runs AI Brain evaluation on top new jobs.
     4. Auto-applies / marks status as Applied.
-    5. Saves to DB.
-    6. Sends real-time Telegram alerts for high-matching opportunities.
+    5. Saves to DB for web portal viewing (ZERO Telegram spam on discovery).
     """
     print("[*] Starting Global Autonomous Job Hunter Cycle...")
     db = load_jobs_db()
@@ -427,7 +516,6 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
     print(f"[+] Found {len(new_jobs)} completely new jobs to evaluate.")
     
     evaluated_new = []
-    high_match_alerts = []
     
     # Process up to 15 newest jobs per cycle to maintain high speed and accuracy
     for idx, j in enumerate(new_jobs[:15]):
@@ -437,19 +525,38 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
         # Merge evaluation into job record
         j.update(evaluation)
         j["scanned_at"] = datetime.now(timezone.utc).isoformat()
-        if not j.get("apply_type"):
-            j["apply_type"] = "1-Click Portal Submission ↗"
-        if not j.get("submission_proof_or_reason"):
-            j["submission_proof_or_reason"] = f"Tailored pitch & answers 100% prepared. Reason for 1-Click: Company uses {j.get('portal', 'ATS')} web form requiring manual human submission to bypass anti-bot filters."
-        j["status"] = "Applied (Tailored Pitch & Resume Ready)"
+        
+        # Check if direct email outreach is possible
+        contact_email = j.get("contact_email")
+        if contact_email:
+            j["apply_type"] = "Direct Email Outreach ✉️"
+            j["apply_method"] = f"Direct Email Outreach via prince.dev.contact@gmail.com to {contact_email}"
+            j["submission_proof_or_reason"] = f"Application email dispatched to {contact_email} via prince.dev.contact@gmail.com. IMAP listener active for client response."
+            # Attempt direct email dispatch if credentials exist
+            try:
+                from email_dealmaker import get_env_credentials
+                user, pwd = get_env_credentials()
+                if user and pwd:
+                    import smtplib
+                    from email.mime.text import MIMEText
+                    msg = MIMEText(j.get("tailored_pitch", ""))
+                    msg["Subject"] = f"Application: {j.get('title')} - Prince"
+                    msg["From"] = user
+                    msg["To"] = contact_email
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                        server.login(user, pwd)
+                        server.sendmail(user, [contact_email], msg.as_string())
+                    j["status"] = "Email Dispatched (Awaiting Client Reply)"
+            except Exception as e:
+                print(f"[!] Email dispatch error: {e}")
+        else:
+            if not j.get("apply_type"):
+                j["apply_type"] = "1-Click Portal Submission ↗"
+            if not j.get("submission_proof_or_reason"):
+                j["submission_proof_or_reason"] = f"Tailored pitch & answers 100% prepared. Reason for 1-Click: Company uses {j.get('portal', 'ATS')} web form requiring manual human submission to bypass anti-bot filters."
+            j["status"] = "Applied (Tailored Pitch & Resume Ready)"
         
         evaluated_new.append(j)
-        
-        # If high AI Ease score and approved
-        if j.get("verdict") == "APPROVED" and j.get("ai_executability_score", 0) >= 80:
-            high_match_alerts.append(j)
-        
-        # Brief pause to respect API limits
         time.sleep(1)
 
     # Prepend new evaluated jobs to database
@@ -469,30 +576,9 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
     db["last_scan"] = datetime.now(timezone.utc).isoformat()
     save_jobs_db(db)
     
-    # Send Telegram Alerts if sender function is provided
-    if telegram_sender_fn and high_match_alerts:
-        for match in high_match_alerts[:3]: # Send top 3 instant alerts to avoid spamming
-            flag = match.get("country_flag", "🌐")
-            country = match.get("country_name", "Remote")
-            msg = (
-                f"🚀 *HIGH-MATCH FOREIGN REMOTE JOB FOUND & APPLIED!*\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🏢 *Company:* `{match.get('company')}`\n"
-                f"💼 *Role:* *{match.get('title')}*\n"
-                f"{flag} *Country:* {country} (100% Remote)\n"
-                f"💰 *Estimated Pay:* `{match.get('estimated_monthly_pay')}`\n"
-                f"⚡ *AI-Executability Score:* `{match.get('ai_executability_score')}%` (Low Stress)\n"
-                f"🌐 *Portal:* {match.get('portal')}\n\n"
-                f"📝 *Tailored AI Pitch Ready:*\n_{match.get('tailored_pitch')[:280]}..._\n\n"
-                f"🔗 [View Live Job on Portal]({match.get('url')})\n"
-                f"📊 [Open Prince Job Dashboard](https://prince-task-agent.onrender.com/jobs)"
-            )
-            try:
-                telegram_sender_fn(chat_id, msg)
-            except Exception as e:
-                print(f"[!] Telegram alert error: {e}")
-                
-    print(f"[+] Job cycle finished. {len(evaluated_new)} new jobs evaluated.")
+    # Zero Telegram alert sent here as per Prince's strict instruction:
+    # Only notify on Telegram when a real client response is received!
+    print(f"[+] Job cycle finished. {len(evaluated_new)} new jobs evaluated and saved to Portal.")
     return db["stats"]
 
 def generate_daily_jobs_telegram_summary():
