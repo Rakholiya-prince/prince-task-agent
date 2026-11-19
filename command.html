@@ -743,10 +743,13 @@
       <!-- HOW IT WAS APPLIED -->
       <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
-          <span style="font-size: 0.7rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ HOW WAS IT APPLIED & SUBMISSION REASON</span>
-          <span id="modalApplyTypeTag" style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 2px 8px; border-radius: 4px; font-weight: 700;">1-Click Submission ↗</span>
+          <span style="font-size: 0.7rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ HOW WAS IT APPLIED & REALITY PROOF</span>
+          <span id="modalApplyTypeTag" style="font-size: 0.68rem; font-family: var(--font-mono); background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 2px 8px; border-radius: 4px; font-weight: 700;">1-Click Submission Required ⚠️</span>
         </div>
-        <div id="modalApplyMethod" style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.45;">Direct Portal ATS Application with Tailored Pitch.</div>
+        <div id="modalApplyMethod" style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 6px;">Direct Portal ATS Application with Tailored Pitch.</div>
+        <div id="modalBlockerReason" style="border-top: 1px dashed rgba(168, 85, 247, 0.2); padding-top: 6px; font-size: 0.76rem; color: #a78bfa;">
+          <strong>🛑 EXACT BLOCKER / REASON (વાસ્તવિક કારણ):</strong> No blocker.
+        </div>
       </div>
 
       <div>
@@ -1370,8 +1373,12 @@
       document.getElementById('modalStatus').textContent = j.status || '🟡 Applied & Awaiting Review';
       document.getElementById('modalWork').textContent = j.exact_work_summary || j.reason || 'Task-based deliverables: verifying features, testing outputs, solving tickets asynchronously.';
       document.getElementById('modalWhyHiring').textContent = j.hiring_reason_why || 'Company is accelerating product releases and requires self-directed execution on this deliverable without micromanagement.';
-      document.getElementById('modalApplyTypeTag').textContent = j.apply_type || (j.url ? '1-Click Submission ↗' : 'Direct Email Outreach ✉️');
-      document.getElementById('modalApplyMethod').textContent = j.submission_proof_or_reason || j.apply_method || 'Tailored pitch & answers prepared. Reason for 1-Click: Company uses ATS web form requiring manual human submission to bypass anti-bot filters.';
+      document.getElementById('modalApplyTypeTag').textContent = j.apply_type || (j.url ? '1-Click Submission Required ⚠️' : 'Direct Email Outreach ✉️');
+      document.getElementById('modalApplyMethod').textContent = j.submission_proof_or_reason || j.apply_method || 'Tailored pitch & answers prepared.';
+      const blockerEl = document.getElementById('modalBlockerReason');
+      if (blockerEl) {
+        blockerEl.innerHTML = '<strong>🛑 EXACT BLOCKER / REASON (વાસ્તવિક કારણ):</strong> ' + (j.blocker_issue || 'No blocker. Direct email dispatched.');
+      }
       document.getElementById('modalPitch').textContent = j.tailored_pitch || "Pitch ready to send.";
       document.getElementById('modalApplyLink').href = j.url;
       document.getElementById('pitchModal').classList.add('active');

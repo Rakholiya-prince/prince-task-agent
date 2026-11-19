@@ -616,6 +616,8 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
         # Smart Hybrid Auto-Apply
         contact_email = j.get("contact_email") or extract_company_contact_email(j.get("url"), j.get("description", ""))
         now_str = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).strftime("%d %b %Y • %I:%M %p IST")
+        j["scanned_at_ist"] = now_str
+        j["posted_date_display"] = j.get("date") or "Recently Posted"
         
         if contact_email:
             j["contact_email"] = contact_email
@@ -643,16 +645,22 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
                 print(f"[!] Email dispatch error to {contact_email}: {e}")
                 
             if email_sent:
+                j["applied_at_ist"] = now_str
+                j["blocker_issue"] = "None (Successfully Dispatched via Email)"
                 j["status"] = "Dispatched via Direct Email (Awaiting Response)"
                 j["submission_proof_or_reason"] = f"Application email dispatched to {contact_email} via prince.dev.contact@gmail.com on {now_str}. IMAP listener active for client response."
             else:
+                j["applied_at_ist"] = "Pending Dispatch"
+                j["blocker_issue"] = f"Direct email {contact_email} found, but dispatch pending."
                 j["status"] = "Email Ready (Pending Dispatch)"
                 j["submission_proof_or_reason"] = f"Direct contact email found: {contact_email}. Tailored pitch ready."
         else:
+            j["applied_at_ist"] = "Not Auto-Dispatched (Action Required)"
+            j["blocker_issue"] = f"No public email found. Company uses ATS web form at {j.get('portal')}. Protected by Cloudflare/CAPTCHA, requiring 1-click human submission to avoid bot IP ban."
             j["apply_type"] = "1-Click Submission Required ⚠️"
             j["apply_method"] = f"Direct Official Portal ATS ({j.get('portal', 'Web Form')}) with Custom Pitch"
             j["status"] = "Action Ready (CAPTCHA Protection - 1-Click Required)"
-            j["submission_proof_or_reason"] = f"Company uses web ATS form at {j.get('portal')}. Custom pitch & answers 100% prepared. 1-Click required due to anti-bot Cloudflare/CAPTCHA security."
+            j["submission_proof_or_reason"] = j["blocker_issue"]
         
         evaluated_new.append(j)
         time.sleep(1)

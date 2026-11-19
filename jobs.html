@@ -742,20 +742,20 @@
         <!-- 4-GRID INTELLIGENCE MATRIX -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px;">
           <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
-            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">📅 POSTED DATE</div>
-            <div style="font-size: 0.86rem; font-weight: 700; color: #fff; margin-top: 2px;">${escapeHtml(j.date || 'Recent (Verified)')}</div>
+            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">📅 EXACT POSTED DATE</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: #fff; margin-top: 2px;">${escapeHtml(j.posted_date_display || j.date || 'Recent (Verified)')}</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
+            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">🔍 SCANNED BY AGENT (IST)</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; margin-top: 2px;">${escapeHtml(j.scanned_at_ist || 'Recent IST')}</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
+            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">✉️ APPLIED DATE / STATUS</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: #fbbf24; margin-top: 2px;">${escapeHtml(j.applied_at_ist || j.status || 'Action Ready')}</div>
           </div>
           <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
             <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">💰 EXACT ESTIMATED PAY</div>
-            <div style="font-size: 0.86rem; font-weight: 700; color: #34d399; margin-top: 2px;">${escapeHtml(j.estimated_monthly_pay || j.salary || '$4,500/mo')}</div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
-            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">💼 EXPERIENCE REQUIRED</div>
-            <div style="font-size: 0.86rem; font-weight: 700; color: #fbbf24; margin-top: 2px;">${escapeHtml(j.experience_required || 'Beginner to Mid / AI-Doable (No 8+ yrs Senior Stress)')}</div>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px;">
-            <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">🚀 APPLICATION STATUS</div>
-            <div style="font-size: 0.86rem; font-weight: 700; color: #38bdf8; margin-top: 2px;">${escapeHtml(j.status || '🟡 Applied & Awaiting Client Review')}</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: #34d399; margin-top: 2px;">${escapeHtml(j.estimated_monthly_pay || j.salary || '$4,500/mo')}</div>
           </div>
         </div>
 
@@ -771,13 +771,16 @@
           <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.5;">${escapeHtml(j.hiring_reason_why || 'Company is accelerating product releases and requires self-directed execution on this deliverable without micromanagement.')}</div>
         </div>
 
-        <!-- HOW IT WAS APPLIED -->
+        <!-- HOW IT WAS APPLIED & EXACT REASON / BLOCKER -->
         <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-            <span style="font-size: 0.72rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ APPLICATION METHOD & SUBMISSION REASON</span>
-            <span style="font-size: 0.7rem; font-family: var(--font-mono); background: rgba(168, 85, 247, 0.25); color: #e9d5ff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">${escapeHtml(j.apply_type || (j.url ? '1-Click Submission ↗' : 'Direct Email Outreach ✉️'))}</span>
+            <span style="font-size: 0.72rem; font-weight: 800; color: #c084fc; font-family: var(--font-mono);">✉️ APPLICATION METHOD & REALITY PROOF</span>
+            <span style="font-size: 0.7rem; font-family: var(--font-mono); background: rgba(168, 85, 247, 0.25); color: #e9d5ff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">${escapeHtml(j.apply_type || (j.url ? '1-Click Submission Required ⚠️' : 'Direct Email Outreach ✉️'))}</span>
           </div>
-          <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.45;">${escapeHtml(j.submission_proof_or_reason || j.apply_method || 'Tailored pitch & answers prepared. Reason for 1-Click: Company uses ATS web form requiring manual human submission to bypass anti-bot filters.')}</div>
+          <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.45; margin-bottom: 8px;">${escapeHtml(j.submission_proof_or_reason || j.apply_method || 'Tailored pitch & answers prepared.')}</div>
+          <div style="border-top: 1px dashed rgba(168, 85, 247, 0.2); padding-top: 8px; font-size: 0.78rem; color: #a78bfa;">
+            <strong>🛑 EXACT BLOCKER / REASON (વાસ્તવિક કારણ):</strong> ${escapeHtml(j.blocker_issue || 'No blocker. Direct email dispatched.')}
+          </div>
         </div>
 
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;">📝 Tailored Application Pitch (Ready to Send)</h3>
