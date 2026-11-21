@@ -38,7 +38,7 @@ def save_jobs_db(db):
 def fetch_remotive_jobs():
     """Fetches high-paying global remote tech jobs from Remotive API."""
     jobs = []
-    url = "https://remotive.com/api/remote-jobs?category=software-dev&limit=25"
+    url = "https://remotive.com/api/remote-jobs?category=software-dev&limit=100"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -67,7 +67,7 @@ def fetch_arbeitnow_jobs():
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            for item in data.get("data", [])[:25]:
+            for item in data.get("data", [])[:100]:
                 if not item.get("remote", False):
                     continue
                 jobs.append({
@@ -92,7 +92,7 @@ def fetch_wwr_rss(category_url, category_name):
         req = urllib.request.Request(category_url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
             root = ET.fromstring(resp.read().decode("utf-8"))
-            for item in root.findall(".//item")[:15]:
+            for item in root.findall(".//item")[:50]:
                 raw_title = item.find("title").text if item.find("title") is not None else ""
                 link = item.find("link").text if item.find("link") is not None else ""
                 desc = item.find("description").text if item.find("description") is not None else ""
@@ -122,7 +122,7 @@ def fetch_wwr_rss(category_url, category_name):
 def fetch_himalayas_jobs():
     """Fetches genuine remote jobs from Himalayas Remote Jobs API."""
     jobs = []
-    url = "https://himalayas.app/jobs/api?limit=25"
+    url = "https://himalayas.app/jobs/api?limit=100"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -190,12 +190,12 @@ def fetch_remoteok_jobs():
                 })
     except Exception as e:
         print(f"[!] RemoteOK scrape error: {e}")
-    return jobs[:25]
+    return jobs[:100]
 
 def fetch_jobicy_jobs():
     """Fetches verified remote tech jobs from Jobicy API."""
     jobs = []
-    url = "https://jobicy.com/api/v2/remote-jobs?count=25&tag=backend"
+    url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=backend"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -224,7 +224,7 @@ def fetch_jobicy_jobs():
 def fetch_jobicy_qa_jobs():
     """Fetches verified remote QA & automation jobs from Jobicy API."""
     jobs = []
-    url = "https://jobicy.com/api/v2/remote-jobs?count=20&tag=qa"
+    url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=qa"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -248,7 +248,7 @@ def fetch_jobicy_qa_jobs():
 def fetch_remotive_qa_jobs():
     """Fetches high-paying global remote QA & Testing jobs from Remotive API."""
     jobs = []
-    url = "https://remotive.com/api/remote-jobs?category=qa&limit=20"
+    url = "https://remotive.com/api/remote-jobs?category=qa&limit=50"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -277,7 +277,7 @@ def fetch_hn_whoishiring_jobs():
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
             root = ET.fromstring(resp.read().decode("utf-8"))
-            for item in root.findall(".//item")[:20]:
+            for item in root.findall(".//item")[:50]:
                 title = item.find("title").text if item.find("title") is not None else ""
                 desc = item.find("description").text if item.find("description") is not None else ""
                 link = item.find("link").text if item.find("link") is not None else ""
@@ -308,7 +308,7 @@ def fetch_hn_whoishiring_jobs():
 def fetch_jobicy_data_jobs():
     """Fetches verified remote Data, AI, and Analysis jobs from Jobicy API."""
     jobs = []
-    url = "https://jobicy.com/api/v2/remote-jobs?count=20&tag=data"
+    url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=data"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -332,7 +332,7 @@ def fetch_jobicy_data_jobs():
 def fetch_remotive_data_jobs():
     """Fetches verified remote Data, AI, and Analytics jobs from Remotive API."""
     jobs = []
-    url = "https://remotive.com/api/remote-jobs?category=data&limit=20"
+    url = "https://remotive.com/api/remote-jobs?category=data&limit=50"
     try:
         req = urllib.request.Request(url, headers=REQ_HEADERS)
         with urllib.request.urlopen(req, timeout=12) as resp:
@@ -382,6 +382,26 @@ def extract_company_contact_email(url, description=""):
                     le = e.lower()
                     if any(p in le for p in ["careers", "jobs", "hiring", "contact", "apply", "team", "hello"]):
                         return e
+                
+                # 3. Check /about, /contact, or /careers on base domain
+                from urllib.parse import urlparse
+                parsed = urlparse(url)
+                if parsed.netloc and not any(block in parsed.netloc for block in ["remoteok", "remotive", "himalayas", "jobicy", "weworkremotely", "greenhouse", "lever.co", "workday"]):
+                    base_url = f"{parsed.scheme}://{parsed.netloc}"
+                    for sub in ["/contact", "/about", "/careers"]:
+                        try:
+                            sub_req = urllib.request.Request(base_url + sub, headers=REQ_HEADERS)
+                            with urllib.request.urlopen(sub_req, timeout=4) as sub_resp:
+                                sub_html = sub_resp.read().decode("utf-8", errors="ignore")
+                                sub_mailtos = re.findall(r'mailto:([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', sub_html)
+                                if sub_mailtos:
+                                    return sub_mailtos[0]
+                                sub_emails = re.findall(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', sub_html)
+                                for se in sub_emails:
+                                    if any(p in se.lower() for p in ["careers", "jobs", "hiring", "contact", "hello", "team"]):
+                                        return se
+                        except Exception:
+                            pass
         except Exception:
             pass
     return ""
@@ -411,6 +431,10 @@ def collect_all_global_jobs():
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss", "Backend"))
     print("[*] Fetching live jobs from WeWorkRemotely Fullstack...")
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss", "FullStack"))
+    print("[*] Fetching live jobs from WeWorkRemotely Customer Support...")
+    all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-customer-support-jobs.rss", "CustomerSupport"))
+    print("[*] Fetching live jobs from WeWorkRemotely DevOps & QA...")
+    all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss", "DevOpsQA"))
     print("[*] Fetching live jobs from Himalayas...")
     all_jobs.extend(fetch_himalayas_jobs())
     print(f"[+] Total raw jobs scraped across all dynamic sources: {len(all_jobs)}")
@@ -421,10 +445,16 @@ def collect_all_global_jobs():
     return filtered_jobs
 
 def is_prince_target_role(job):
-    """Ensures 100% precision: only deliverable-based, low-stress roles UNDER $10k/mo pass."""
+    """Ensures 100% precision: only foreign/worldwide, deliverable-based, low-stress roles UNDER $10k/mo pass."""
     title = (job.get("title") or "").lower()
+    loc = (job.get("location") or "").lower()
     
-    # Hard ban on senior, lead, architect, executive, management roles
+    # 1. Hard ban on India local locations - Only Foreign / Worldwide Remote accepted
+    india_indicators = ["india", "in only", "bengaluru", "bangalore", "mumbai", "delhi", "hyderabad", "pune", "chennai", "noida", "gurgaon"]
+    if any(ind in loc for ind in india_indicators):
+        return False
+
+    # 2. Hard ban on senior, lead, architect, executive, management roles
     disqualified = [
         "senior", "lead", "architect", "principal", "staff engineer", "director", 
         "vice president", "vp of", "head of", "chief", "manager", "account executive",
@@ -604,9 +634,9 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
     
     evaluated_new = []
     
-    # Process up to 15 newest jobs per cycle to maintain high speed and accuracy
-    for idx, j in enumerate(new_jobs[:15]):
-        print(f"[*] AI Evaluating ({idx+1}/15): {j['title']} at {j['company']}...")
+    # Process up to 100 newest jobs per cycle to maintain high coverage and maximum scale
+    for idx, j in enumerate(new_jobs[:100]):
+        print(f"[*] AI Evaluating ({idx+1}/{min(len(new_jobs), 100)}): {j['title']} at {j['company']}...")
         evaluation = evaluate_job_with_ai(j, gemini_api_key)
         
         # Merge evaluation into job record
@@ -649,6 +679,11 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
                 j["blocker_issue"] = "None (Successfully Dispatched via Email)"
                 j["status"] = "Dispatched via Direct Email (Awaiting Response)"
                 j["submission_proof_or_reason"] = f"Application email dispatched to {contact_email} via prince.dev.contact@gmail.com on {now_str}. IMAP listener active for client response."
+                if telegram_sender_fn and chat_id:
+                    try:
+                        telegram_sender_fn(chat_id, f"🚀 *AUTO-APPLICATION DISPATCHED FOR BOSS PRINCE!*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 *Role:* `{j.get('title')}`\n🏢 *Company:* `{j.get('company')}`\n✉️ *Sent To:* `{contact_email}`\n💰 *Pay:* `{j.get('salary', 'Competitive')}`\n📍 *Location:* `{j.get('location', 'Worldwide')}`\n⚡ *Method:* `Direct SMTP via {user}`")
+                    except Exception as te:
+                        print(f"[!] Telegram notify error: {te}")
             else:
                 j["applied_at_ist"] = "Pending Dispatch"
                 j["blocker_issue"] = f"Direct email {contact_email} found, but dispatch pending."
