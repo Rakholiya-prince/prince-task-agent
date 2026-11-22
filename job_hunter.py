@@ -687,25 +687,9 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
             j["apply_type"] = "Direct Email Outreach ✉️"
             j["apply_method"] = f"Direct Email Outreach via prince.dev.contact@gmail.com to {contact_email}"
             
-            # Attempt direct email dispatch via SMTP SSL
+            # Auto email dispatch disabled as instructed by Prince
             email_sent = False
-            try:
-                from email_dealmaker import get_env_credentials
-                user, pwd = get_env_credentials()
-                if user and pwd:
-                    import smtplib
-                    from email.mime.text import MIMEText
-                    msg = MIMEText(j.get("tailored_pitch", ""))
-                    msg["Subject"] = f"Application: {j.get('title')} - Prince"
-                    msg["From"] = f"Prince <{user}>"
-                    msg["To"] = contact_email
-                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-                        server.login(user, pwd)
-                        server.sendmail(user, [contact_email], msg.as_string())
-                    email_sent = True
-                    print(f"[+] Successfully dispatched application email to {contact_email}!")
-            except Exception as e:
-                print(f"[!] Email dispatch error to {contact_email}: {e}")
+            # Draft pitch is prepared and saved, no unsolicited emails sent automatically
                 
             if email_sent:
                 j["applied_at_ist"] = now_str
