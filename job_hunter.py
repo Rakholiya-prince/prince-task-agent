@@ -60,29 +60,30 @@ def fetch_remotive_jobs():
     return jobs
 
 def fetch_arbeitnow_jobs():
-    """Fetches genuine European & German remote jobs from Arbeitnow API."""
+    """Fetches genuine European & German remote jobs from Arbeitnow API across multiple pages."""
     jobs = []
-    url = "https://www.arbeitnow.com/api/job-board-api"
-    try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            for item in data.get("data", [])[:100]:
-                if not item.get("remote", False):
-                    continue
-                jobs.append({
-                    "id": f"arbeitnow_{item.get('slug')}",
-                    "title": item.get("title", "").strip(),
-                    "company": item.get("company_name", "").strip(),
-                    "portal": "Arbeitnow Europe",
-                    "url": item.get("url", ""),
-                    "location": item.get("location", "Europe / Remote"),
-                    "salary": "EUR € High Tech Standard",
-                    "description": item.get("description", "")[:2500],
-                    "date": datetime.now().strftime("%Y-%m-%d")
-                })
-    except Exception as e:
-        print(f"[!] Arbeitnow scrape error: {e}")
+    for page in [1, 2, 3]:
+        url = f"https://www.arbeitnow.com/api/job-board-api?page={page}"
+        try:
+            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for item in data.get("data", []):
+                    if not item.get("remote", False):
+                        continue
+                    jobs.append({
+                        "id": f"arbeitnow_{item.get('slug')}",
+                        "title": item.get("title", "").strip(),
+                        "company": item.get("company_name", "").strip(),
+                        "portal": f"Arbeitnow Europe (Page {page})",
+                        "url": item.get("url", ""),
+                        "location": item.get("location", "Europe / Remote"),
+                        "salary": "EUR € High Tech Standard",
+                        "description": item.get("description", "")[:2500],
+                        "date": datetime.now().strftime("%Y-%m-%d")
+                    })
+        except Exception as e:
+            print(f"[!] Arbeitnow scrape error (page {page}): {e}")
     return jobs
 
 def fetch_wwr_rss(category_url, category_name):
@@ -120,46 +121,47 @@ def fetch_wwr_rss(category_url, category_name):
     return jobs
 
 def fetch_himalayas_jobs():
-    """Fetches genuine remote jobs from Himalayas Remote Jobs API."""
+    """Fetches genuine remote jobs from Himalayas Remote Jobs API across multiple offsets."""
     jobs = []
-    url = "https://himalayas.app/jobs/api?limit=100"
-    try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            for item in data.get("jobs", []):
-                locs = item.get("locationRestrictions", [])
-                loc_str = ", ".join(locs) if locs else "Worldwide / Anywhere"
-                
-                min_s = item.get("minSalary")
-                max_s = item.get("maxSalary")
-                curr = item.get("currency", "USD")
-                salary_str = f"{curr} {min_s:,} - {max_s:,}" if min_s and max_s else f"{curr} Competitive Remote"
-                
-                app_url = item.get("applicationLink") or f"https://himalayas.app/companies/{item.get('companySlug', 'remote')}/jobs/{item.get('guid', '')}"
-                raw_pub = item.get("pubDate")
-                pub_str = datetime.now().strftime("%Y-%m-%d")
-                if isinstance(raw_pub, (int, float)):
-                    try:
-                        pub_str = datetime.fromtimestamp(raw_pub).strftime("%Y-%m-%d")
-                    except Exception:
-                        pass
-                
-                job_id = f"himalayas_{item.get('guid') or item.get('companySlug', '') + str(time.time())}"
-                
-                jobs.append({
-                    "id": job_id,
-                    "title": item.get("title", "").strip(),
-                    "company": item.get("companyName", "").strip(),
-                    "portal": "Himalayas Global",
-                    "url": app_url,
-                    "location": loc_str,
-                    "salary": salary_str,
-                    "description": item.get("description", "")[:2500],
-                    "date": pub_str
-                })
-    except Exception as e:
-        print(f"[!] Himalayas scrape error: {e}")
+    for offset in [0, 20, 40, 60, 80, 100, 120, 140]:
+        url = f"https://himalayas.app/jobs/api?offset={offset}"
+        try:
+            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for item in data.get("jobs", []):
+                    locs = item.get("locationRestrictions", [])
+                    loc_str = ", ".join(locs) if locs else "Worldwide / Anywhere"
+                    
+                    min_s = item.get("minSalary")
+                    max_s = item.get("maxSalary")
+                    curr = item.get("currency", "USD")
+                    salary_str = f"{curr} {min_s:,} - {max_s:,}" if min_s and max_s else f"{curr} Competitive Remote"
+                    
+                    app_url = item.get("applicationLink") or f"https://himalayas.app/companies/{item.get('companySlug', 'remote')}/jobs/{item.get('guid', '')}"
+                    raw_pub = item.get("pubDate")
+                    pub_str = datetime.now().strftime("%Y-%m-%d")
+                    if isinstance(raw_pub, (int, float)):
+                        try:
+                            pub_str = datetime.fromtimestamp(raw_pub).strftime("%Y-%m-%d")
+                        except Exception:
+                            pass
+                    
+                    job_id = f"himalayas_{item.get('guid') or item.get('companySlug', '') + str(time.time())}"
+                    
+                    jobs.append({
+                        "id": job_id,
+                        "title": item.get("title", "").strip(),
+                        "company": item.get("companyName", "").strip(),
+                        "portal": "Himalayas Global",
+                        "url": app_url,
+                        "location": loc_str,
+                        "salary": salary_str,
+                        "description": item.get("description", "")[:2500],
+                        "date": pub_str
+                    })
+        except Exception as e:
+            print(f"[!] Himalayas scrape error (offset {offset}): {e}")
     return jobs
 
 def fetch_remoteok_jobs():
@@ -193,32 +195,33 @@ def fetch_remoteok_jobs():
     return jobs[:100]
 
 def fetch_jobicy_jobs():
-    """Fetches verified remote tech jobs from Jobicy API."""
+    """Fetches verified remote tech jobs across multiple industries from Jobicy API."""
     jobs = []
-    url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=backend"
-    try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            for item in data.get("jobs", []):
-                min_s = item.get("annualSalaryMin")
-                max_s = item.get("annualSalaryMax")
-                curr = item.get("salaryCurrency", "USD")
-                salary_str = f"{curr} ${min_s:,} - ${max_s:,}" if min_s and max_s else f"{curr} $3,500 - $5,000/mo"
-                
-                jobs.append({
-                    "id": f"jobicy_{item.get('id')}",
-                    "title": item.get("jobTitle", "").strip(),
-                    "company": item.get("companyName", "").strip(),
-                    "portal": "Jobicy Verified",
-                    "url": item.get("url", ""),
-                    "location": item.get("jobGeo", "Worldwide Remote"),
-                    "salary": salary_str,
-                    "description": item.get("jobExcerpt", "")[:2500],
-                    "date": item.get("pubDate", "")[:10] or datetime.now().strftime("%Y-%m-%d")
-                })
-    except Exception as e:
-        print(f"[!] Jobicy scrape error: {e}")
+    for ind in ["dev", "supporting", "data-science", "engineering"]:
+        url = f"https://jobicy.com/api/v2/remote-jobs?count=100&industry={ind}"
+        try:
+            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for item in data.get("jobs", []):
+                    min_s = item.get("annualSalaryMin")
+                    max_s = item.get("annualSalaryMax")
+                    curr = item.get("salaryCurrency", "USD")
+                    salary_str = f"{curr} ${min_s:,} - ${max_s:,}" if min_s and max_s else f"{curr} $3,500 - $5,000/mo"
+                    
+                    jobs.append({
+                        "id": f"jobicy_{item.get('id')}",
+                        "title": item.get("jobTitle", "").strip(),
+                        "company": item.get("companyName", "").strip(),
+                        "portal": f"Jobicy {ind.capitalize()}",
+                        "url": item.get("url", ""),
+                        "location": item.get("jobGeo", "Worldwide Remote"),
+                        "salary": salary_str,
+                        "description": item.get("jobExcerpt", "")[:2500],
+                        "date": item.get("pubDate", "")[:10] or datetime.now().strftime("%Y-%m-%d")
+                    })
+        except Exception as e:
+            print(f"[!] Jobicy scrape error ({ind}): {e}")
     return jobs
 
 def fetch_jobicy_qa_jobs():
@@ -404,6 +407,16 @@ def extract_company_contact_email(url, description=""):
                             pass
         except Exception:
             pass
+        # Fallback pattern generation: extract clean company domain and provide standard hiring inbox
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            if parsed.netloc and not any(block in parsed.netloc for block in ["remoteok", "remotive", "himalayas", "jobicy", "weworkremotely", "greenhouse", "lever.co", "workday", "ycombinator"]):
+                clean_domain = parsed.netloc.replace("www.", "")
+                if "." in clean_domain:
+                    return f"careers@{clean_domain}"
+        except Exception:
+            pass
     return ""
 
 def collect_all_global_jobs():
@@ -435,6 +448,10 @@ def collect_all_global_jobs():
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-customer-support-jobs.rss", "CustomerSupport"))
     print("[*] Fetching live jobs from WeWorkRemotely DevOps & QA...")
     all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss", "DevOpsQA"))
+    print("[*] Fetching live jobs from WeWorkRemotely Frontend...")
+    all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss", "Frontend"))
+    print("[*] Fetching live jobs from WeWorkRemotely Product & Design...")
+    all_jobs.extend(fetch_wwr_rss("https://weworkremotely.com/categories/remote-product-design-jobs.rss", "ProductDesign"))
     print("[*] Fetching live jobs from Himalayas...")
     all_jobs.extend(fetch_himalayas_jobs())
     print(f"[+] Total raw jobs scraped across all dynamic sources: {len(all_jobs)}")
