@@ -6,14 +6,30 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone, timedelta
 
+import random
+
 # File paths
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jobs_database.json")
 
-# User agent for scraping
-REQ_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/xml, application/xml, text/html, */*"
-}
+# Rotating real browser user-agents for anti-blocking & stealth
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+]
+
+def get_req_headers():
+    return {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "application/json, text/xml, application/xml, text/html, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+    }
+
+REQ_HEADERS = get_req_headers()
 
 def load_jobs_db():
     if os.path.exists(DB_PATH):
@@ -40,7 +56,7 @@ def fetch_remotive_jobs():
     jobs = []
     url = "https://remotive.com/api/remote-jobs?category=software-dev&limit=100"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data.get("jobs", []):
@@ -65,7 +81,7 @@ def fetch_arbeitnow_jobs():
     for page in [1, 2, 3]:
         url = f"https://www.arbeitnow.com/api/job-board-api?page={page}"
         try:
-            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            req = urllib.request.Request(url, headers=get_req_headers())
             with urllib.request.urlopen(req, timeout=12) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 for item in data.get("data", []):
@@ -90,7 +106,7 @@ def fetch_wwr_rss(category_url, category_name):
     """Fetches genuine remote jobs from WeWorkRemotely RSS feed."""
     jobs = []
     try:
-        req = urllib.request.Request(category_url, headers=REQ_HEADERS)
+        req = urllib.request.Request(category_url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             root = ET.fromstring(resp.read().decode("utf-8"))
             for item in root.findall(".//item")[:50]:
@@ -126,7 +142,7 @@ def fetch_himalayas_jobs():
     for offset in [0, 20, 40, 60, 80, 100, 120, 140]:
         url = f"https://himalayas.app/jobs/api?offset={offset}"
         try:
-            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            req = urllib.request.Request(url, headers=get_req_headers())
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 for item in data.get("jobs", []):
@@ -169,7 +185,7 @@ def fetch_remoteok_jobs():
     jobs = []
     url = "https://remoteok.com/api?tag=dev"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data:
@@ -200,7 +216,7 @@ def fetch_jobicy_jobs():
     for ind in ["dev", "supporting", "data-science", "engineering"]:
         url = f"https://jobicy.com/api/v2/remote-jobs?count=100&industry={ind}"
         try:
-            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            req = urllib.request.Request(url, headers=get_req_headers())
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 for item in data.get("jobs", []):
@@ -229,7 +245,7 @@ def fetch_jobicy_qa_jobs():
     jobs = []
     url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=qa"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data.get("jobs", []):
@@ -253,7 +269,7 @@ def fetch_remotive_qa_jobs():
     jobs = []
     url = "https://remotive.com/api/remote-jobs?category=qa&limit=50"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data.get("jobs", []):
@@ -277,7 +293,7 @@ def fetch_hn_whoishiring_jobs():
     jobs = []
     url = "https://hnrss.org/whoishiring/jobs"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             root = ET.fromstring(resp.read().decode("utf-8"))
             for item in root.findall(".//item")[:50]:
@@ -313,7 +329,7 @@ def fetch_jobicy_data_jobs():
     jobs = []
     url = "https://jobicy.com/api/v2/remote-jobs?count=50&tag=data"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data.get("jobs", []):
@@ -337,7 +353,7 @@ def fetch_remotive_data_jobs():
     jobs = []
     url = "https://remotive.com/api/remote-jobs?category=data&limit=50"
     try:
-        req = urllib.request.Request(url, headers=REQ_HEADERS)
+        req = urllib.request.Request(url, headers=get_req_headers())
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for item in data.get("jobs", []):
@@ -372,7 +388,7 @@ def extract_company_contact_email(url, description=""):
     # 2. Try fetching the job page
     if url and url.startswith("http"):
         try:
-            req = urllib.request.Request(url, headers=REQ_HEADERS)
+            req = urllib.request.Request(url, headers=get_req_headers())
             with urllib.request.urlopen(req, timeout=5) as resp:
                 html = resp.read().decode("utf-8", errors="ignore")
                 # Look for mailto:
@@ -393,7 +409,7 @@ def extract_company_contact_email(url, description=""):
                     base_url = f"{parsed.scheme}://{parsed.netloc}"
                     for sub in ["/contact", "/about", "/careers"]:
                         try:
-                            sub_req = urllib.request.Request(base_url + sub, headers=REQ_HEADERS)
+                            sub_req = urllib.request.Request(base_url + sub, headers=get_req_headers())
                             with urllib.request.urlopen(sub_req, timeout=4) as sub_resp:
                                 sub_html = sub_resp.read().decode("utf-8", errors="ignore")
                                 sub_mailtos = re.findall(r'mailto:([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)', sub_html)
