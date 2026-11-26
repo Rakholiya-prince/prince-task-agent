@@ -397,6 +397,53 @@ class HorizonHunterBrain:
         except Exception:
             pass
 
+        # 4. 🇩🇪 Germany & 🇨🇭 Switzerland Remote Platform Discovery (SwissDev & GermanTech)
+        try:
+            req = urllib.request.Request("https://germantechjobs.de/api/jobsCommunity", headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                remote_de = [j for j in data if j.get("isRemote") or "remote" in str(j).lower()][:6]
+                for item in remote_de:
+                    fresh_discoveries.append({
+                        "id": f"de_{item.get('_id', str(time.time()))}",
+                        "title": item.get("name", "Software Engineer"),
+                        "company": item.get("company", "EU Tech GmbH"),
+                        "country_name": "Germany",
+                        "country_flag": "🇩🇪",
+                        "portal": "GermanTechJobs (DE/EU)",
+                        "salary": f"€{item.get('salaryMin', 60000):,} - €{item.get('salaryMax', 85000):,}/yr",
+                        "estimated_monthly_pay": "$5,000 - $7,000/mo (EUR €)",
+                        "url": item.get("url") or f"https://germantechjobs.de/jobs/{item.get('slug', '')}",
+                        "category": "High-Yield EU Remote",
+                        "ai_executability_score": 90
+                    })
+                    self.country_stats["Europe 🇪🇺"] += 1
+        except Exception:
+            pass
+
+        # 5. 🌐 Global Remote Multi-Platform Discovery (WorkingNomads API)
+        try:
+            req = urllib.request.Request("https://www.workingnomads.com/api/exposed_jobs/", headers=REQ_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for item in data[:8]:
+                    fresh_discoveries.append({
+                        "id": f"wn_{item.get('id', str(time.time()))}",
+                        "title": item.get("title", "Remote Developer"),
+                        "company": item.get("company_name", "Global Partner"),
+                        "country_name": "Global Remote",
+                        "country_flag": "🌐",
+                        "portal": "WorkingNomads Global",
+                        "salary": "USD $4,500 - $6,500/mo",
+                        "estimated_monthly_pay": "$4,500 - $6,500/mo",
+                        "url": item.get("url", "https://www.workingnomads.com/jobs"),
+                        "category": item.get("category_name", "Development"),
+                        "ai_executability_score": 88
+                    })
+                    self.country_stats["US 🇺🇸"] += 1
+        except Exception:
+            pass
+
         self.total_probed += len(fresh_discoveries)
         self.discovered_opportunities.extend(fresh_discoveries)
         self.state = f"Standing by. Probed {self.total_probed} deep superpower opportunities."
