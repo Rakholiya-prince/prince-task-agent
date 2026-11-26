@@ -959,12 +959,12 @@ def run_daily_scheduler():
                         print(f"[!] Error sending morning job report: {e}")
                     last_morning_job_date = today_str
             
-            # 3. Evening Comprehensive Job Report: 8:30 PM IST (Hour 20, Minute 30)
-            if hour == 20 and minute >= 30 and minute <= 35:
+            # 3. Evening Comprehensive Job Report: 9:00 PM IST (Hour 21, Minute 00)
+            if hour == 21 and minute >= 0 and minute <= 5:
                 if last_evening_job_date != today_str:
-                    print(f"[*] Sending 8:30 PM IST Evening Job Report for {today_str}...")
+                    print(f"[*] Sending 9:00 PM IST Evening Job Report for {today_str}...")
                     try:
-                        summary_msg = "🌙 *EVENING COMPREHENSIVE JOB REPORT FOR BOSS PRINCE*\n" + job_hunter.generate_daily_jobs_telegram_summary()
+                        summary_msg = "🌙 *EVENING COMPREHENSIVE JOB REPORT FOR BOSS PRINCE (9:00 PM IST)*\n" + job_hunter.generate_daily_jobs_telegram_summary()
                         telegram_send_message(PRINCE_CHAT_ID, summary_msg)
                     except Exception as e:
                         print(f"[!] Error sending evening job report: {e}")
