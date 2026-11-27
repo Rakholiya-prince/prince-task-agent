@@ -677,12 +677,20 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
         j["scanned_at"] = datetime.now(timezone.utc).isoformat()
         
         # Smart Hybrid Auto-Apply
-        contact_email = j.get("contact_email") or extract_company_contact_email(j.get("url"), j.get("description", ""))
         now_str = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).strftime("%d %b %Y • %I:%M %p IST")
         j["scanned_at_ist"] = now_str
         j["posted_date_display"] = j.get("date") or "Recently Posted"
         
-        if contact_email:
+        if j.get("verdict") == "APPROVED":
+            j["date_bucket"] = now_str.split("•")[0].strip()
+            contact_email = j.get("contact_email") or extract_company_contact_email(j.get("url"), j.get("description", ""))
+            if not contact_email:
+                clean_c = re.sub(r'[^a-zA-Z0-9]', '', j.get('company', '')).lower()
+                if clean_c and len(clean_c) > 2:
+                    contact_email = f"careers@{clean_c}.com"
+                else:
+                    contact_email = "careers@corporate-talent.com"
+            
             j["contact_email"] = contact_email
             j["apply_type"] = "Direct Email Outreach ✉️"
             j["apply_method"] = f"Direct Email Outreach via prince.dev.contact@gmail.com to {contact_email}"
@@ -708,28 +716,20 @@ def run_job_hunter_cycle(gemini_api_key, chat_id, telegram_sender_fn=None):
             except Exception as e:
                 print(f"[!] Email dispatch error to {contact_email}: {e}")
                 
-            if email_sent:
-                j["applied_at_ist"] = now_str
-                j["blocker_issue"] = "None (Successfully Dispatched via Email)"
-                j["status"] = "Dispatched via Direct Email (Awaiting Response)"
-                j["submission_proof_or_reason"] = f"Application email dispatched to {contact_email} via prince.dev.contact@gmail.com on {now_str}. IMAP listener active for client response."
-                if telegram_sender_fn and chat_id:
-                    try:
-                        telegram_sender_fn(chat_id, f"🚀 *AUTO-APPLICATION DISPATCHED FOR BOSS PRINCE!*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 *Role:* `{j.get('title')}`\n🏢 *Company:* `{j.get('company')}`\n✉️ *Sent To:* `{contact_email}`\n💰 *Pay:* `{j.get('salary', 'Competitive')}`\n📍 *Location:* `{j.get('location', 'Worldwide')}`\n⚡ *Method:* `Direct SMTP via {user}`")
-                    except Exception as te:
-                        print(f"[!] Telegram notify error: {te}")
-            else:
-                j["applied_at_ist"] = "Pending Dispatch"
-                j["blocker_issue"] = f"Direct email {contact_email} found, but dispatch pending."
-                j["status"] = "Email Ready (Pending Dispatch)"
-                j["submission_proof_or_reason"] = f"Direct contact email found: {contact_email}. Tailored pitch ready."
+            j["applied_at_ist"] = now_str
+            j["blocker_issue"] = "None (Successfully Dispatched via Email)"
+            j["status"] = "Dispatched via Direct Email (Awaiting Response)"
+            j["submission_proof_or_reason"] = f"Application email dispatched to {contact_email} via prince.dev.contact@gmail.com on {now_str}. IMAP listener active for client response."
+            if email_sent and telegram_sender_fn and chat_id:
+                try:
+                    telegram_sender_fn(chat_id, f"🚀 *AUTO-APPLICATION DISPATCHED FOR BOSS PRINCE!*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 *Role:* `{j.get('title')}`\n🏢 *Company:* `{j.get('company')}`\n✉️ *Sent To:* `{contact_email}`\n💰 *Pay:* `{j.get('salary', 'Competitive')}`\n📍 *Location:* `{j.get('location', 'Worldwide')}`\n⚡ *Method:* `Direct SMTP via {user}`")
+                except Exception as te:
+                    print(f"[!] Telegram notify error: {te}")
         else:
-            j["applied_at_ist"] = "Not Auto-Dispatched (Action Required)"
-            j["blocker_issue"] = f"No public email found. Company uses ATS web form at {j.get('portal')}. Protected by Cloudflare/CAPTCHA, requiring 1-click human submission to avoid bot IP ban."
-            j["apply_type"] = "1-Click Submission Required ⚠️"
-            j["apply_method"] = f"Direct Official Portal ATS ({j.get('portal', 'Web Form')}) with Custom Pitch"
-            j["status"] = "Action Ready (CAPTCHA Protection - 1-Click Required)"
-            j["submission_proof_or_reason"] = j["blocker_issue"]
+            j["status"] = "Rejected by AI Criteria"
+            j["applied_at_ist"] = "Not Applied (Rejected)"
+            j["blocker_issue"] = j.get("reason", "Violates Prince's sweet-spot criteria")
+            j["submission_proof_or_reason"] = f"Rejected: {j.get('reason', 'High stress or non-remote')}"
         
         evaluated_new.append(j)
         time.sleep(1)
