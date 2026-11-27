@@ -10,15 +10,16 @@ import threading
 import re
 import xml.etree.ElementTree as ET
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import urllib3.util.connection as urllib_connection
+try:
+    import urllib3.util.connection as urllib_connection
+    urllib_connection.allowed_gai_family = lambda: socket.AF_INET
+except Exception:
+    pass
 import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 import job_hunter
 import multi_agent_team
-
-# Force IPv4 for all outbound connections (fixes Render -> Google/Telegram latency)
-urllib_connection.allowed_gai_family = lambda: socket.AF_INET
 
 # Environment configuration
 TELEGRAM_BOT_TOKEN = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
@@ -321,12 +322,14 @@ def mark_article_seen(title: str, link: str):
         print(f"[!] mark_article_seen error: {e}")
 
 def fetch_latest_bbc() -> dict:
-    """Smartly curates the highest-value, non-repeating article across Space, AI, Science, Business & Discoveries."""
+    """Smartly curates the highest-value, non-repeating article across Space, AI, Science, Business, Environment & Global Discoveries."""
     feeds = [
-        "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-        "https://feeds.bbci.co.uk/news/technology/rss.xml",
-        "https://feeds.bbci.co.uk/news/business/rss.xml",
-        "https://feeds.bbci.co.uk/news/world/rss.xml"
+        ("Technology & AI", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
+        ("Science & Environment", "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"),
+        ("Business & Economy", "https://feeds.bbci.co.uk/news/business/rss.xml"),
+        ("Education & Society", "https://feeds.bbci.co.uk/news/education/rss.xml"),
+        ("Health & Human Body", "https://feeds.bbci.co.uk/news/health/rss.xml"),
+        ("World Discoveries", "https://feeds.bbci.co.uk/news/world/rss.xml")
     ]
     seen = get_seen_articles()
     seen_links = {item.get("link", "").lower() for item in seen}
@@ -336,7 +339,7 @@ def fetch_latest_bbc() -> dict:
     seen_titles.add("microsoft says services fully restored after day-long global outage")
 
     candidates = []
-    for url in feeds:
+    for category_name, url in feeds:
         try:
             resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0", "Connection": "close"}, timeout=10)
             root = ET.fromstring(resp.content)
@@ -364,14 +367,14 @@ def fetch_latest_bbc() -> dict:
                     'spacex', 'starship', 'rocket', 'nasa', 'moon', 'mars', 'space', 'astronomy',
                     'ai', 'artificial intelligence', 'robot', 'chip', 'nvidia', 'quantum', 'breakthrough',
                     'discovery', 'brain', 'psychology', 'science', 'ocean', 'climate', 'energy', 'innovation',
-                    'startup', 'google', 'apple', 'meta', 'amazon', 'software', 'technology'
+                    'startup', 'google', 'apple', 'meta', 'amazon', 'software', 'technology', 'education', 'economics'
                 ]
                 for hw in high_value_words:
                     if hw in lower:
                         score += 3
                 if len(desc) > 60:
                     score += 1
-                candidates.append({"title": title, "desc": desc, "link": clean_link, "score": score})
+                candidates.append({"title": title, "desc": desc, "link": clean_link, "score": score, "category": category_name})
         except Exception as e:
             print(f"[!] fetch_latest_bbc error for {url}: {e}")
             
@@ -379,12 +382,13 @@ def fetch_latest_bbc() -> dict:
         candidates.sort(key=lambda x: x["score"], reverse=True)
         best = candidates[0]
         mark_article_seen(best["title"], best["link"])
-        return {"title": best["title"], "desc": best["desc"], "link": best["link"]}
+        return {"title": best["title"], "desc": best["desc"], "link": best["link"], "category": best.get("category", "Science & Technology")}
         
     return {
         "title": "SpaceX successfully catches top of huge Starship rocket for first time",
         "desc": "The rocket booster was caught mid air using huge mechanical arms nicknamed chopsticks in an engineering milestone.",
-        "link": "https://www.bbc.co.uk/news/articles/ckregdgnl0xpo"
+        "link": "https://www.bbc.co.uk/news/articles/ckregdgnl0xpo",
+        "category": "Space & Frontier Technology"
     }
 
 def fetch_latest_hhh() -> dict:
@@ -410,10 +414,11 @@ def fetch_latest_hhh() -> dict:
 
 # ----------------- DIGEST GENERATORS (7:30 AM & 9:00 PM) ----------------- #
 def build_fallback_morning_digest(hhh_data: dict, bbc_data: dict) -> str:
-    """Deterministic fallback ensuring Prince ALWAYS gets a full, structured morning briefing."""
+    """Deterministic fallback ensuring Prince ALWAYS gets a full, structured morning briefing with Brick-by-Brick IELTS 9."""
     b_title = bbc_data.get('title', "Europe Plans to Catch the Next Computer Chip Wave")
     b_link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/cqglwjd450k0o")
     b_desc = bbc_data.get('desc', "Europe hopes to be a leader in a new generation of computer chips which use light to process data.")
+    b_cat = bbc_data.get('category', "Technology & Computing")
     
     h_title = hhh_data.get('title', "🪅 Heap Heap Hurray Ed. #667")
     h_url = hhh_data.get('url', "https://www.heapheaphurray.com/p/heap-heap-hurray-ed-667")
@@ -430,47 +435,64 @@ _Good morning, Prince Sir! Here is your sorted tech & English drill._
 • *Efficient AI Tooling*: Next-gen lightweight coding models reduce inference expenses while accelerating dev workflows.
 
 ━━━━━━━━━━━━━━━━━━━━
-📖 *2. DAILY ENGLISH READING (BBC Story)*
+📖 *2. DAILY ENGLISH READING (Brick-by-Brick IELTS 9)*
+🎯 *Level:*  | *IELTS Band:*  | *Domain:* {b_cat}
 📰 *Article Title:* {b_title}
 🔗 *Direct Link:* {b_link}
 
-{b_desc} Today's society runs on silicon microchips that shuffle billions of electrons through microscopic circuits. But as frontier artificial intelligence models demand unprecedented compute, conventional electronics face thermodynamic limits and generate immense heat. European research institutes and governments are backing photonic chips that process data with light pulses rather than electrical current, offering orders-of-magnitude faster processing and negligible energy waste.
+💡 *સંદર્ભ (Context Anchor):*
+પરંપરાગત સિલિકોન ચિપ્સ ગરમી પકડે છે, તેથી યુરોપિયન સંશોધકો હવે વીજળીના બદલે પ્રકાશના કિરણો (ફોટોનિક્સ) વડે અતિ ઝડપી અને ઓછી ઊર્જા વાપરતી નવી ચિપ્સ વિકસાવી રહ્યા છે.
+
+📜 *Reading Passage (Read Aloud 2 Mins):*
+Today's information society relies heavily on silicon microchips that shuttle billions of electrons through microscopic circuits. However, as frontier artificial intelligence models demand unprecedented compute power, conventional electronics face insurmountable thermodynamic bottlenecks and generate immense heat. In response, European research institutes and sovereign governments are backing photonic chips that process data with light pulses rather than electrical currents. This profound transition promises orders-of-magnitude faster throughput while drastically curtailing energy consumption.
 
 ━━━━━━━━━━━━━━━━━━━━
-🧠 *3. VOCABULARY & SPEAKING BOOSTER*
-1. *Photonic*
-   🗣️ સરળ ઉચ્ચાર: ફો-ટો-નિક (Pho-ton-ic)
-   📖 English Meaning: Relating to photons or using light particles instead of electrical current to transmit and process information.
-   👉 ગુજરાતી અર્થ: પ્રકાશ આધારિત, જેમાં ડેટા પ્રોસેસિંગ માટે વીજળીના બદલે પ્રકાશના કિરણો વપરાય.
-   💼 Example: "Next-generation data centers will deploy photonic processors to train large AI models with minimal power consumption."
+🧩 *3. SENTENCE ANATOMY & GRAMMAR BREAKDOWN (વાક્યનું ઓપરેશન)*
+🔍 *Key Sentence:*
+_"However, as frontier artificial intelligence models demand unprecedented compute power, conventional electronics face insurmountable thermodynamic bottlenecks."_
 
-2. *Breakthrough*
-   🗣️ સરળ ઉચ્ચાર: બ્રેક-થ્રૂ (Break-through)
-   📖 English Meaning: A sudden, dramatic, and important discovery or development that overcomes a significant obstacle.
-   👉 ગુજરાતી અર્થ: મોટી સફળતા, ક્રાંતિકારી શોધ અથવા મહત્વપૂર્ણ પ્રગતિ.
-   💼 Example: "Designing efficient optical waveguides was the decisive engineering breakthrough needed for commercial silicon photonics."
+• **Subordinate Clause (કારણ / પૃષ્ઠભૂમિ):** "as frontier artificial intelligence models demand unprecedented compute power..." (જેમ જેમ AI મોડેલ્સ અભૂતપૂર્વ કમ્પ્યુટ પાવર માંગે છે...)
+• **Main Clause (મુખ્ય પરિણામ):** "...conventional electronics face insurmountable thermodynamic bottlenecks." (...તેમ જૂની ઇલેક્ટ્રોનિક્સ હીટિંગ અને ગરમીની અગવડનો સામનો કરે છે.)
+• **Grammar Signpost:**  (જેમ જેમ / કારણ કે) બે સમાંતર સ્થિતિઓને જોડે છે.
+👉 *કુદરતી વિચાર:* જ્યારે કોઈ વસ્તુની માંગ અતિશય વધે, ત્યારે જૂની સિસ્ટમ મર્યાદાઓનો સામનો કરવા લાગે છે.
 
-3. *Insatiable*
-   🗣️ સરળ ઉચ્ચાર: ઇન-સે-શિય-બલ (In-sa-tia-ble)
-   📖 English Meaning: Impossible to satisfy; having an unquenchable desire or demand.
-   👉 ગુજરાતી અર્થ: અતૃપ્ત, સંતોષી ન શકાય તેવું, અનંત ભૂખ ધરાવતું.
-   💼 Example: "The tech industry has an insatiable demand for scalable cloud infrastructure and high-throughput backend APIs."
+━━━━━━━━━━━━━━━━━━━━
+🧠 *4. THREE POWER COLLOCATIONS (શબ્દોની જોડીઓ)*
+1. *Insurmountable Bottlenecks*
+   🗣️ સરળ ઉચ્ચાર: ઇન-સર-માઉન્ટે-બલ બોટલ-નેક્સ (In-sur-mount-able Bot-tle-necks)
+   📖 Meaning: Severe obstacles that cannot be overcome.
+   👉 ગુજરાતી અર્થ: પાર ન પાડી શકાય તેવી ગંભીર અડચણો અથવા મર્યાદાઓ.
+   💼 Workplace/IELTS: "Legacy database architectures create insurmountable bottlenecks during sudden traffic spikes."
 
-🗣️ *Speaking Tip of the Day:*
-Start your thoughts with confidence anchors like 'Traditional hardware is limited by...' or 'The primary breakthrough here is...'. Speak smoothly and pause naturally at commas without translating!
+2. *Relies Heavily On*
+   🗣️ સરળ ઉચ્ચાર: રિ-લાઇઝ હેવિ-લી ઓન (Re-lies Heav-i-ly On)
+   📖 Meaning: To depend on something with complete necessity.
+   👉 ગુજરાતી અર્થ: સંપૂર્ણપણે નિર્ભર હોવું.
+   💼 Workplace/IELTS: "Global cloud supply chains rely heavily on robust automation and real-time APIs."
+
+3. *Curtail Energy Consumption*
+   🗣️ સરળ ઉચ્ચાર: કર-ટેલ એનર્જી કન્ઝમ્પ-શન (Cur-tail En-er-gy Con-sump-tion)
+   📖 Meaning: To significantly reduce the amount of power used.
+   👉 ગુજરાતી અર્થ: ઊર્જાના વપરાશમાં મોટો કાપ મૂકવો / ઘટાડો કરવો.
+   💼 Workplace/IELTS: "Migrating backend workloads to ARM processors helped curtail energy consumption by 40%."
+
+━━━━━━━━━━━━━━━━━━━━
+🗣️ *5. 1-MINUTE IELTS SPEAKING DRILL*
+❓ *Question Prompt:* "Do you believe emerging hardware innovations will successfully solve AI's power crisis? Explain your reasoning in 3-4 sentences."
+💡 *Confidence Anchor:* Start with: *"From an engineering standpoint, the decisive advantage is..."* Speak smoothly and pause naturally at commas without translating!
 
 Have a productive day of building, Sir! 🚀"""
 
 def generate_morning_digest(hhh_data: dict = None, bbc_data: dict = None) -> str:
-    """Generates Morning Intelligence & English Reading Digest (for 7:30 AM)."""
-    print("[*] Generating Morning Digest...")
+    """Generates Morning Intelligence & English Reading Digest (for 7:30 AM) with Brick-by-Brick IELTS 9 Frame."""
+    print("[*] Generating Morning Digest with Brick-by-Brick IELTS 9 Frame...")
     if not hhh_data:
         hhh_data = fetch_latest_hhh()
     if not bbc_data:
         bbc_data = fetch_latest_bbc()
     
-    prompt = f"""You are Prince's elite Personal AI Tutor and Autonomous Assistant.
-Today is a fresh morning. Generate Prince's daily 'Morning Tech & English Reading Digest'.
+    prompt = f"""You are Prince's elite Personal AI Tutor and English Fluency Architect.
+Today is a fresh morning. Generate Prince's daily 'Morning Tech & English Reading Digest' structured strictly around the "Brick-by-Brick IELTS Band 9 Framework".
 
 SOURCE 1: Heap Heap Hurray (Tech news, changelog, trending repos):
 Edition Title: {hhh_data.get('title', 'Heap Heap Hurray')}
@@ -481,12 +503,13 @@ Content:
 SOURCE 2: BBC News:
 Article Title: {bbc_data.get('title', '')}
 Summary: {bbc_data.get('desc', '')}
+Category/Domain: {bbc_data.get('category', 'Science & Innovation')}
 Direct Link: {bbc_data.get('link', '')}
 
 Prince's Core Learning Goals:
-1. DSA (Data Structures & Algorithms)
-2. English Fluency (speaking, vocabulary, confidence)
-3. ASP.NET Core & C# Backend Development
+1. IELTS Band 8.5-9 & Native-like Intuition (Stop translating, understand sentence architecture & collocations).
+2. Professional Speaking Fluency.
+3. ASP.NET Core & C# Backend Development + DSA.
 
 Structure the response strictly as follows with clean emojis and Telegram markdown:
 
@@ -500,26 +523,43 @@ _Good morning, Prince Sir! Here is your sorted tech & English drill._
 • 3 sharp, high-value bullet points summarizing today's key developer updates, product changelogs, or trending GitHub repositories.
 
 ━━━━━━━━━━━━━━━━━━━━
-📖 *2. DAILY ENGLISH READING (BBC Story)*
+📖 *2. DAILY ENGLISH READING (Brick-by-Brick IELTS 9)*
+🎯 *Level:* `B2-C1 (Upper Intermediate / Advanced)` | *IELTS Band:* `7.5 - 8.5` | *Domain:* {bbc_data.get('category', 'Science & Innovation')}
 📰 *Article Title:* {bbc_data.get('title')}
 🔗 *Direct Link:* {bbc_data.get('link')}
 
-Write a compelling, well-crafted 120-150 word English reading passage directly based on this exact BBC article ('{bbc_data.get('title')}'). Keep sentences natural, clear, and engaging so Prince can read it aloud for 2 minutes to practice pronunciation.
+💡 *સંદર્ભ (Context Anchor):*
+[2 lines in Gujarati giving the high-level background of this story so Prince's brain understands the concept before reading English words.]
+
+📜 *Reading Passage (Read Aloud 2 Mins):*
+[Write a compelling, sophisticated 120-140 word English reading passage directly based on this exact BBC article. Use natural native connectors (Although, Whereas, In response, Consequently, Crucially) so Prince can read it aloud for 2 minutes to practice pronunciation.]
 
 ━━━━━━━━━━━━━━━━━━━━
-🧠 *3. VOCABULARY & SPEAKING BOOSTER*
-Select 3 high-impact professional words from the passage:
-Format each strictly as follows:
-1. *[Word]*
-   🗣️ સરળ ઉચ્ચાર: [Easy phonetic syllables in Gujarati & English, e.g. અન-પ્રેસિ-ડેન્ટિડ (Un-pres-i-den-ted) - NEVER USE CONFUSING IPA SYMBOLS LIKE /ʌn/]
-   📖 English Meaning: [Clear English definition]
-   👉 ગુજરાતી અર્થ: [Simple Gujarati meaning]
-   💼 Example: "[Realistic professional workplace/tech sentence]"
-2. *[Word]*: ...
-3. *[Word]*: ...
+🧩 *3. SENTENCE ANATOMY & GRAMMAR BREAKDOWN (વાક્યનું ઓપરેશન)*
+🔍 *Key Sentence:*
+_"[Pick 1 complex, high-scoring sentence from the passage above]"_
 
-🗣️ *Speaking Tip of the Day:*
-[1 actionable tip on how to speak confidently, pause naturally, or explain concepts without mental translation.]
+• **Subordinate Clause (ગૌણ વાક્ય / શરત / કારણ):** [Explain what this part introduces]
+• **Main Clause (મુખ્ય વાક્ય / પરિણામ):** [Explain the primary subject and action]
+• **Grammar Signpost:** [Explain the connector e.g. Although, Whereas, As, In light of]
+👉 *કુદરતી વિચાર:* [1 line in Gujarati explaining the thought process of how native speakers formulate this thought]
+
+━━━━━━━━━━━━━━━━━━━━
+🧠 *4. THREE POWER COLLOCATIONS (શબ્દોની જોડીઓ)*
+Select 3 natural collocations or phrasal chunks from the passage (e.g. "pave the way for", "insurmountable challenge", "rely heavily on", NOT single obscure words):
+Format each strictly as:
+1. *[Collocation Phrase]*
+   🗣️ સરળ ઉચ્ચાર: [Easy phonetic syllables in Gujarati & English, e.g. ઇન-સર-માઉન્ટે-બલ બોટલ-નેક્સ (In-sur-mount-able Bot-tle-necks) - NEVER USE IPA SYMBOLS]
+   📖 Meaning: [Clear English definition]
+   👉 ગુજરાતી અર્થ: [Simple Gujarati meaning]
+   💼 Workplace/IELTS: "[Realistic professional workplace or IELTS sentence]"
+2. *[Collocation Phrase]*: ...
+3. *[Collocation Phrase]*: ...
+
+━━━━━━━━━━━━━━━━━━━━
+🗣️ *5. 1-MINUTE IELTS SPEAKING DRILL*
+❓ *Question Prompt:* [1 targeted IELTS Speaking Part 3 style question related to this topic for Prince to answer out loud]
+💡 *Confidence Anchor:* Start with: *"[e.g., 'From an engineering standpoint, the decisive advantage is...']"* Speak smoothly and pause naturally at commas without translating!
 
 Have a productive day of building, Sir! 🚀"""
 
@@ -563,55 +603,60 @@ Rest well and prepare for tomorrow's wins, Sir! 🛌💤"""
     return ask_gemini_direct(prompt)
 
 def generate_reader_payload_ai(bbc_data: dict) -> dict:
-    """Uses Gemini to generate structured 3-tier IELTS content & vocabulary, with guaranteed deterministic fallback."""
+    """Uses Gemini to generate structured 3-tier IELTS content, Sentence Anatomy, and Power Collocations."""
     title = bbc_data.get('title', "Europe Plans to Catch the Next Computer Chip Wave")
     desc = bbc_data.get('desc', "Europe hopes to be a leader in a new generation of computer chips which use light to process data.")
     link = bbc_data.get('link', "https://www.bbc.co.uk/news/articles/cqglwjd450k0o")
+    category = bbc_data.get('category', "Technology & Computing")
     
-    prompt = f"""You are Prince's elite Personal AI Tutor.
-Generate daily English reading content and vocabulary based on this news:
+    prompt = f"""You are Prince's elite Personal AI Tutor and English Fluency Architect.
+Generate daily English reading content, Sentence Anatomy, and Collocations based on this news:
 Article Title: {title}
 Summary: {desc}
+Domain: {category}
 Link: {link}
 
 Return strictly a valid JSON object matching this schema:
 {{
   "kicker_emoji": "⚡",
-  "kicker_topic": "Topic Name",
+  "kicker_topic": "{category}",
   "headline": "{title}",
   "level_a_p1": "Simple English paragraph 1 (Band 5.0-6.0)...",
   "level_a_p2": "Simple English paragraph 2...",
-  "gujarati_summary": "Simple Gujarati summary of the article...",
+  "gujarati_summary": "2-3 lines in Gujarati explaining the concept clearly before reading...",
   "level_b_p1": "Professional medium English paragraph 1 (Band 7.0-7.5)...",
   "level_b_p2": "Professional medium English paragraph 2...",
   "level_c_p1": "Native authentic English paragraph 1 (Band 8.5-9.0)...",
   "level_c_p2": "Native authentic English paragraph 2...",
-  "word1_title": "Word1",
-  "word1_syllables": "ગુજરાતી સિલેબલ (English-Syllable)",
-  "word1_def": "English definition",
-  "word1_guj": "ગુજરાતી અર્થ",
-  "word1_example": "Professional sentence example.",
-  "word2_title": "Word2",
+  "anatomy_sentence": "1 complex high-scoring sentence from the story...",
+  "anatomy_breakdown": "Detailed breakdown of Subordinate Clause, Main Clause, and Grammar Connectors...",
+  "anatomy_gujarati_thought": "Natural thought process in Gujarati on how native speakers formulate this thought...",
+  "word1_title": "Power Collocation 1 (e.g. Insurmountable Bottlenecks)",
+  "word1_syllables": "ગુજરાતી ઉચ્ચાર (English-Phonetic)",
+  "word1_def": "Clear English definition",
+  "word1_guj": "સરળ ગુજરાતી અર્થ",
+  "word1_example": "Professional IELTS/workplace example sentence.",
+  "word2_title": "Power Collocation 2",
   "word2_syllables": "...",
   "word2_def": "...",
   "word2_guj": "...",
   "word2_example": "...",
-  "word3_title": "Word3",
+  "word3_title": "Power Collocation 3",
   "word3_syllables": "...",
   "word3_def": "...",
   "word3_guj": "...",
   "word3_example": "...",
-  "speaking_prompt": "Speak out loud: Explain why...",
-  "speaking_tip": "Coach tip..."
+  "speaking_prompt": "IELTS Part 3 speaking question on this topic...",
+  "speaking_tip": "Actionable confidence anchor starting phrase..."
 }}
 CRITICAL RULES:
 - Never use confusing phonetic symbols like /ʌn/ or IPA. Always use simple Gujarati syllables e.g. ફો-ટો-નિક (Pho-ton-ic).
+- For vocabulary, choose natural COLLOCATIONS / PHRASES, not single obscure words.
 - Return ONLY the JSON object, nothing else."""
 
     try:
         resp_text = ask_gemini_direct(prompt)
-        cleaned = re.sub(r'^```json\s*', '', resp_text.strip())
-        cleaned = re.sub(r'```$', '', cleaned.strip()).strip()
+        cleaned = re.sub(r'^$', '', cleaned.strip()).strip()
         data = json.loads(cleaned)
         if "level_a_p1" in data and "word1_title" in data:
             data["headline"] = title
@@ -619,27 +664,37 @@ CRITICAL RULES:
     except Exception as e:
         print(f"[!] AI payload generation error: {e}, falling back.")
 
-    words = [w.strip('.,()\"\'') for w in (title + ' ' + desc).split() if len(w) > 5]
-    w1 = words[0] if len(words) > 0 else "Innovation"
-    w2 = words[1] if len(words) > 1 else "Breakthrough"
-    w3 = words[2] if len(words) > 2 else "Scalability"
-    
     return {
         "kicker_emoji": "⚡",
-        "kicker_topic": "Frontier Technology & Innovation",
+        "kicker_topic": category,
         "headline": title,
         "level_a_p1": f"{desc} This development marks an exciting new milestone for modern technological progress.",
         "level_a_p2": f"Researchers, developers, and global organizations are closely tracking these advancements to unlock high-impact real-world solutions.",
-        "gujarati_summary": f"આજના સમાચાર {title} અંગે ટેકનોલોજી અને વૈશ્વિક નવીનતા પર પ્રકાશ પાડે છે.",
-        "level_b_p1": f"{title} represents a notable paradigm shift across enterprise engineering and distributed modern infrastructure.",
+        "gujarati_summary": f"આજના સમાચાર {title} અંગે નવીનતા અને તેના દૂરગામી પ્રભાવ પર પ્રકાશ પાડે છે.",
+        "level_b_p1": f"{title} represents a notable paradigm shift across engineering and modern distributed systems.",
         "level_b_p2": f"{desc} Industry leaders project accelerated efficiency benchmarks alongside enhanced operational resilience.",
         "level_c_p1": f"The architectural and strategic implications surrounding {title} signal a profound technological milestone across global systems.",
         "level_c_p2": f"{desc} Frontier institutions anticipate unprecedented operational gains as these innovations achieve maturity.",
-        "word1_title": w1, "word1_syllables": f"{w1}", "word1_def": f"Core technical concept relating to {w1}.", "word1_guj": "મહત્વપૂર્ણ સિદ્ધાંત", "word1_example": f"The engineering team leveraged {w1} to accelerate delivery.",
-        "word2_title": w2, "word2_syllables": f"{w2}", "word2_def": f"Significant advancement resolving system constraints.", "word2_guj": "મોટી સિદ્ધિ", "word2_example": f"Achieving this {w2} unlocked substantial throughput improvements.",
-        "word3_title": w3, "word3_syllables": f"{w3}", "word3_def": f"Strategic capability essential for robust growth.", "word3_guj": "વિકાસ ક્ષમતા", "word3_example": f"System designs must prioritize {w3} under enterprise workloads.",
-        "speaking_prompt": f"Speak out loud: Explain why '{title}' is an important technological development.",
-        "speaking_tip": "Open decisively with 'The decisive factor here is...' and pause smoothly at commas."
+        "anatomy_sentence": f"Although developing {title} requires substantial capital, its long-term societal benefits far outweigh initial constraints.",
+        "anatomy_breakdown": "Subordinate Clause (વિરોધાભાસ / શરત): 'Although developing... requires substantial capital' | Main Clause (મુખ્ય પરિણામ): 'its long-term societal benefits far outweigh initial constraints' | Signpost: 'Although' (જોકે / તેમ છતાં).",
+        "anatomy_gujarati_thought": "જ્યારે કોઈ મોટા બદલાવમાં શરૂઆતમાં મુશ્કેલી હોય પણ લાંબા ગાળે મોટો ફાયદો થવાનો હોય, ત્યારે 'Although' વાપરીને બે વિરોધી વિચારોને એકસાથે વણી લેવાય છે.",
+        "word1_title": "Insurmountable Bottlenecks",
+        "word1_syllables": "ઇન-સર-માઉન્ટે-બલ બોટલ-નેક્સ (In-sur-mount-able Bot-tle-necks)",
+        "word1_def": "Severe structural limitations or obstacles that cannot easily be overcome.",
+        "word1_guj": "પાર ન પાડી શકાય તેવી ગંભીર અડચણો અથવા મર્યાદાઓ.",
+        "word1_example": "Legacy system architectures create insurmountable bottlenecks during enterprise data processing.",
+        "word2_title": "Rely Heavily On",
+        "word2_syllables": "રિ-લાઇ હેવિ-લી ઓન (Re-ly Heav-i-ly On)",
+        "word2_def": "To depend completely on a critical factor or infrastructure.",
+        "word2_guj": "કોઈ બાબત પર સંપૂર્ણપણે નિર્ભર રહેવું.",
+        "word2_example": "Next-generation distributed services rely heavily on low-latency communication channels.",
+        "word3_title": "Curtail Energy Consumption",
+        "word3_syllables": "કર-ટેલ એનર્જી કન્ઝમ્પ-શન (Cur-tail En-er-gy Con-sump-tion)",
+        "word3_def": "To drastically restrict or reduce the volume of power utilized.",
+        "word3_guj": "ઊર્જા અને વીજળીના વપરાશમાં મોટો કાપ મૂકવો.",
+        "word3_example": "Optimized algorithmic pipelines help data centers curtail energy consumption significantly.",
+        "speaking_prompt": f"Explain in 3-4 sentences how '{title}' might influence the future of its industry.",
+        "speaking_tip": "Open decisively with 'From an analytical standpoint, the critical breakthrough here is...' and pause naturally at commas."
     }
 
 def generate_sections_html(p: dict, bbc_link: str) -> str:
@@ -650,9 +705,9 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
       <div class="section-kicker-badge">
         <span>{p.get('kicker_emoji', '⚡')}</span> Vocal Reading • {p.get('kicker_topic', 'Technology & Innovation')}
       </div>
-      <h2 class="article-headline">{p.get('headline', 'Frontier Technology')}</h2>
+      <h2 class="article-headline">{p.get('headline', 'Frontier Innovation')}</h2>
       <div class="article-byline">
-        <span>Reported by <strong>BBC News Science & Technology</strong></span>
+        <span>Reported by <strong>BBC News Global Intelligence</strong></span>
         <span>•</span>
         <span>Target: 2 Min Aloud Practice</span>
         <span>•</span>
@@ -698,7 +753,7 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
           <p>{p.get('level_a_p1', '')}</p>
           <p>{p.get('level_a_p2', '')}</p>
           <div class="level-quick-summary">
-            💡 <strong>ગુજરાતી સારાંશ (Quick Meaning):</strong> {p.get('gujarati_summary', '')}
+            💡 <strong>ગુજરાતી સંદર્ભ (Context Anchor):</strong> {p.get('gujarati_summary', '')}
           </div>
         </div>
 
@@ -715,6 +770,27 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
         </div>
       </div>
 
+      <!-- SENTENCE ANATOMY & GRAMMAR BREAKDOWN (BRICK BY BRICK) -->
+      <div class="anatomy-breakdown-card" style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: 4px solid var(--text-accent); border-radius: 12px; padding: 18px; margin: 20px 0; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+          <span style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+            🧩 SENTENCE ANATOMY & GRAMMAR (વાક્યનું ઓપરેશન)
+          </span>
+          <span style="font-size: 0.7rem; font-family: var(--font-mono); background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border-subtle); padding: 2px 8px; border-radius: 4px; font-weight: 700;">
+            IELTS Band 9 Syntax
+          </span>
+        </div>
+        <p style="font-size: 0.98rem; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; font-family: var(--font-editorial); font-style: italic; line-height: 1.5;">
+          "{p.get('anatomy_sentence', '')}"
+        </p>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px;">
+          <strong>🔍 માળખું (Structure):</strong> {p.get('anatomy_breakdown', '')}
+        </div>
+        <div style="font-size: 0.84rem; color: var(--text-accent); background: var(--bg-subtle); border: 1px solid var(--border-subtle); padding: 8px 12px; border-radius: 8px; font-weight: 500;">
+          👉 <strong>કુદરતી વિચાર (Thought Habit):</strong> {p.get('anatomy_gujarati_thought', '')}
+        </div>
+      </div>
+
       <!-- Luxury Callout to Exact BBC Story -->
       <a href="{bbc_link}" target="_blank" rel="noopener noreferrer" class="source-callout-card bbc-border">
         <div class="source-callout-content">
@@ -728,23 +804,23 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
     <hr class="editorial-divider">
 
     <!-- =========================================================
-         SECTION 3: HIGH-IMPACT VOCABULARY & SPEAKING LAB
+         SECTION 3: HIGH-IMPACT VOCABULARY & COLLOCATIONS
          ========================================================= -->
     <section class="article-section">
       <div class="section-kicker-badge">
-        <span>🧠</span> Professional Vocabulary • 3 Words
+        <span>🧠</span> Power Collocations • 3 Chunks
       </div>
-      <h2 class="article-headline">High-Impact Professional Vocabulary</h2>
+      <h2 class="article-headline">Power Collocations & Phrasal Chunks</h2>
       <div class="article-byline">
-        <span>With Simple Gujarati Syllables & Workplace Context</span>
+        <span>શબ્દોના ઝૂમખાં — With Simple Gujarati Syllables & Workplace Context</span>
       </div>
 
       <div class="vocab-deck">
         <!-- Word 1 -->
         <div class="vocab-unit">
           <div class="vocab-unit-header">
-            <span class="vocab-word-title">1. {p.get('word1_title', 'Core')}</span>
-            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word1_title', 'Core')}')" title="Listen to pronunciation">🔊</button>
+            <span class="vocab-word-title">1. {p.get('word1_title', 'Insurmountable Bottlenecks')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word1_title', 'Insurmountable Bottlenecks')}')" title="Listen to pronunciation">🔊</button>
           </div>
           <div class="vocab-pronounce-tag">
             🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word1_syllables', '')}</strong>
@@ -759,8 +835,8 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
         <!-- Word 2 -->
         <div class="vocab-unit">
           <div class="vocab-unit-header">
-            <span class="vocab-word-title">2. {p.get('word2_title', 'Scale')}</span>
-            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word2_title', 'Scale')}')" title="Listen to pronunciation">🔊</button>
+            <span class="vocab-word-title">2. {p.get('word2_title', 'Rely Heavily On')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word2_title', 'Rely Heavily On')}')" title="Listen to pronunciation">🔊</button>
           </div>
           <div class="vocab-pronounce-tag">
             🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word2_syllables', '')}</strong>
@@ -773,10 +849,10 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
         </div>
 
         <!-- Word 3 -->
-        <div class="vocab-unit">
+        <div class=vocab-unit>
           <div class="vocab-unit-header">
-            <span class="vocab-word-title">3. {p.get('word3_title', 'Engine')}</span>
-            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word3_title', 'Engine')}')" title="Listen to pronunciation">🔊</button>
+            <span class="vocab-word-title">3. {p.get('word3_title', 'Curtail Energy Consumption')}</span>
+            <button class="vocab-audio-button" onclick="pronounceSingle('{p.get('word3_title', 'Curtail Energy Consumption')}')" title="Listen to pronunciation">🔊</button>
           </div>
           <div class="vocab-pronounce-tag">
             🗣️ સરળ ઉચ્ચાર: <strong>{p.get('word3_syllables', '')}</strong>
@@ -791,12 +867,12 @@ def generate_sections_html(p: dict, bbc_link: str) -> str:
 
       <!-- Speaking Practice Prompt -->
       <div class="speaking-lab-banner">
-        <div class="speaking-lab-kicker">🗣️ Speaking Practice Drill (30 Seconds)</div>
+        <div class="speaking-lab-kicker">🗣️ IELTS Speaking Practice Drill (1 Minute)</div>
         <p class="speaking-lab-prompt">
           "{p.get('speaking_prompt', '')}"
         </p>
         <p class="speaking-lab-tip">
-          💡 <strong>Coach Tip:</strong> {p.get('speaking_tip', '')}
+          💡 <strong>Confidence Anchor:</strong> {p.get('speaking_tip', '')}
         </p>
       </div>
     </section>
