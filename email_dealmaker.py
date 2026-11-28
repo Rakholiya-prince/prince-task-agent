@@ -26,6 +26,12 @@ def get_env_credentials():
                             user = v.strip()
                         elif k.strip() == "OUTREACH_EMAIL_PASS":
                             pwd = v.strip()
+    if not user:
+        user = "prince.dev.contact@gmail.com"
+    if not pwd:
+        pwd = "cwlh hqgh yogp tfws"
+    if pwd:
+        pwd = pwd.replace(" ", "").strip()
     return user, pwd
 
 def load_replies():
